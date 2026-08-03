@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet>
+  <link rel="stylesheet" href="_ds/nocturne-80ce061c-8322-4dbd-b704-abf5e54c5ba4/styles.css">
+  <style>
+    body { margin: 0; }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-thumb { background: var(--color-neutral-800); border-radius: 8px; }
+    .ph {
+      background: repeating-linear-gradient(45deg, var(--color-neutral-800), var(--color-neutral-800) 9px, var(--color-neutral-900) 9px, var(--color-neutral-900) 18px);
+      border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;
+      color: var(--color-neutral-500); font-family: monospace; font-size: 11px; text-align: center; flex: none;
+    }
+    .row { display: flex; align-items: center; }
+    .col { display: flex; flex-direction: column; }
+  </style>
+</helmet>
+
+<div style="background: var(--color-bg); color: var(--color-text); font-family: var(--font-body); min-height: 100vh; position: relative;">
+
+  <div style="position: fixed; top: 16px; right: 16px; z-index: 100; box-shadow: var(--shadow-md); border-radius: var(--radius-md); overflow: hidden;">
+    <div class="seg" style="background: var(--color-surface);">
+      <label class="seg-opt" style="{{ storeSegStyle }}">
+        <input type="radio" name="modeseg" onChange="{{ goStore }}" checked="{{ isStore }}" />Store
+      </label>
+      <label class="seg-opt" style="{{ adminSegStyle }}">
+        <input type="radio" name="modeseg" onChange="{{ goAdmin }}" checked="{{ isAdmin }}" />Admin
+      </label>
+    </div>
+  </div>
+
+  <sc-if value="{{ isStore }}" hint-placeholder-val="{{ true }}">
+    <div>
+      <div class="nav" style="border-bottom: 1px solid var(--color-divider); padding: 14px 32px;">
+        <div class="nav-brand">Volt Electronics</div>
+        <a href="#" style="{{ navLinkStyleHome }}" onClick="{{ goHome }}">Home</a>
+        <a href="#" style="{{ navLinkStyleListing }}" onClick="{{ goListing }}">Shop</a>
+        <a href="#" style="{{ navLinkStyleAccount }}" onClick="{{ goAccount }}">Orders</a>
+        <div style="flex: 1;"></div>
+        <div class="row" style="gap: 18px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <div style="position: relative; cursor: pointer;" onClick="{{ goCart }}">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+            <div style="position: absolute; top: -6px; right: -8px; background: var(--color-accent); color: var(--color-bg); font-size: 10px; font-weight: 600; border-radius: 999px; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; padding: 0 3px;">{{ cartCount }}</div>
+          </div>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6 8-6s8 2 8 6"></path></svg>
+        </div>
+      </div>
+
+      <sc-if value="{{ showHome }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <div style="background: linear-gradient(135deg, var(--color-section), var(--color-section-glow)); padding: 64px 32px; display: flex; align-items: center; gap: 48px;">
+            <div style="max-width: 460px;">
+              <div class="tag tag-outline" style="margin-bottom: 14px;">Trusted by 40,000+ businesses</div>
+              <h1 style="font-size: 46px; margin-bottom: 14px;">Enterprise-grade electronics, sourced right.</h1>
+              <p style="opacity: 0.8; font-size: 15px; margin-bottom: 22px;">Laptops, phones, displays and networking gear vetted for reliability — with volume pricing and dedicated procurement support.</p>
+              <div class="row" style="gap: 10px;">
+                <button class="btn btn-primary" onClick="{{ goListing }}">Browse catalog</button>
+                <button class="btn btn-secondary">Talk to sales</button>
+              </div>
+            </div>
+            <div class="ph" style="width: 380px; height: 260px;">hero — lifestyle product photo</div>
+          </div>
+
+          <div style="padding: 48px 32px;">
+            <h3 style="margin-bottom: 18px;">Shop by category</h3>
+            <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px;">
+              <sc-for list="{{ categories }}" as="cat" hint-placeholder-count="6">
+                <div class="card" style="align-items: center; text-align: center; cursor: pointer;" onClick="{{ goListing }}">
+                  <div class="ph" style="width: 100%; height: 64px;">{{ cat.name }}</div>
+                  <div class="card-title" style="font-size: 14px;">{{ cat.name }}</div>
+                  <div class="card-meta">{{ cat.count }} products</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="padding: 0 32px 56px;">
+            <div class="row" style="justify-content: space-between; margin-bottom: 18px;">
+              <h3 style="margin: 0;">Featured products</h3>
+              <button class="btn btn-ghost" onClick="{{ goListing }}">View all →</button>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
+              <sc-for list="{{ featured }}" as="p" hint-placeholder-count="4">
+                <div class="card elev-sm" style="cursor: pointer;" onClick="{{ goDetail }}">
+                  <div class="ph" style="width: 100%; height: 140px;">{{ p.label }}</div>
+                  <sc-if value="{{ p.badge }}" hint-placeholder-val="{{ false }}"><div class="tag tag-accent" style="align-self: flex-start;">{{ p.badge }}</div></sc-if>
+                  <div class="card-title">{{ p.name }}</div>
+                  <div class="card-meta">{{ p.category }} · ★ {{ p.rating }}</div>
+                  <div style="font-family: var(--font-heading); font-size: 16px; margin-top: 2px;">${{ p.price }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="border-top: 1px solid var(--color-divider); padding: 28px 32px; opacity: 0.6; font-size: 13px;">© 2026 Volt Electronics. Procurement-friendly pricing on request.</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showListing }}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; gap: 28px; padding: 32px;">
+          <div class="col" style="width: 220px; flex: none; gap: 22px;">
+            <div>
+              <h6 style="margin-bottom: 10px;">Category</h6>
+              <div class="col" style="gap: 8px;">
+                <sc-for list="{{ categories }}" as="cat" hint-placeholder-count="6">
+                  <label class="row" style="gap: 8px; font-size: 13px; cursor: pointer;"><input type="checkbox" />{{ cat.name }} <span class="text-muted">({{ cat.count }})</span></label>
+                </sc-for>
+              </div>
+            </div>
+            <div>
+              <h6 style="margin-bottom: 10px;">Price</h6>
+              <div class="col" style="gap: 8px; font-size: 13px;">
+                <label class="row" style="gap: 8px;"><input type="checkbox" />Under $250</label>
+                <label class="row" style="gap: 8px;"><input type="checkbox" />$250 – $750</label>
+                <label class="row" style="gap: 8px;"><input type="checkbox" />$750 – $1,500</label>
+                <label class="row" style="gap: 8px;"><input type="checkbox" />Over $1,500</label>
+              </div>
+            </div>
+            <button class="btn btn-secondary btn-block">Clear filters</button>
+          </div>
+          <div style="flex: 1;">
+            <div class="row" style="justify-content: space-between; margin-bottom: 18px;">
+              <h3 style="margin: 0;">All products <span class="text-muted" style="font-size: 14px;">({{ productCount }})</span></h3>
+              <div class="row" style="gap: 10px;">
+                <div class="field" style="margin: 0; width: 200px;"><input class="input" placeholder="Search products" /></div>
+                <select class="input" style="width: 160px;"><option>Sort: Featured</option><option>Price: Low–High</option><option>Price: High–Low</option><option>Top rated</option></select>
+              </div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+              <sc-for list="{{ products }}" as="p" hint-placeholder-count="10">
+                <div class="card elev-sm" style="cursor: pointer;" onClick="{{ goDetail }}">
+                  <div class="ph" style="width: 100%; height: 150px;">{{ p.label }}</div>
+                  <sc-if value="{{ p.badge }}" hint-placeholder-val="{{ false }}"><div class="tag tag-accent" style="align-self: flex-start;">{{ p.badge }}</div></sc-if>
+                  <div class="card-title">{{ p.name }}</div>
+                  <div class="card-meta">{{ p.category }} · ★ {{ p.rating }} · {{ p.stock }} in stock</div>
+                  <div class="row" style="justify-content: space-between; margin-top: 4px;">
+                    <div class="row" style="gap: 8px;">
+                      <div style="font-family: var(--font-heading); font-size: 16px;">${{ p.price }}</div>
+                      <sc-if value="{{ p.oldPrice }}" hint-placeholder-val="{{ false }}"><div class="text-muted" style="font-size: 12px; text-decoration: line-through;">${{ p.oldPrice }}</div></sc-if>
+                    </div>
+                    <button class="btn btn-icon btn-secondary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></button>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showDetail }}" hint-placeholder-val="{{ false }}">
+        <div style="padding: 32px; max-width: 1200px; margin: 0 auto;">
+          <div class="text-muted" style="font-size: 13px; margin-bottom: 18px;">Shop / Laptops / Aurora Pro 15</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 48px;">
+            <div class="col" style="gap: 12px;">
+              <div class="ph" style="width: 100%; height: 380px;">laptop — hero product photo</div>
+              <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                <div class="ph" style="height: 76px;">angle 1</div>
+                <div class="ph" style="height: 76px;">angle 2</div>
+                <div class="ph" style="height: 76px;">ports</div>
+                <div class="ph" style="height: 76px;">in use</div>
+              </div>
+            </div>
+            <div class="col" style="gap: 16px;">
+              <div class="tag tag-accent" style="align-self: flex-start;">New</div>
+              <h1 style="margin: 0;">Aurora Pro 15 Laptop</h1>
+              <div class="row" style="gap: 10px;">
+                <div style="color: var(--color-accent-300);">★★★★★</div>
+                <div class="text-muted" style="font-size: 13px;">4.8 (312 reviews) · 24 in stock</div>
+              </div>
+              <div class="row" style="gap: 10px; align-items: baseline;">
+                <div style="font-family: var(--font-heading); font-size: 30px;">$1,499</div>
+                <div class="text-muted" style="text-decoration: line-through; font-size: 15px;">$1,699</div>
+                <div class="tag tag-accent-2">Save 12%</div>
+              </div>
+              <div class="hr"></div>
+              <p style="opacity: 0.85;">A 15-inch aluminum-unibody workstation built for sustained performance: 14-core processor, 32GB unified memory and a 1TB NVMe drive, tuned for all-day battery life under real workloads.</p>
+              <div class="col" style="gap: 6px;">
+                <div class="row" style="justify-content: space-between; font-size: 13px; padding: 8px 0; border-bottom: 1px solid var(--color-divider);"><span class="text-muted">Processor</span><span>14-core, 4.2GHz boost</span></div>
+                <div class="row" style="justify-content: space-between; font-size: 13px; padding: 8px 0; border-bottom: 1px solid var(--color-divider);"><span class="text-muted">Memory</span><span>32GB unified</span></div>
+                <div class="row" style="justify-content: space-between; font-size: 13px; padding: 8px 0;"><span class="text-muted">Storage</span><span>1TB NVMe SSD</span></div>
+              </div>
+              <div class="row" style="gap: 12px; margin-top: 8px;">
+                <div class="field" style="margin: 0; width: 90px;"><label>Qty</label><input class="input" type="number" value="1" min="1" /></div>
+                <button class="btn btn-primary" style="flex: 1; height: 36px;" onClick="{{ goCart }}">Add to cart — $1,499</button>
+              </div>
+              <button class="btn btn-secondary btn-block">Request bulk quote</button>
+            </div>
+          </div>
+
+          <div style="margin-top: 56px;">
+            <h3 style="margin-bottom: 18px;">You may also like</h3>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
+              <sc-for list="{{ featured }}" as="p" hint-placeholder-count="4">
+                <div class="card elev-sm">
+                  <div class="ph" style="width: 100%; height: 120px;">{{ p.label }}</div>
+                  <div class="card-title">{{ p.name }}</div>
+                  <div style="font-family: var(--font-heading); font-size: 15px;">${{ p.price }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showCart }}" hint-placeholder-val="{{ false }}">
+        <div style="padding: 32px; max-width: 1100px; margin: 0 auto;">
+          <h2>Your cart <span class="text-muted" style="font-size: 18px;">({{ cartCount }} items)</span></h2>
+          <div style="display: grid; grid-template-columns: 1fr 340px; gap: 32px; margin-top: 20px; align-items: flex-start;">
+            <div class="col" style="gap: 0;">
+              <sc-for list="{{ cartItems }}" as="item" hint-placeholder-count="3">
+                <div class="row" style="gap: 18px; padding: 18px 0; border-bottom: 1px solid var(--color-divider);">
+                  <div class="ph" style="width: 88px; height: 88px;">{{ item.label }}</div>
+                  <div class="col" style="flex: 1; gap: 4px;">
+                    <div class="card-title" style="font-size: 15px;">{{ item.name }}</div>
+                    <div class="card-meta">{{ item.category }}</div>
+                    <button class="btn btn-ghost" style="padding: 0; font-size: 12px; align-self: flex-start; margin-top: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg> Remove</button>
+                  </div>
+                  <div class="seg">
+                    <div class="seg-opt" style="padding: 6px 10px;">−</div>
+                    <div class="seg-opt" style="padding: 6px 14px;">{{ item.qty }}</div>
+                    <div class="seg-opt" style="padding: 6px 10px;">+</div>
+                  </div>
+                  <div style="font-family: var(--font-heading); font-size: 16px; width: 90px; text-align: right;">${{ item.lineTotal }}</div>
+                </div>
+              </sc-for>
+              <button class="btn btn-ghost" style="align-self: flex-start; margin-top: 14px;" onClick="{{ goListing }}">← Continue shopping</button>
+            </div>
+            <div class="card elev-sm" style="gap: 14px;">
+              <div class="card-title">Order summary</div>
+              <div class="row" style="justify-content: space-between; font-size: 14px;"><span class="text-muted">Subtotal</span><span>${{ cartSubtotal }}</span></div>
+              <div class="row" style="justify-content: space-between; font-size: 14px;"><span class="text-muted">Estimated shipping</span><span>$24.00</span></div>
+              <div class="row" style="justify-content: space-between; font-size: 14px;"><span class="text-muted">Estimated tax</span><span>${{ cartTax }}</span></div>
+              <div class="hr" style="margin: 4px 0;"></div>
+              <div class="row" style="justify-content: space-between; font-family: var(--font-heading); font-size: 18px;"><span>Total</span><span>${{ cartTotal }}</span></div>
+              <button class="btn btn-primary btn-block" onClick="{{ goCheckout }}">Proceed to checkout</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showCheckout }}" hint-placeholder-val="{{ false }}">
+        <div style="padding: 32px; max-width: 1100px; margin: 0 auto;">
+          <h2 style="margin-bottom: 24px;">Checkout</h2>
+          <div style="display: grid; grid-template-columns: 1fr 340px; gap: 32px; align-items: flex-start;">
+            <div class="col" style="gap: 28px;">
+              <div>
+                <h4 style="margin-bottom: 14px;">Shipping address</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                  <div class="field"><label>Full name</label><input class="input" placeholder="Jordan Lee" /></div>
+                  <div class="field"><label>Company (optional)</label><input class="input" placeholder="Acme Corp" /></div>
+                  <div class="field" style="grid-column: span 2;"><label>Street address</label><input class="input" placeholder="500 Market St, Suite 200" /></div>
+                  <div class="field"><label>City</label><input class="input" placeholder="San Francisco" /></div>
+                  <div class="field"><label>State</label><input class="input" placeholder="CA" /></div>
+                  <div class="field"><label>ZIP code</label><input class="input" placeholder="94105" /></div>
+                  <div class="field"><label>Phone</label><input class="input" placeholder="(555) 010-0199" /></div>
+                </div>
+              </div>
+              <div>
+                <h4 style="margin-bottom: 14px;">Payment method</h4>
+                <div class="seg">
+                  <label class="seg-opt"><input type="radio" name="pay" defaultChecked="{{ true }}" />Card</label>
+                  <label class="seg-opt"><input type="radio" name="pay" />PayPal</label>
+                  <label class="seg-opt"><input type="radio" name="pay" />Purchase order</label>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px;">
+                  <div class="field" style="grid-column: span 2;"><label>Card number</label><input class="input" placeholder="4242 4242 4242 4242" /></div>
+                  <div class="field"><label>Expiry</label><input class="input" placeholder="MM / YY" /></div>
+                  <div class="field"><label>CVC</label><input class="input" placeholder="123" /></div>
+                </div>
+              </div>
+            </div>
+            <div class="card elev-sm" style="gap: 14px;">
+              <div class="card-title">Order summary</div>
+              <sc-for list="{{ cartItems }}" as="item" hint-placeholder-count="3">
+                <div class="row" style="justify-content: space-between; font-size: 13px;"><span>{{ item.name }} × {{ item.qty }}</span><span>${{ item.lineTotal }}</span></div>
+              </sc-for>
+              <div class="hr" style="margin: 4px 0;"></div>
+              <div class="row" style="justify-content: space-between; font-family: var(--font-heading); font-size: 18px;"><span>Total</span><span>${{ cartTotal }}</span></div>
+              <button class="btn btn-primary btn-block" onClick="{{ goConfirm }}">Place order</button>
+              <button class="btn btn-ghost btn-block" onClick="{{ goCart }}">← Back to cart</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showConfirm }}" hint-placeholder-val="{{ false }}">
+        <div style="padding: 80px 32px; max-width: 560px; margin: 0 auto; text-align: center;">
+          <div style="width: 64px; height: 64px; border-radius: 50%; border: 1px solid var(--color-accent); display: flex; align-items: center; justify-content: center; margin: 0 auto 22px;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+          <h2>Order confirmed</h2>
+          <p class="text-muted" style="margin-bottom: 24px;">Your order <strong style="color: var(--color-text);">#ORD-58213</strong> has been placed. A confirmation email is on its way.</p>
+          <div class="card elev-sm" style="text-align: left; gap: 10px; margin-bottom: 24px;">
+            <div class="row" style="justify-content: space-between; font-size: 13px;"><span class="text-muted">Order total</span><span>${{ cartTotal }}</span></div>
+            <div class="row" style="justify-content: space-between; font-size: 13px;"><span class="text-muted">Estimated delivery</span><span>Aug 9 – Aug 12</span></div>
+            <div class="row" style="justify-content: space-between; font-size: 13px;"><span class="text-muted">Shipping to</span><span>San Francisco, CA</span></div>
+          </div>
+          <div class="row" style="gap: 10px; justify-content: center;">
+            <button class="btn btn-primary" onClick="{{ goAccount }}">View order</button>
+            <button class="btn btn-secondary" onClick="{{ goHome }}">Continue shopping</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showAccount }}" hint-placeholder-val="{{ false }}">
+        <div style="padding: 32px; max-width: 1100px; margin: 0 auto; display: flex; gap: 32px;">
+          <div class="col" style="width: 200px; flex: none; gap: 4px;">
+            <div class="card" style="align-items: center; text-align: center; margin-bottom: 16px;">
+              <div class="ph" style="width: 56px; height: 56px; border-radius: 50%;">JL</div>
+              <div class="card-title" style="font-size: 14px;">Jordan Lee</div>
+              <div class="card-meta">jordan@acme.com</div>
+            </div>
+            <a href="#" style="padding: 9px 12px; border-radius: var(--radius-md); background: color-mix(in srgb, var(--color-accent) 12%, transparent); color: var(--color-accent); font-size: 14px; text-decoration: none;">Order history</a>
+            <a href="#" style="padding: 9px 12px; border-radius: var(--radius-md); font-size: 14px; text-decoration: none;">Addresses</a>
+            <a href="#" style="padding: 9px 12px; border-radius: var(--radius-md); font-size: 14px; text-decoration: none;">Payment methods</a>
+            <a href="#" style="padding: 9px 12px; border-radius: var(--radius-md); font-size: 14px; text-decoration: none;">Account settings</a>
+          </div>
+          <div style="flex: 1;">
+            <h3 style="margin-bottom: 18px;">Order history</h3>
+            <table class="table">
+              <thead><tr><th>Order</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th></tr></thead>
+              <tbody>
+                <sc-for list="{{ myOrders }}" as="o" hint-placeholder-count="4">
+                  <tr>
+                    <td>{{ o.id }}</td><td>{{ o.date }}</td><td>{{ o.items }}</td><td>${{ o.total }}</td>
+                    <td><span style="{{ o.tagStyle }}" class="tag">{{ o.status }}</span></td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ false }}">
+    <div style="display: flex; min-height: 100vh;">
+      <div class="col" style="width: 220px; flex: none; background: var(--color-surface); padding: 20px 14px; gap: 4px; border-right: 1px solid var(--color-divider);">
+        <div class="nav-brand" style="padding: 0 10px 18px;">Volt Admin</div>
+        <a href="#" style="{{ adminNavStyleProducts }}" onClick="{{ goAdminProducts }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 8l-9-5-9 5 9 5 9-5z"></path><path d="M3 8v8l9 5 9-5V8"></path><path d="M12 13v8"></path></svg> Products</a>
+        <a href="#" style="{{ adminNavStyleCategories }}" onClick="{{ goAdminCategories }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect></svg> Categories</a>
+        <a href="#" style="{{ adminNavStyleOrders }}" onClick="{{ goAdminOrders }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg> Orders</a>
+        <a href="#" style="{{ adminNavStyleAnalytics }}" onClick="{{ goAdminAnalytics }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="4" y1="20" x2="4" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="20" y1="20" x2="20" y2="14"></line></svg> Analytics</a>
+      </div>
+      <div style="flex: 1; padding: 28px 36px;">
+
+        <sc-if value="{{ showAdminProducts }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <div class="row" style="justify-content: space-between; margin-bottom: 20px;">
+              <h2 style="margin: 0;">Products</h2>
+              <button class="btn btn-primary" onClick="{{ goAdminForm }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Add product</button>
+            </div>
+            <div class="row" style="gap: 10px; margin-bottom: 16px;">
+              <div class="field" style="margin: 0; width: 260px;"><input class="input" placeholder="Search products" /></div>
+              <select class="input" style="width: 170px;"><option>All categories</option><option>Laptops</option><option>Phones</option><option>Audio</option></select>
+              <select class="input" style="width: 140px;"><option>All statuses</option><option>Active</option><option>Draft</option></select>
+            </div>
+            <table class="table">
+              <thead><tr><th></th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Status</th><th></th></tr></thead>
+              <tbody>
+                <sc-for list="{{ products }}" as="p" hint-placeholder-count="10">
+                  <tr>
+                    <td><div class="ph" style="width: 40px; height: 40px; font-size: 8px;">img</div></td>
+                    <td>{{ p.name }}</td>
+                    <td>{{ p.category }}</td>
+                    <td>${{ p.price }}</td>
+                    <td><span class="tag" style="{{ p.stockTagStyle }}">{{ p.stock }} units</span></td>
+                    <td><span class="tag tag-accent">Active</span></td>
+                    <td>
+                      <div class="row" style="gap: 4px;">
+                        <button class="btn btn-icon btn-ghost" onClick="{{ goAdminForm }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg></button>
+                        <button class="btn btn-icon btn-ghost"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg></button>
+                      </div>
+                    </td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ showAdminForm }}" hint-placeholder-val="{{ false }}">
+          <div style="max-width: 860px;">
+            <button class="btn btn-ghost" style="padding: 0; margin-bottom: 12px;" onClick="{{ goAdminProducts }}">← Back to products</button>
+            <h2 style="margin-bottom: 22px;">Add product</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+              <div class="field" style="grid-column: span 2;"><label>Product name</label><input class="input" placeholder="e.g. Aurora Pro 15 Laptop" /></div>
+              <div class="field"><label>SKU</label><input class="input" placeholder="VLT-LP-2201" /></div>
+              <div class="field"><label>Category</label>
+                <select class="input"><option>Laptops</option><option>Phones</option><option>Audio</option><option>TVs</option><option>Wearables</option><option>Cameras</option><option>Tablets</option><option>Monitors</option><option>Gaming</option></select>
+              </div>
+              <div class="field"><label>Price (USD)</label><input class="input" placeholder="1499.00" /></div>
+              <div class="field"><label>Compare-at price</label><input class="input" placeholder="1699.00" /></div>
+              <div class="field"><label>Stock quantity</label><input class="input" type="number" placeholder="24" /></div>
+              <div class="field"><label>Status</label>
+                <div class="seg" style="width: fit-content;">
+                  <label class="seg-opt"><input type="radio" name="status" defaultChecked="{{ true }}" />Active</label>
+                  <label class="seg-opt"><input type="radio" name="status" />Draft</label>
+                </div>
+              </div>
+              <div class="field" style="grid-column: span 2;"><label>Description</label><textarea class="input" placeholder="A 15-inch aluminum-unibody workstation built for sustained performance..."></textarea></div>
+              <div class="field" style="grid-column: span 2;">
+                <label>Product images</label>
+                <div class="row" style="gap: 12px;">
+                  <div class="ph" style="width: 110px; height: 110px;">upload<br />image</div>
+                  <div class="ph" style="width: 110px; height: 110px;">upload<br />image</div>
+                  <div class="ph" style="width: 110px; height: 110px;">upload<br />image</div>
+                </div>
+              </div>
+              <div class="field" style="grid-column: span 2;">
+                <label>Specifications</label>
+                <div class="col" style="gap: 8px;">
+                  <div class="row" style="gap: 8px;"><input class="input" placeholder="Processor" style="width: 200px;" /><input class="input" placeholder="14-core, 4.2GHz boost" /></div>
+                  <div class="row" style="gap: 8px;"><input class="input" placeholder="Memory" style="width: 200px;" /><input class="input" placeholder="32GB unified" /></div>
+                  <div class="row" style="gap: 8px;"><input class="input" placeholder="Storage" style="width: 200px;" /><input class="input" placeholder="1TB NVMe SSD" /></div>
+                </div>
+              </div>
+            </div>
+            <div class="row" style="gap: 10px; margin-top: 26px;">
+              <button class="btn btn-primary" onClick="{{ goAdminProducts }}">Save product</button>
+              <button class="btn btn-secondary" onClick="{{ goAdminProducts }}">Discard</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ showAdminOrders }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <h2 style="margin-bottom: 20px;">Orders</h2>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px;">
+              <div class="card elev-sm"><div class="card-kicker">Total orders</div><div style="font-family: var(--font-heading); font-size: 26px;">1,204</div></div>
+              <div class="card elev-sm"><div class="card-kicker">Pending</div><div style="font-family: var(--font-heading); font-size: 26px;">38</div></div>
+              <div class="card elev-sm"><div class="card-kicker">Shipped</div><div style="font-family: var(--font-heading); font-size: 26px;">96</div></div>
+              <div class="card elev-sm"><div class="card-kicker">Revenue (30d)</div><div style="font-family: var(--font-heading); font-size: 26px;">$128,430</div></div>
+            </div>
+            <div class="seg" style="width: fit-content; margin-bottom: 16px;">
+              <div class="seg-opt" style="box-shadow: inset 0 0 0 1px var(--color-accent); color: var(--color-accent);">All</div>
+              <div class="seg-opt">Pending</div>
+              <div class="seg-opt">Shipped</div>
+              <div class="seg-opt">Delivered</div>
+            </div>
+            <table class="table">
+              <thead><tr><th>Order</th><th>Customer</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th></tr></thead>
+              <tbody>
+                <sc-for list="{{ orders }}" as="o" hint-placeholder-count="6">
+                  <tr>
+                    <td>{{ o.id }}</td><td>{{ o.customer }}</td><td>{{ o.date }}</td><td>{{ o.items }}</td><td>${{ o.total }}</td>
+                    <td><span class="tag" style="{{ o.tagStyle }}">{{ o.status }}</span></td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ showAdminCategories }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div class="row" style="justify-content: space-between; margin-bottom: 20px;">
+              <h2 style="margin: 0;">Categories</h2>
+              <button class="btn btn-primary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Add category</button>
+            </div>
+            <table class="table">
+              <thead><tr><th>Category</th><th>Products</th><th>Total stock</th><th>Status</th><th></th></tr></thead>
+              <tbody>
+                <sc-for list="{{ categories }}" as="cat" hint-placeholder-count="9">
+                  <tr>
+                    <td>{{ cat.name }}</td>
+                    <td>{{ cat.count }}</td>
+                    <td>{{ cat.stock }}</td>
+                    <td><span class="tag" style="{{ cat.tagStyle }}">{{ cat.tagLabel }}</span></td>
+                    <td>
+                      <div class="row" style="gap: 4px;">
+                        <button class="btn btn-icon btn-ghost"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg></button>
+                        <button class="btn btn-icon btn-ghost"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg></button>
+                      </div>
+                    </td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ showAdminAnalytics }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <h2 style="margin-bottom: 20px;">Analytics</h2>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px;">
+              <div class="card elev-sm"><div class="card-kicker">Revenue (30d)</div><div style="font-family: var(--font-heading); font-size: 26px;">$128,430</div><div class="card-meta" style="color: var(--color-accent-300);">↑ 8.2% vs prior</div></div>
+              <div class="card elev-sm"><div class="card-kicker">Orders</div><div style="font-family: var(--font-heading); font-size: 26px;">1,204</div><div class="card-meta" style="color: var(--color-accent-300);">↑ 4.6%</div></div>
+              <div class="card elev-sm"><div class="card-kicker">Avg. order value</div><div style="font-family: var(--font-heading); font-size: 26px;">$106.70</div><div class="card-meta">flat</div></div>
+              <div class="card elev-sm"><div class="card-kicker">Low stock alerts</div><div style="font-family: var(--font-heading); font-size: 26px; color: var(--color-accent-300);">3</div><div class="card-meta">below 20 units</div></div>
+            </div>
+            <div class="card elev-sm" style="margin-bottom: 24px;">
+              <div class="card-title" style="margin-bottom: 14px;">Revenue, last 7 days</div>
+              <div class="row" style="align-items: flex-end; gap: 14px; height: 160px;">
+                <sc-for list="{{ chartBars }}" as="b" hint-placeholder-count="7">
+                  <div class="col" style="align-items: center; gap: 8px; flex: 1;">
+                    <div style="{{ b.barStyle }}"></div>
+                    <div class="text-muted" style="font-size: 11px;">{{ b.day }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div class="card-title" style="margin-bottom: 12px;">Top products</div>
+            <table class="table">
+              <thead><tr><th>Product</th><th>Category</th><th>Units sold</th><th>Revenue</th></tr></thead>
+              <tbody>
+                <sc-for list="{{ topProducts }}" as="p" hint-placeholder-count="5">
+                  <tr><td>{{ p.name }}</td><td>{{ p.category }}</td><td>{{ p.units }}</td><td>${{ p.revenue }}</td></tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </sc-if>
+
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+
+const PRODUCTS = [
+  { id: 'p1', name: 'Aurora Pro 15 Laptop', category: 'Laptops', price: 1499, oldPrice: 1699, badge: 'New', label: 'laptop — product photo', stock: 24, rating: 4.8 },
+  { id: 'p2', name: 'Halcyon X1 Smartphone', category: 'Phones', price: 899, badge: 'Best seller', label: 'phone — product photo', stock: 56, rating: 4.6 },
+  { id: 'p3', name: 'Nimbus Wireless Headphones', category: 'Audio', price: 249, label: 'headphones — product photo', stock: 120, rating: 4.7 },
+  { id: 'p4', name: 'Vantage 55" OLED TV', category: 'TVs', price: 1299, oldPrice: 1499, badge: 'Sale', label: 'tv — product photo', stock: 12, rating: 4.5 },
+  { id: 'p5', name: 'Pulse Fitness Smartwatch', category: 'Wearables', price: 329, label: 'smartwatch — product photo', stock: 80, rating: 4.4 },
+  { id: 'p6', name: 'Cascade Mirrorless Camera', category: 'Cameras', price: 1099, label: 'camera — product photo', stock: 18, rating: 4.9 },
+  { id: 'p7', name: 'Drift Bluetooth Speaker', category: 'Audio', price: 129, label: 'speaker — product photo', stock: 200, rating: 4.3 },
+  { id: 'p8', name: 'Solace 11 Tablet', category: 'Tablets', price: 649, label: 'tablet — product photo', stock: 40, rating: 4.6 },
+  { id: 'p9', name: 'Meridian 27" 4K Monitor', category: 'Monitors', price: 449, label: 'monitor — product photo', stock: 33, rating: 4.7 },
+  { id: 'p10', name: 'Apex Gaming Console', category: 'Gaming', price: 499, badge: 'New', label: 'console — product photo', stock: 15, rating: 4.8 },
+];
+const CATEGORIES = [
+  { name: 'Laptops', count: 1, stock: 24 }, { name: 'Phones', count: 1, stock: 56 },
+  { name: 'Audio', count: 2, stock: 320 }, { name: 'TVs', count: 1, stock: 12 },
+  { name: 'Wearables', count: 1, stock: 80 }, { name: 'Cameras', count: 1, stock: 18 },
+  { name: 'Tablets', count: 1, stock: 40 }, { name: 'Monitors', count: 1, stock: 33 },
+  { name: 'Gaming', count: 1, stock: 15 },
+];
+const ORDERS = [
+  { id: 'ORD-58201', customer: 'Priya Nair', date: 'Aug 1', items: 2, total: 1748, status: 'Delivered' },
+  { id: 'ORD-58202', customer: 'Marcus Chen', date: 'Aug 1', items: 1, total: 249, status: 'Shipped' },
+  { id: 'ORD-58203', customer: 'Sofia Reyes', date: 'Jul 31', items: 3, total: 928, status: 'Processing' },
+  { id: 'ORD-58204', customer: 'Tom Becker', date: 'Jul 30', items: 1, total: 1299, status: 'Delivered' },
+  { id: 'ORD-58205', customer: 'Amara Obi', date: 'Jul 29', items: 4, total: 2176, status: 'Cancelled' },
+  { id: 'ORD-58206', customer: 'Liam Walsh', date: 'Jul 28', items: 2, total: 578, status: 'Shipped' },
+];
+const CART = [
+  { ...PRODUCTS[0], qty: 1 }, { ...PRODUCTS[2], qty: 2 }, { ...PRODUCTS[6], qty: 1 },
+];
+
+function tagStyleFor(status) {
+  if (status === 'Delivered') return { background: 'var(--color-accent-800)', color: 'var(--color-accent-100)' };
+  if (status === 'Shipped') return { background: 'var(--color-neutral-800)', color: 'var(--color-neutral-100)' };
+  if (status === 'Processing') return { border: '1px solid var(--color-accent)', color: 'var(--color-accent)', background: 'transparent' };
+  return { background: 'var(--color-neutral-900)', color: 'var(--color-neutral-500)' };
+}
+
+class Component extends DCLogic {
+  state = { mode: 'store', storeScreen: 'home', adminScreen: 'products' };
+
+  tabActive() { return { color: 'var(--color-accent)' }; }
+
+  renderVals() {
+    const { mode, storeScreen, adminScreen } = this.state;
+    const isStore = mode === 'store', isAdmin = mode === 'admin';
+    const goStore = () => this.setState({ mode: 'store' });
+    const goAdmin = () => this.setState({ mode: 'admin' });
+    const nav = (s) => () => this.setState({ storeScreen: s });
+    const anav = (s) => () => this.setState({ adminScreen: s });
+
+    const navLink = (active) => ({
+      fontSize: '14px', textDecoration: 'none',
+      color: active ? 'var(--color-accent)' : 'var(--color-text)',
+    });
+    const adminNav = (active) => ({
+      display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 12px',
+      borderRadius: 'var(--radius-md)', fontSize: '14px', textDecoration: 'none',
+      color: active ? 'var(--color-accent)' : 'var(--color-text)',
+      background: active ? 'color-mix(in srgb, var(--color-accent) 12%, transparent)' : 'transparent',
+    });
+    const seg = (active) => ({
+      color: active ? 'var(--color-accent)' : 'var(--color-text)',
+      boxShadow: active ? 'inset 0 0 0 1px var(--color-accent)' : 'none',
+    });
+
+    const cartItems = CART.map(i => ({ ...i, lineTotal: i.price * i.qty }));
+    const cartCount = cartItems.reduce((a, i) => a + i.qty, 0);
+    const cartSubtotal = cartItems.reduce((a, i) => a + i.lineTotal, 0);
+    const cartTax = Math.round(cartSubtotal * 0.0875);
+    const cartTotal = cartSubtotal + 24 + cartTax;
+
+    const products = PRODUCTS.map(p => ({
+      ...p,
+      stockTagStyle: p.stock < 20 ? { background: 'var(--color-accent-800)', color: 'var(--color-accent-100)' } : { background: 'var(--color-neutral-800)', color: 'var(--color-neutral-100)' },
+    }));
+    const categories = CATEGORIES.map(c => ({
+      ...c,
+      tagLabel: c.stock < 20 ? 'Low stock' : 'In stock',
+      tagStyle: c.stock < 20 ? { border: '1px solid var(--color-accent)', color: 'var(--color-accent)', background: 'transparent' } : { background: 'var(--color-neutral-800)', color: 'var(--color-neutral-100)' },
+    }));
+    const orders = ORDERS.map(o => ({ ...o, tagStyle: tagStyleFor(o.status) }));
+
+    return {
+      isStore, isAdmin, goStore, goAdmin,
+      storeSegStyle: seg(isStore), adminSegStyle: seg(isAdmin),
+
+      showHome: storeScreen === 'home', showListing: storeScreen === 'listing',
+      showDetail: storeScreen === 'detail', showCart: storeScreen === 'cart',
+      showCheckout: storeScreen === 'checkout', showConfirm: storeScreen === 'confirm',
+      showAccount: storeScreen === 'account',
+      goHome: nav('home'), goListing: nav('listing'), goDetail: nav('detail'),
+      goCart: nav('cart'), goCheckout: nav('checkout'), goConfirm: nav('confirm'), goAccount: nav('account'),
+      navLinkStyleHome: navLink(storeScreen === 'home'), navLinkStyleListing: navLink(storeScreen === 'listing'),
+      navLinkStyleAccount: navLink(storeScreen === 'account'),
+
+      showAdminProducts: adminScreen === 'products', showAdminForm: adminScreen === 'form',
+      showAdminOrders: adminScreen === 'orders', showAdminCategories: adminScreen === 'categories',
+      showAdminAnalytics: adminScreen === 'analytics',
+      goAdminProducts: anav('products'), goAdminForm: anav('form'), goAdminOrders: anav('orders'),
+      goAdminCategories: anav('categories'), goAdminAnalytics: anav('analytics'),
+      adminNavStyleProducts: adminNav(adminScreen === 'products'), adminNavStyleCategories: adminNav(adminScreen === 'categories'),
+      adminNavStyleOrders: adminNav(adminScreen === 'orders'), adminNavStyleAnalytics: adminNav(adminScreen === 'analytics'),
+
+      products, featured: products.slice(0, 4), productCount: products.length,
+      categories, orders, myOrders: orders.slice(0, 4),
+      cartItems, cartCount, cartSubtotal, cartTax, cartTotal,
+
+      chartBars: [
+        { day: 'Mon', h: 70 }, { day: 'Tue', h: 95 }, { day: 'Wed', h: 60 }, { day: 'Thu', h: 130 },
+        { day: 'Fri', h: 110 }, { day: 'Sat', h: 150 }, { day: 'Sun', h: 90 },
+      ].map(b => ({ ...b, barStyle: { width: '100%', height: b.h + 'px', background: 'var(--color-accent-700)', borderRadius: '4px 4px 0 0' } })),
+      topProducts: [
+        { name: 'Aurora Pro 15 Laptop', category: 'Laptops', units: 214, revenue: 320786 },
+        { name: 'Nimbus Wireless Headphones', category: 'Audio', units: 512, revenue: 127488 },
+        { name: 'Halcyon X1 Smartphone', category: 'Phones', units: 168, revenue: 151032 },
+        { name: 'Apex Gaming Console', category: 'Gaming', units: 190, revenue: 94810 },
+        { name: 'Meridian 27" 4K Monitor', category: 'Monitors', units: 143, revenue: 64207 },
+      ],
+    };
+  }
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,174 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using VoltElectronics.Domain.Entities;
+using VoltElectronics.Domain.Enums;
+using VoltElectronics.Infrastructure.Identity;
+
+namespace VoltElectronics.Infrastructure.Data;
+
+public static class DbSeeder
+{
+    public const string AdminRole = "Admin";
+    public const string CustomerRole = "Customer";
+
+    public static async Task SeedAsync(IServiceProvider services)
+    {
+        var db = services.GetRequiredService<AppDbContext>();
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+        var config = services.GetRequiredService<IConfiguration>();
+        var logger = services.GetRequiredService<ILoggerFactory>().CreateLogger("DbSeeder");
+
+        foreach (var role in new[] { AdminRole, CustomerRole })
+        {
+            if (!await roleManager.RoleExistsAsync(role))
+                await roleManager.CreateAsync(new IdentityRole(role));
+        }
+
+        var adminEmail = config["Seed:AdminEmail"] ?? "admin@volt.local";
+        if (await userManager.FindByEmailAsync(adminEmail) is null)
+        {
+            var admin = new ApplicationUser
+            {
+                UserName = adminEmail,
+                Email = adminEmail,
+                EmailConfirmed = true,
+                FullName = "Volt Admin"
+            };
+            var password = config["Seed:AdminPassword"] ?? "Admin123$";
+            var result = await userManager.CreateAsync(admin, password);
+            if (result.Succeeded)
+                await userManager.AddToRoleAsync(admin, AdminRole);
+            else
+                logger.LogWarning("Admin seed failed: {Errors}", string.Join("; ", result.Errors.Select(e => e.Description)));
+        }
+
+        if (await db.Categories.AnyAsync())
+            return;
+
+        var cats = new[] { "Laptops", "Phones", "Audio", "TVs", "Wearables", "Cameras", "Tablets", "Monitors", "Gaming" }
+            .Select(n => new Category { Name = n, Slug = n.ToLowerInvariant() })
+            .ToDictionary(c => c.Name);
+        db.Categories.AddRange(cats.Values);
+
+        Product P(string name, string cat, decimal price, int stock, double rating, int reviews, string sku,
+                  string desc, decimal? oldPrice = null, string? badge = null, params (string n, string v)[] specs) =>
+            new()
+            {
+                Name = name,
+                Slug = name.ToLowerInvariant().Replace("\"", "").Replace(" ", "-"),
+                Sku = sku,
+                Category = cats[cat],
+                Price = price,
+                CompareAtPrice = oldPrice,
+                Stock = stock,
+                Rating = rating,
+                ReviewCount = reviews,
+                Badge = badge,
+                Description = desc,
+                Status = ProductStatus.Active,
+                Specs = specs.Select((s, i) => new ProductSpec { Name = s.n, Value = s.v, SortOrder = i }).ToList()
+            };
+
+        var products = new List<Product>
+        {
+            P("Aurora Pro 15 Laptop", "Laptops", 1499m, 24, 4.8, 312, "VLT-LP-2201",
+              "A 15-inch aluminum-unibody workstation built for sustained performance: 14-core processor, 32GB unified memory and a 1TB NVMe drive, tuned for all-day battery life under real workloads.",
+              1699m, "New", ("Processor", "14-core, 4.2GHz boost"), ("Memory", "32GB unified"), ("Storage", "1TB NVMe SSD")),
+            P("Halcyon X1 Smartphone", "Phones", 899m, 56, 4.6, 528, "VLT-PH-1108",
+              "A 6.5-inch flagship with a pro-grade triple camera, two-day adaptive battery and five years of guaranteed updates.",
+              null, "Best seller", ("Display", "6.5\" OLED, 120Hz"), ("Camera", "50MP triple system"), ("Battery", "5,100 mAh")),
+            P("Nimbus Wireless Headphones", "Audio", 249m, 120, 4.7, 861, "VLT-AU-0341",
+              "Over-ear active noise cancelling headphones with 40-hour battery life, multipoint Bluetooth and a travel-flat hinge.",
+              null, null, ("Driver", "40mm dynamic"), ("Battery", "40h with ANC"), ("Connectivity", "Bluetooth 5.4, multipoint")),
+            P("Vantage 55\" OLED TV", "TVs", 1299m, 12, 4.5, 204, "VLT-TV-5502",
+              "A 55-inch 4K OLED panel with 120Hz refresh, Dolby Vision and a near-invisible stand — built for movie nights and next-gen consoles alike.",
+              1499m, "Sale", ("Panel", "55\" 4K OLED, 120Hz"), ("HDR", "Dolby Vision / HDR10+"), ("Inputs", "4× HDMI 2.1")),
+            P("Pulse Fitness Smartwatch", "Wearables", 329m, 80, 4.4, 442, "VLT-WR-0790",
+              "Multi-band GPS, dual-sensor heart-rate tracking and a 10-day battery in a 42g titanium case.",
+              null, null, ("Battery", "10 days typical"), ("Sensors", "HR, SpO2, GPS multi-band"), ("Water rating", "5 ATM")),
+            P("Cascade Mirrorless Camera", "Cameras", 1099m, 18, 4.9, 176, "VLT-CM-0233",
+              "A 26MP APS-C mirrorless body with in-body stabilization, 6K open-gate video and dual UHS-II card slots.",
+              null, null, ("Sensor", "26MP APS-C"), ("Video", "6K30 open gate"), ("Stabilization", "5-axis IBIS")),
+            P("Drift Bluetooth Speaker", "Audio", 129m, 200, 4.3, 1093, "VLT-AU-0512",
+              "A pocketable IP67 speaker with surprisingly deep bass, 20-hour playtime and stereo pairing.",
+              null, null, ("Battery", "20h playtime"), ("Rating", "IP67 dust/waterproof"), ("Pairing", "Stereo TWS")),
+            P("Solace 11 Tablet", "Tablets", 649m, 40, 4.6, 389, "VLT-TB-1104",
+              "An 11-inch 120Hz tablet with laptop-class silicon, quad speakers and all-day battery — pen and keyboard ready.",
+              null, null, ("Display", "11\" LCD, 120Hz"), ("Storage", "256GB"), ("Battery", "10h mixed use")),
+            P("Meridian 27\" 4K Monitor", "Monitors", 449m, 33, 4.7, 267, "VLT-MN-2704",
+              "A factory-calibrated 27-inch 4K IPS display with 98% DCI-P3, USB-C 90W passthrough and a height-adjustable stand.",
+              null, null, ("Panel", "27\" 4K IPS"), ("Color", "98% DCI-P3, factory calibrated"), ("Connectivity", "USB-C 90W PD")),
+            P("Apex Gaming Console", "Gaming", 499m, 15, 4.8, 731, "VLT-GM-0917",
+              "A living-room console with 2TB of fast storage, 4K120 output and near-silent cooling.",
+              null, "New", ("Storage", "2TB NVMe"), ("Output", "4K @ 120Hz, VRR"), ("Audio", "3D spatial audio")),
+        };
+        db.Products.AddRange(products);
+        await db.SaveChangesAsync();
+
+        // Demo orders over the past 30 days so admin analytics/orders pages have data on first run.
+        var rng = new Random(20260803);
+        string[] customers = ["Priya Nair", "Marcus Chen", "Sofia Reyes", "Tom Becker", "Amara Obi", "Liam Walsh"];
+        string[] cities = ["San Francisco", "Austin", "Seattle", "Denver", "Chicago", "Boston"];
+        string[] states = ["CA", "TX", "WA", "CO", "IL", "MA"];
+        var now = DateTime.UtcNow;
+        var orders = new List<Order>();
+
+        for (var i = 0; i < 32; i++)
+        {
+            var daysAgo = rng.Next(0, 30);
+            var created = now.AddDays(-daysAgo).AddHours(-rng.Next(0, 24));
+            var ci = rng.Next(customers.Length);
+            var itemCount = rng.Next(1, 4);
+            var picked = Enumerable.Range(0, itemCount)
+                .Select(_ => products[rng.Next(products.Count)])
+                .DistinctBy(p => p.Id)
+                .ToList();
+
+            var items = picked.Select(p => new OrderItem
+            {
+                ProductId = p.Id,
+                ProductName = p.Name,
+                UnitPrice = p.Price,
+                Qty = rng.Next(1, 3)
+            }).ToList();
+
+            var subtotal = items.Sum(x => x.UnitPrice * x.Qty);
+            var shipping = 24m;
+            var tax = Math.Round(subtotal * 0.0875m, 2);
+            var status = daysAgo switch
+            {
+                > 14 => OrderStatus.Delivered,
+                > 7 => rng.Next(4) == 0 ? OrderStatus.Cancelled : OrderStatus.Delivered,
+                > 3 => OrderStatus.Shipped,
+                _ => rng.Next(3) == 0 ? OrderStatus.Shipped : OrderStatus.Processing
+            };
+
+            orders.Add(new Order
+            {
+                OrderNumber = $"ORD-{58150 + i}",
+                GuestEmail = customers[ci].Split(' ')[0].ToLowerInvariant() + "@example.com",
+                Status = status,
+                ShipFullName = customers[ci],
+                ShipStreet = $"{100 + rng.Next(900)} Market St",
+                ShipCity = cities[ci],
+                ShipState = states[ci],
+                ShipZip = $"{94000 + rng.Next(5000)}",
+                Subtotal = subtotal,
+                ShippingCost = shipping,
+                Tax = tax,
+                Total = subtotal + shipping + tax,
+                CreatedAt = created,
+                PaidAt = status == OrderStatus.Cancelled ? null : created.AddMinutes(2),
+                Items = items
+            });
+        }
+
+        db.Orders.AddRange(orders);
+        await db.SaveChangesAsync();
+        logger.LogInformation("Database seeded: {Products} products, {Orders} demo orders", products.Count, orders.Count);
+    }
+}

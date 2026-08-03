@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/VoltElectronics.Api/VoltElectronics.Api.csproj" />
+    <Project Path="src/VoltElectronics.Application/VoltElectronics.Application.csproj" />
+    <Project Path="src/VoltElectronics.Domain/VoltElectronics.Domain.csproj" />
+    <Project Path="src/VoltElectronics.Infrastructure/VoltElectronics.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/VoltElectronics.Tests/VoltElectronics.Tests.csproj" />
+  </Folder>
+</Solution>
