@@ -1,0 +1,193 @@
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
+import { ApiClient } from '../core/api-client';
+import { Category, ProductImage, ProductSpec } from '../core/api.types';
+import { extractError } from '../core/cart-store';
+
+@Component({
+  selector: 'app-admin-product-form',
+  imports: [FormsModule, RouterLink],
+  template: `
+    <div style="max-width: 860px;">
+      <a class="btn btn-ghost" style="padding: 0; margin-bottom: 12px;" routerLink="/admin/products">← Back to products</a>
+      <h2 style="margin-bottom: 22px;">{{ isNew() ? 'Add product' : 'Edit product' }}</h2>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+        <div class="field" style="grid-column: span 2;"><label>Product name</label>
+          <input class="input" [(ngModel)]="form.name" placeholder="e.g. Aurora Pro 15 Laptop" /></div>
+        <div class="field"><label>SKU</label>
+          <input class="input" [(ngModel)]="form.sku" placeholder="VLT-LP-2201" /></div>
+        <div class="field"><label>Category</label>
+          <select class="input" [(ngModel)]="form.categoryId">
+            @for (cat of categories(); track cat.id) {
+              <option [ngValue]="cat.id">{{ cat.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="field"><label>Price (USD)</label>
+          <input class="input" type="number" step="0.01" [(ngModel)]="form.price" placeholder="1499.00" /></div>
+        <div class="field"><label>Compare-at price</label>
+          <input class="input" type="number" step="0.01" [(ngModel)]="form.compareAtPrice" placeholder="1699.00" /></div>
+        <div class="field"><label>Stock quantity</label>
+          <input class="input" type="number" [(ngModel)]="form.stock" placeholder="24" /></div>
+        <div class="field"><label>Badge (optional)</label>
+          <input class="input" [(ngModel)]="form.badge" placeholder="New / Best seller / Sale" /></div>
+        <div class="field" style="grid-column: span 2;"><label>Status</label>
+          <div class="seg" style="width: fit-content;">
+            @for (s of ['Active', 'Draft', 'Archived']; track s) {
+              <label class="seg-opt"><input type="radio" name="status" [value]="s" [(ngModel)]="form.status" />{{ s }}</label>
+            }
+          </div>
+        </div>
+        <div class="field" style="grid-column: span 2;"><label>Description</label>
+          <textarea class="input" [(ngModel)]="form.description" placeholder="A 15-inch aluminum-unibody workstation built for sustained performance..."></textarea></div>
+
+        @if (!isNew()) {
+          <div class="field" style="grid-column: span 2;">
+            <label>Product images</label>
+            <div class="row" style="gap: 12px; flex-wrap: wrap;">
+              @for (img of images(); track img.id) {
+                <div style="position: relative;">
+                  <div class="ph" style="width: 110px; height: 110px;"><img [src]="img.url" alt="" /></div>
+                  <button class="btn btn-icon btn-secondary" style="position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; background: var(--color-bg);"
+                          (click)="removeImage(img)" aria-label="Remove image">×</button>
+                </div>
+              }
+              <label class="ph" style="width: 110px; height: 110px; cursor: pointer;">
+                upload<br />image
+                <input type="file" accept="image/*" style="display: none;" (change)="uploadImage($event)" />
+              </label>
+            </div>
+          </div>
+        } @else {
+          <p class="text-muted" style="grid-column: span 2; font-size: 13px; margin: 0;">Save the product first, then add images.</p>
+        }
+
+        <div class="field" style="grid-column: span 2;">
+          <label>Specifications</label>
+          <div class="col" style="gap: 8px;">
+            @for (spec of form.specs; track $index) {
+              <div class="row" style="gap: 8px;">
+                <input class="input" placeholder="Name (e.g. Processor)" style="width: 200px;"
+                       [(ngModel)]="spec.name" [ngModelOptions]="{ standalone: true }" />
+                <input class="input" placeholder="Value (e.g. 14-core, 4.2GHz boost)"
+                       [(ngModel)]="spec.value" [ngModelOptions]="{ standalone: true }" />
+                <button class="btn btn-icon btn-ghost" (click)="form.specs.splice($index, 1)" aria-label="Remove spec">×</button>
+              </div>
+            }
+            <button class="btn btn-ghost" style="align-self: flex-start;" (click)="form.specs.push({ name: '', value: '' })">+ Add spec</button>
+          </div>
+        </div>
+      </div>
+
+      @if (error(); as err) { <div class="error-text" style="margin-top: 14px;">{{ err }}</div> }
+
+      <div class="row" style="gap: 10px; margin-top: 26px;">
+        <button class="btn btn-primary" [disabled]="busy()" (click)="save()">{{ busy() ? 'Saving…' : 'Save product' }}</button>
+        <a class="btn btn-secondary" routerLink="/admin/products">Discard</a>
+      </div>
+    </div>
+  `,
+})
+export class AdminProductFormPage implements OnInit {
+  private api = inject(ApiClient);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+
+  private id: number | null = null;
+  isNew = signal(true);
+  categories = signal<Category[]>([]);
+  images = signal<ProductImage[]>([]);
+  busy = signal(false);
+  error = signal<string | null>(null);
+
+  form: {
+    name: string; sku: string; categoryId: number | null; description: string;
+    price: number | null; compareAtPrice: number | null; stock: number;
+    status: string; badge: string; specs: ProductSpec[];
+  } = {
+    name: '', sku: '', categoryId: null, description: '',
+    price: null, compareAtPrice: null, stock: 0, status: 'Active', badge: '',
+    specs: [{ name: '', value: '' }],
+  };
+
+  async ngOnInit(): Promise<void> {
+    this.categories.set(await firstValueFrom(this.api.adminGetCategories()));
+
+    const idParam = this.route.snapshot.paramMap.get('id');
+    if (idParam) {
+      this.id = +idParam;
+      this.isNew.set(false);
+      const p = await firstValueFrom(this.api.adminGetProduct(this.id));
+      this.form = {
+        name: p.name, sku: p.sku, categoryId: p.categoryId, description: p.description,
+        price: p.price, compareAtPrice: p.compareAtPrice, stock: p.stock,
+        status: p.status, badge: p.badge ?? '',
+        specs: p.specs.length ? p.specs.map((s) => ({ ...s })) : [{ name: '', value: '' }],
+      };
+      this.images.set(p.images);
+    } else if (this.categories().length) {
+      this.form.categoryId = this.categories()[0].id;
+    }
+  }
+
+  async save(): Promise<void> {
+    if (!this.form.name || !this.form.sku || !this.form.categoryId || !this.form.price) {
+      this.error.set('Name, SKU, category and price are required.');
+      return;
+    }
+    this.busy.set(true);
+    this.error.set(null);
+    const request = {
+      name: this.form.name,
+      sku: this.form.sku,
+      categoryId: this.form.categoryId,
+      description: this.form.description,
+      price: this.form.price,
+      compareAtPrice: this.form.compareAtPrice || null,
+      stock: this.form.stock || 0,
+      status: this.form.status,
+      badge: this.form.badge || null,
+      specs: this.form.specs.filter((s) => s.name && s.value),
+    };
+    try {
+      if (this.id === null) {
+        const { id } = await firstValueFrom(this.api.adminCreateProduct(request));
+        void this.router.navigate(['/admin/products', id]);
+      } else {
+        await firstValueFrom(this.api.adminUpdateProduct(this.id, request));
+        void this.router.navigate(['/admin/products']);
+      }
+    } catch (e) {
+      this.error.set(extractError(e));
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  async uploadImage(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file || this.id === null) return;
+    try {
+      const img = await firstValueFrom(this.api.adminUploadImage(this.id, file));
+      this.images.update((imgs) => [...imgs, img]);
+    } catch (e) {
+      this.error.set(extractError(e));
+    } finally {
+      input.value = '';
+    }
+  }
+
+  async removeImage(img: ProductImage): Promise<void> {
+    if (this.id === null) return;
+    try {
+      await firstValueFrom(this.api.adminRemoveImage(this.id, img.id));
+      this.images.update((imgs) => imgs.filter((i) => i.id !== img.id));
+    } catch (e) {
+      this.error.set(extractError(e));
+    }
+  }
+}

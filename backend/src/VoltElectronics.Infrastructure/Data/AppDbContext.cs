@@ -69,7 +69,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
             e.Property(o => o.OrderNumber).HasMaxLength(20);
             e.HasIndex(o => o.OrderNumber).IsUnique();
             e.HasIndex(o => o.UserId);
-            e.HasIndex(o => o.StripePaymentIntentId);
+            e.HasIndex(o => o.PaymentId);
             e.Property(o => o.GuestEmail).HasMaxLength(256);
             e.Property(o => o.ShipFullName).HasMaxLength(150);
             e.Property(o => o.ShipCompany).HasMaxLength(150);
@@ -78,7 +78,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
             e.Property(o => o.ShipState).HasMaxLength(50);
             e.Property(o => o.ShipZip).HasMaxLength(20);
             e.Property(o => o.ShipPhone).HasMaxLength(30);
-            e.Property(o => o.StripePaymentIntentId).HasMaxLength(100);
+            e.Property(o => o.PaymentId).HasMaxLength(100);
+            e.Property(o => o.PaymentProvider).HasMaxLength(30);
             e.Property(o => o.PaymentFailureReason).HasMaxLength(500);
             e.Property(o => o.Subtotal).HasPrecision(18, 2);
             e.Property(o => o.ShippingCost).HasPrecision(18, 2);

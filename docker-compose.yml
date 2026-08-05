@@ -24,9 +24,15 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__Default: "Server=mssql,1433;Database=VoltElectronics;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;Encrypt=False"
       Jwt__Key: ${JWT_KEY}
-      Stripe__SecretKey: ${STRIPE_SECRET_KEY}
-      Stripe__WebhookSecret: ${STRIPE_WEBHOOK_SECRET}
-      Stripe__PublishableKey: ${STRIPE_PUBLISHABLE_KEY}
+      Payments__Provider: ${PAYMENTS_PROVIDER:-Fake}
+      Payments__CallbackBaseUrl: ${PAYMENTS_CALLBACK_BASE_URL:-http://localhost:8080}
+      Payments__FrontendBaseUrl: ${PAYMENTS_FRONTEND_BASE_URL:-http://localhost}
+      Payments__Ameria__BaseUrl: ${AMERIA_BASE_URL:-https://servicestest.ameriabank.am/VPOS}
+      Payments__Ameria__ClientId: ${AMERIA_CLIENT_ID:-}
+      Payments__Ameria__Username: ${AMERIA_USERNAME:-}
+      Payments__Ameria__Password: ${AMERIA_PASSWORD:-}
+      Payments__Ameria__Currency: ${AMERIA_CURRENCY:-USD}
+      Payments__Ameria__OrderIdOffset: ${AMERIA_ORDER_ID_OFFSET:-0}
       Seed__AdminPassword: ${ADMIN_PASSWORD}
     ports:
       - "8080:8080"

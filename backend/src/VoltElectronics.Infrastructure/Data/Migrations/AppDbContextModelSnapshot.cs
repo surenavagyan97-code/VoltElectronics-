@@ -262,6 +262,14 @@ namespace VoltElectronics.Infrastructure.Data.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<string>("PaymentId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PaymentProvider")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
                     b.Property<string>("ShipCity")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -302,10 +310,6 @@ namespace VoltElectronics.Infrastructure.Data.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<string>("StripePaymentIntentId")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
                     b.Property<decimal>("Subtotal")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
@@ -326,7 +330,7 @@ namespace VoltElectronics.Infrastructure.Data.Migrations
                     b.HasIndex("OrderNumber")
                         .IsUnique();
 
-                    b.HasIndex("StripePaymentIntentId");
+                    b.HasIndex("PaymentId");
 
                     b.HasIndex("UserId");
 

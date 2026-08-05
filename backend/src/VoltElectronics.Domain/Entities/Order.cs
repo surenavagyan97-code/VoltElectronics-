@@ -26,7 +26,9 @@ public class Order
     // Cart that produced this order — cleared by the payment webhook on success.
     public Guid? CartId { get; set; }
 
-    public string? StripePaymentIntentId { get; set; }
+    // Gateway-assigned payment id (e.g. Ameriabank vPOS PaymentID) + which provider issued it.
+    public string? PaymentId { get; set; }
+    public string? PaymentProvider { get; set; }
     public string? PaymentFailureReason { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? PaidAt { get; set; }

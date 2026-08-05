@@ -1,12 +1,16 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { CartStore } from './core/cart-store';
 
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet],
-  templateUrl: './app.html',
-  styleUrl: './app.css'
+  template: '<router-outlet />',
 })
-export class App {
-  protected readonly title = signal('volt-electronics');
+export class App implements OnInit {
+  private cart = inject(CartStore);
+
+  ngOnInit(): void {
+    void this.cart.load();
+  }
 }

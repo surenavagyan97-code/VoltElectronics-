@@ -3,9 +3,19 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using VoltElectronics.Application.Auth;
+using VoltElectronics.Application.Cart;
+using VoltElectronics.Application.Catalog;
+using VoltElectronics.Application.Orders;
+using VoltElectronics.Application.Payments;
+using VoltElectronics.Application.Admin;
+using VoltElectronics.Infrastructure.Admin;
 using VoltElectronics.Infrastructure.Auth;
+using VoltElectronics.Infrastructure.Carts;
+using VoltElectronics.Infrastructure.Catalog;
+using VoltElectronics.Infrastructure.Orders;
 using VoltElectronics.Infrastructure.Data;
 using VoltElectronics.Infrastructure.Identity;
+using VoltElectronics.Infrastructure.Payments;
 
 namespace VoltElectronics.Infrastructure;
 
@@ -28,6 +38,17 @@ public static class DependencyInjection
         services.Configure<JwtOptions>(config.GetSection(JwtOptions.SectionName));
         services.AddScoped<TokenService>();
         services.AddScoped<IAuthService, AuthService>();
+
+        services.AddScoped<ICatalogService, CatalogService>();
+        services.AddScoped<ICartService, CartService>();
+        services.AddScoped<IOrderService, OrderService>();
+        services.AddScoped<IAdminService, AdminService>();
+
+        services.Configure<PaymentsOptions>(config.GetSection(PaymentsOptions.SectionName));
+        if (string.Equals(config["Payments:Provider"], "Ameria", StringComparison.OrdinalIgnoreCase))
+            services.AddHttpClient<IPaymentProvider, AmeriaVposProvider>();
+        else
+            services.AddSingleton<IPaymentProvider, FakePaymentProvider>();
 
         return services;
     }
