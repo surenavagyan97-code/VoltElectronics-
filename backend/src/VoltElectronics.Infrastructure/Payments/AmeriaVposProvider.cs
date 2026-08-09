@@ -22,6 +22,9 @@ public class AmeriaVposProvider(HttpClient http, IOptions<PaymentsOptions> optio
 
     public async Task<PaymentInitResult> InitPaymentAsync(PaymentInitRequest request, CancellationToken ct = default)
     {
+        // Charge in whatever currency the order was placed in. Note: Ameriabank provisions a
+        // merchant account for specific settlement currencies — confirm with the bank that
+        // this ClientID actually accepts AMD/USD/EUR before relying on this in production.
         var body = new
         {
             ClientID = _opts.ClientId,
@@ -29,7 +32,7 @@ public class AmeriaVposProvider(HttpClient http, IOptions<PaymentsOptions> optio
             Password = _opts.Password,
             OrderID = _opts.OrderIdOffset + request.OrderId,
             Amount = request.Amount,
-            Currency = _opts.Currency,
+            Currency = request.Currency,
             Description = request.Description,
             BackURL = request.CallbackUrl,
             Opaque = request.OrderNumber

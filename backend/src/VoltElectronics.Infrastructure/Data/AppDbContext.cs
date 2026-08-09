@@ -54,6 +54,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
         builder.Entity<Cart>(e =>
         {
             e.Property(c => c.Id).ValueGeneratedNever();
+            e.Property(c => c.Currency).HasMaxLength(3);
             e.HasIndex(c => c.UserId);
             e.HasMany(c => c.Items).WithOne(i => i.Cart).HasForeignKey(i => i.CartId).OnDelete(DeleteBehavior.Cascade);
         });
@@ -85,6 +86,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
             e.Property(o => o.ShippingCost).HasPrecision(18, 2);
             e.Property(o => o.Tax).HasPrecision(18, 2);
             e.Property(o => o.Total).HasPrecision(18, 2);
+            e.Property(o => o.Currency).HasMaxLength(3);
+            e.Property(o => o.ExchangeRate).HasPrecision(18, 6);
             e.HasMany(o => o.Items).WithOne(i => i.Order).HasForeignKey(i => i.OrderId).OnDelete(DeleteBehavior.Cascade);
         });
 

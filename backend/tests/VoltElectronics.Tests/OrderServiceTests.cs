@@ -1,9 +1,11 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using VoltElectronics.Application.Cart;
+using VoltElectronics.Application.Common;
 using VoltElectronics.Application.Orders;
 using VoltElectronics.Domain.Enums;
 using VoltElectronics.Infrastructure.Carts;
+using VoltElectronics.Infrastructure.Common;
 using VoltElectronics.Infrastructure.Orders;
 using VoltElectronics.Infrastructure.Payments;
 
@@ -21,8 +23,9 @@ public class OrderServiceTests : IDisposable
     public OrderServiceTests()
     {
         var options = Options.Create(new PaymentsOptions());
-        _service = new OrderService(_db.Context, new FakePaymentProvider(), options, NullLogger<OrderService>.Instance);
-        _cartService = new CartService(_db.Context);
+        var currency = new CurrencyConverter(Options.Create(new CurrencyOptions()));
+        _service = new OrderService(_db.Context, new FakePaymentProvider(), options, currency, NullLogger<OrderService>.Instance);
+        _cartService = new CartService(_db.Context, currency);
     }
 
     public void Dispose() => _db.Dispose();

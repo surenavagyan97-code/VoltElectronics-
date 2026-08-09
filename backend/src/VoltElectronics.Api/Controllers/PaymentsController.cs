@@ -37,7 +37,7 @@ public class PaymentsController(
     [HttpGet("fake/pay")]
     public IActionResult FakePayPage(
         [FromQuery] string paymentId, [FromQuery] string orderNumber,
-        [FromQuery] string amount, [FromQuery] string callback)
+        [FromQuery] string amount, [FromQuery] string callback, [FromQuery] string currency = "USD")
     {
         if (paymentProvider.Name != "Fake") return NotFound();
         // Only ever bounce back to our own callback endpoint.
@@ -66,7 +66,7 @@ public class PaymentsController(
             <body><div class="card">
               <h1>Fake payment gateway</h1>
               <p>Order {{WebUtility.HtmlEncode(orderNumber)}} &middot; dev only — no real charge</p>
-              <div class="amount">${{WebUtility.HtmlEncode(amount)}}</div>
+              <div class="amount">{{WebUtility.HtmlEncode(amount)}} {{WebUtility.HtmlEncode(currency)}}</div>
               <a class="pay" href="{{WebUtility.HtmlEncode(Link("success"))}}">Pay now</a>
               <a class="fail" href="{{WebUtility.HtmlEncode(Link("fail"))}}">Simulate declined card</a>
             </div></body></html>

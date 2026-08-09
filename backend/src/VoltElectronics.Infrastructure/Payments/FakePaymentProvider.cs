@@ -1,3 +1,4 @@
+using System.Globalization;
 using VoltElectronics.Application.Payments;
 
 namespace VoltElectronics.Infrastructure.Payments;
@@ -19,7 +20,8 @@ public class FakePaymentProvider : IPaymentProvider
         var payUrl = $"{callbackUri.GetLeftPart(UriPartial.Authority)}/api/payments/fake/pay" +
                      $"?paymentId={paymentId}" +
                      $"&orderNumber={Uri.EscapeDataString(request.OrderNumber)}" +
-                     $"&amount={request.Amount:0.00}" +
+                     $"&amount={request.Amount.ToString("0.00", CultureInfo.InvariantCulture)}" +
+                     $"&currency={Uri.EscapeDataString(request.Currency)}" +
                      $"&callback={Uri.EscapeDataString(request.CallbackUrl)}";
         return Task.FromResult(PaymentInitResult.Ok(paymentId, payUrl));
     }

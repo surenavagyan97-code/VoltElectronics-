@@ -1,5 +1,8 @@
+using Microsoft.Extensions.Options;
 using VoltElectronics.Application.Cart;
+using VoltElectronics.Application.Common;
 using VoltElectronics.Infrastructure.Carts;
+using VoltElectronics.Infrastructure.Common;
 
 namespace VoltElectronics.Tests;
 
@@ -8,7 +11,8 @@ public class CartServiceTests : IDisposable
     private readonly TestDb _db = new();
     private readonly CartService _service;
 
-    public CartServiceTests() => _service = new CartService(_db.Context);
+    public CartServiceTests() =>
+        _service = new CartService(_db.Context, new CurrencyConverter(Options.Create(new CurrencyOptions())));
 
     public void Dispose() => _db.Dispose();
 

@@ -6,10 +6,11 @@ public record CartItemDto(
 
 public record CartDto(
     Guid Id, IReadOnlyList<CartItemDto> Items, int Count,
-    decimal Subtotal, decimal Shipping, decimal Tax, decimal Total);
+    decimal Subtotal, decimal Shipping, decimal Tax, decimal Total, string Currency);
 
 public record AddCartItemRequest(int ProductId, int Qty);
 public record UpdateCartItemRequest(int Qty);
+public record SetCartCurrencyRequest(string Currency);
 
 /// <summary>Identifies whose cart to operate on: an authenticated user's, or a guest cart by client GUID.</summary>
 public record CartKey(string? UserId, Guid? GuestId)

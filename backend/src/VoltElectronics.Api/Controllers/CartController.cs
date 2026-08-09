@@ -27,6 +27,10 @@ public class CartController(ICartService cartService) : ControllerBase
     [HttpDelete]
     public Task<ActionResult<CartDto>> Clear() => Run(key => cartService.ClearAsync(key));
 
+    [HttpPut("currency")]
+    public Task<ActionResult<CartDto>> SetCurrency(SetCartCurrencyRequest request)
+        => Run(key => cartService.SetCurrencyAsync(key, request.Currency));
+
     /// <summary>Fold the pre-login guest cart into the authenticated user's cart.</summary>
     [Authorize]
     [HttpPost("merge")]

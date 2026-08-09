@@ -24,13 +24,14 @@ public record SaveCategoryRequest(string Name);
 // Orders
 public record AdminOrderListItemDto(
     string OrderNumber, string Customer, string Email, DateTime CreatedAt,
-    decimal Total, string Status, int ItemCount);
+    decimal Total, string Currency, string Status, int ItemCount);
 
 public record UpdateOrderStatusRequest(string Status);
 
 public record AdminOrderStatsDto(int Total, int PendingPayment, int Processing, int Shipped, int Delivered, int Cancelled);
 
-// Analytics
+// Analytics — all revenue figures are normalized to the store's base currency (see
+// CurrencyOptions.Base), regardless of what currency individual orders were charged in.
 public record RevenueDayDto(DateOnly Day, decimal Revenue, int Orders);
 public record TopProductDto(int ProductId, string Name, int UnitsSold, decimal Revenue);
 public record AnalyticsDto(

@@ -8,7 +8,7 @@ using CartItemEntity = VoltElectronics.Domain.Entities.CartItem;
 
 namespace VoltElectronics.Infrastructure.Carts;
 
-public class CartService(AppDbContext db) : ICartService
+public class CartService(AppDbContext db, ICurrencyConverter currency) : ICartService
 {
     public async Task<CartDto> GetAsync(CartKey key)
     {
@@ -123,6 +123,18 @@ public class CartService(AppDbContext db) : ICartService
             .FirstAsync(c => c.Id == userCart.Id));
     }
 
+    public async Task<CartDto> SetCurrencyAsync(CartKey key, string newCurrency)
+    {
+        if (!currency.IsSupported(newCurrency))
+            throw new CartException($"Unsupported currency \"{newCurrency}\".");
+
+        var cart = await FindAsync(key) ?? Create(key);
+        cart.Currency = newCurrency.ToUpperInvariant();
+        cart.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+        return ToDto(cart);
+    }
+
     private Task<CartEntity?> FindAsync(CartKey key)
     {
         var q = db.Carts
@@ -146,21 +158,27 @@ public class CartService(AppDbContext db) : ICartService
         return cart;
     }
 
-    private static CartDto ToDto(CartEntity? cart)
+    private CartDto ToDto(CartEntity? cart)
     {
+        var cur = cart?.Currency ?? currency.BaseCurrency;
         if (cart is null || cart.Items.Count == 0)
-            return new CartDto(cart?.Id ?? Guid.Empty, [], 0, 0, 0, 0, 0);
+            return new CartDto(cart?.Id ?? Guid.Empty, [], 0, 0, 0, 0, 0, cur);
 
         var items = cart.Items
             .OrderBy(i => i.Id)
             .Select(i => new CartItemDto(
                 i.ProductId, i.Product.Name, i.Product.Slug, i.Product.Category.Name,
-                i.Product.Price, i.Qty, i.Product.Price * i.Qty, i.Product.Stock,
+                currency.Convert(i.Product.Price, cur), i.Qty, currency.Convert(i.Product.Price * i.Qty, cur),
+                i.Product.Stock,
                 i.Product.Images.OrderBy(img => img.SortOrder).Select(img => img.CardUrl).FirstOrDefault()))
             .ToList();
 
-        var (subtotal, shipping, tax, total) = Pricing.Totals(items.Sum(i => i.LineTotal));
-        return new CartDto(cart.Id, items, items.Sum(i => i.Qty), subtotal, shipping, tax, total);
+        // Compute shipping/tax on the true base-currency subtotal, then convert the totals together —
+        // converting each line first and re-summing could drift a cent from per-line rounding.
+        var (subtotal, shipping, tax, total) = Pricing.Totals(cart.Items.Sum(i => i.Product.Price * i.Qty));
+        return new CartDto(cart.Id, items, items.Sum(i => i.Qty),
+            currency.Convert(subtotal, cur), currency.Convert(shipping, cur),
+            currency.Convert(tax, cur), currency.Convert(total, cur), cur);
     }
 }
 

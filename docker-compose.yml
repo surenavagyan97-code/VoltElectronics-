@@ -31,7 +31,6 @@ services:
       Payments__Ameria__ClientId: ${AMERIA_CLIENT_ID:-}
       Payments__Ameria__Username: ${AMERIA_USERNAME:-}
       Payments__Ameria__Password: ${AMERIA_PASSWORD:-}
-      Payments__Ameria__Currency: ${AMERIA_CURRENCY:-USD}
       Payments__Ameria__OrderIdOffset: ${AMERIA_ORDER_ID_OFFSET:-0}
       Seed__AdminPassword: ${ADMIN_PASSWORD}
     ports:

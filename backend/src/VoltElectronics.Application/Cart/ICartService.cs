@@ -9,4 +9,5 @@ public interface ICartService
     Task<CartDto> ClearAsync(CartKey key);
     /// <summary>Merge a guest cart into the authenticated user's cart (called after login).</summary>
     Task<CartDto> MergeAsync(Guid guestCartId, string userId);
+    Task<CartDto> SetCurrencyAsync(CartKey key, string currency);
 }

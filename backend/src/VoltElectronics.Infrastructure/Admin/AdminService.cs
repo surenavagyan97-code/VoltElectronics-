@@ -220,7 +220,7 @@ public class AdminService(AppDbContext db) : IAdminService
             .Skip((page - 1) * pageSize).Take(pageSize)
             .Select(o => new AdminOrderListItemDto(
                 o.OrderNumber, o.ShipFullName, o.GuestEmail ?? "", o.CreatedAt,
-                o.Total, o.Status.ToString(), o.Items.Sum(i => i.Qty)))
+                o.Total, o.Currency, o.Status.ToString(), o.Items.Sum(i => i.Qty)))
             .ToListAsync();
         return new PagedResult<AdminOrderListItemDto>(items, total, page, pageSize);
     }
@@ -256,16 +256,19 @@ public class AdminService(AppDbContext db) : IAdminService
         var d30 = now.AddDays(-30);
         var d60 = now.AddDays(-60);
 
-        // Revenue = paid orders only (Cancelled/PendingPayment excluded via PaidAt).
+        // Revenue = paid orders only (Cancelled/PendingPayment excluded via PaidAt). Orders can be
+        // in different currencies, so every sum divides by the order's frozen ExchangeRate first to
+        // normalize back to the store's base currency — otherwise USD/EUR/AMD totals would just add
+        // face values together, which is meaningless.
         var paid = db.Orders.Where(o => o.PaidAt != null);
 
         var current = await paid.Where(o => o.CreatedAt >= d30)
             .GroupBy(_ => 1)
-            .Select(g => new { Revenue = g.Sum(o => o.Total), Count = g.Count() })
+            .Select(g => new { Revenue = g.Sum(o => o.Total / o.ExchangeRate), Count = g.Count() })
             .FirstOrDefaultAsync();
         var previous = await paid.Where(o => o.CreatedAt >= d60 && o.CreatedAt < d30)
             .GroupBy(_ => 1)
-            .Select(g => new { Revenue = g.Sum(o => o.Total), Count = g.Count() })
+            .Select(g => new { Revenue = g.Sum(o => o.Total / o.ExchangeRate), Count = g.Count() })
             .FirstOrDefaultAsync();
 
         var revenue30 = current?.Revenue ?? 0;
@@ -280,7 +283,7 @@ public class AdminService(AppDbContext db) : IAdminService
         var revenueByDayRaw = await paid
             .Where(o => o.CreatedAt >= now.AddDays(-7))
             .GroupBy(o => o.CreatedAt.Date)
-            .Select(g => new { Day = g.Key, Revenue = g.Sum(o => o.Total), Orders = g.Count() })
+            .Select(g => new { Day = g.Key, Revenue = g.Sum(o => o.Total / o.ExchangeRate), Orders = g.Count() })
             .ToListAsync();
         var revenueByDay = Enumerable.Range(0, 7)
             .Select(i => d7.AddDays(i))
@@ -299,7 +302,7 @@ public class AdminService(AppDbContext db) : IAdminService
                     g.Key.ProductId,
                     g.Key.ProductName,
                     Units = g.Sum(i => i.Qty),
-                    Revenue = g.Sum(i => i.UnitPrice * i.Qty)
+                    Revenue = g.Sum(i => i.UnitPrice * i.Qty / i.Order.ExchangeRate)
                 })
                 .OrderByDescending(t => t.Revenue)
                 .Take(5)

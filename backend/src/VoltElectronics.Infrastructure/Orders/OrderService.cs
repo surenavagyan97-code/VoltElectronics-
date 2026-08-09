@@ -16,6 +16,7 @@ public class OrderService(
     AppDbContext db,
     IPaymentProvider paymentProvider,
     IOptions<PaymentsOptions> paymentsOptions,
+    ICurrencyConverter currency,
     ILogger<OrderService> logger) : IOrderService
 {
     private readonly PaymentsOptions _payments = paymentsOptions.Value;
@@ -39,8 +40,12 @@ public class OrderService(
                 return CheckoutResult.Fail($"Only {item.Product.Stock} of \"{item.Product.Name}\" left in stock.");
         }
 
-        // Never trust client-side totals — re-price from current DB prices.
-        var (subtotal, shipping, tax, total) = Pricing.Totals(cart.Items.Sum(i => i.Product.Price * i.Qty));
+        // Never trust client-side totals — re-price from current DB prices (in the store's base
+        // currency), then convert once to whatever currency the shopper's cart is set to. The
+        // order stores the converted amounts — that's what's actually charged and shown back.
+        var orderCurrency = cart.Currency;
+        var (subtotalBase, shippingBase, taxBase, totalBase) =
+            Pricing.Totals(cart.Items.Sum(i => i.Product.Price * i.Qty));
 
         var order = new Order
         {
@@ -55,17 +60,19 @@ public class OrderService(
             ShipState = request.State.Trim(),
             ShipZip = request.Zip.Trim(),
             ShipPhone = request.Phone?.Trim(),
-            Subtotal = subtotal,
-            ShippingCost = shipping,
-            Tax = tax,
-            Total = total,
+            Subtotal = currency.Convert(subtotalBase, orderCurrency),
+            ShippingCost = currency.Convert(shippingBase, orderCurrency),
+            Tax = currency.Convert(taxBase, orderCurrency),
+            Total = currency.Convert(totalBase, orderCurrency),
+            Currency = orderCurrency,
+            ExchangeRate = currency.Rate(orderCurrency),
             CartId = cart.Id,
             PaymentProvider = paymentProvider.Name,
             Items = cart.Items.Select(i => new OrderItem
             {
                 ProductId = i.ProductId,
                 ProductName = i.Product.Name,
-                UnitPrice = i.Product.Price,
+                UnitPrice = currency.Convert(i.Product.Price, orderCurrency),
                 Qty = i.Qty
             }).ToList()
         };
@@ -74,7 +81,7 @@ public class OrderService(
 
         var callbackUrl = $"{_payments.CallbackBaseUrl.TrimEnd('/')}/api/payments/callback";
         var init = await paymentProvider.InitPaymentAsync(new PaymentInitRequest(
-            order.Id, order.OrderNumber, order.Total,
+            order.Id, order.OrderNumber, order.Total, order.Currency,
             $"Volt Electronics order {order.OrderNumber}", callbackUrl));
 
         if (!init.Success)
@@ -151,7 +158,7 @@ public class OrderService(
             .Where(o => o.UserId == userId)
             .OrderByDescending(o => o.CreatedAt)
             .Select(o => new OrderSummaryDto(
-                o.OrderNumber, o.Status.ToString(), o.CreatedAt, o.Total, o.Items.Sum(i => i.Qty)))
+                o.OrderNumber, o.Status.ToString(), o.CreatedAt, o.Total, o.Items.Sum(i => i.Qty), o.Currency))
             .ToListAsync();
 
     public async Task<OrderDetailDto?> GetOrderAsync(string orderNumber, string? userId, string? email, bool bypassOwnerCheck = false)
@@ -172,7 +179,7 @@ public class OrderService(
             order.PaymentFailureReason,
             order.ShipFullName, order.ShipCompany, order.ShipStreet, order.ShipCity,
             order.ShipState, order.ShipZip, order.ShipPhone,
-            order.Subtotal, order.ShippingCost, order.Tax, order.Total,
+            order.Subtotal, order.ShippingCost, order.Tax, order.Total, order.Currency,
             order.Items.Select(i => new OrderItemDto(
                 i.ProductId, i.ProductName, i.Product?.Slug,
                 i.Product?.Images.OrderBy(img => img.SortOrder).Select(img => img.CardUrl).FirstOrDefault(),

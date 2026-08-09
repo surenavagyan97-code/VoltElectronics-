@@ -22,6 +22,10 @@ public class Order
     public decimal ShippingCost { get; set; }
     public decimal Tax { get; set; }
     public decimal Total { get; set; }
+    /// <summary>Currency the shopper was actually charged in — frozen at checkout.</summary>
+    public string Currency { get; set; } = "USD";
+    /// <summary>Base-currency exchange rate applied at checkout, for audit/historical reference.</summary>
+    public decimal ExchangeRate { get; set; } = 1m;
 
     // Cart that produced this order — cleared by the payment webhook on success.
     public Guid? CartId { get; set; }

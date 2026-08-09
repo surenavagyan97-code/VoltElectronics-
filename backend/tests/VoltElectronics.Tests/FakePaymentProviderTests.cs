@@ -11,7 +11,7 @@ public class FakePaymentProviderTests
     public async Task Init_returns_pay_page_on_callback_origin_with_payment_id()
     {
         var result = await _provider.InitPaymentAsync(new PaymentInitRequest(
-            42, "ORD-123", 132.75m, "Volt order", "http://localhost:5002/api/payments/callback"));
+            42, "ORD-123", 132.75m, "USD", "Volt order", "http://localhost:5002/api/payments/callback"));
 
         Assert.True(result.Success);
         Assert.False(string.IsNullOrEmpty(result.PaymentId));

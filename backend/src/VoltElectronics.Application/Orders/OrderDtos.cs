@@ -16,14 +16,14 @@ public record CheckoutResponse(string OrderNumber, string PaymentUrl);
 public record OrderItemDto(int ProductId, string ProductName, string? Slug, string? ImageUrl, decimal UnitPrice, int Qty);
 
 public record OrderSummaryDto(
-    string OrderNumber, string Status, DateTime CreatedAt, decimal Total, int ItemCount);
+    string OrderNumber, string Status, DateTime CreatedAt, decimal Total, int ItemCount, string Currency);
 
 public record OrderDetailDto(
     string OrderNumber, string Status, DateTime CreatedAt, DateTime? PaidAt,
     string? PaymentFailureReason,
     string ShipFullName, string? ShipCompany, string ShipStreet, string ShipCity,
     string ShipState, string ShipZip, string? ShipPhone,
-    decimal Subtotal, decimal ShippingCost, decimal Tax, decimal Total,
+    decimal Subtotal, decimal ShippingCost, decimal Tax, decimal Total, string Currency,
     IReadOnlyList<OrderItemDto> Items);
 
 public record CheckoutResult(bool Success, string? Error, CheckoutResponse? Data)

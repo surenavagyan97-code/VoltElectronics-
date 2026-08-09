@@ -23,9 +23,6 @@ public class AmeriaVposOptions
     public string ClientId { get; set; } = "";
     public string Username { get; set; } = "";
     public string Password { get; set; } = "";
-
-    /// <summary>Must match the vPOS merchant account currency: AMD, USD, EUR or RUB.</summary>
-    public string Currency { get; set; } = "USD";
     public string Language { get; set; } = "en";
 
     /// <summary>Ameriabank assigns test merchants a numeric OrderID range; this shifts our int order ids into it.</summary>

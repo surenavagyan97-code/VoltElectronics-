@@ -1,7 +1,7 @@
 namespace VoltElectronics.Application.Payments;
 
 public record PaymentInitRequest(
-    int OrderId, string OrderNumber, decimal Amount, string Description,
+    int OrderId, string OrderNumber, decimal Amount, string Currency, string Description,
     /// <summary>Absolute URL the gateway redirects the shopper back to after the payment attempt.</summary>
     string CallbackUrl);
 
