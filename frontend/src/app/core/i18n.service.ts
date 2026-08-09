@@ -9,6 +9,7 @@ export type Lang = 'en' | 'hy' | 'ru';
 
 const DICTS: Record<Lang, Record<string, string>> = { en, hy, ru };
 export const LANG_LABELS: Record<Lang, string> = { en: 'English', hy: 'Հայերեն', ru: 'Русский' };
+export const LANG_FLAGS: Record<Lang, string> = { en: '🇬🇧', hy: '🇦🇲', ru: '🇷🇺' };
 
 @Injectable({ providedIn: 'root' })
 export class I18nService {

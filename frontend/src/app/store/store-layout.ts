@@ -4,7 +4,7 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 import { AuthStore } from '../core/auth-store';
 import { CartStore } from '../core/cart-store';
 import { Currency, CurrencyStore } from '../core/currency-store';
-import { I18nService, LANG_LABELS, Lang } from '../core/i18n.service';
+import { I18nService, LANG_FLAGS, LANG_LABELS, Lang } from '../core/i18n.service';
 import { ThemeStore } from '../core/theme-store';
 
 @Component({
@@ -26,7 +26,7 @@ import { ThemeStore } from '../core/theme-store';
         <select class="input" style="height: 32px; padding: 2px 8px; font-size: 12px; width: auto;"
                 [attr.aria-label]="i18n.t('lang.label')"
                 [ngModel]="i18n.lang()" [ngModelOptions]="{ standalone: true }" (ngModelChange)="i18n.setLang($event)">
-          @for (l of langs; track l) { <option [value]="l">{{ langLabels[l] }}</option> }
+          @for (l of langs; track l) { <option [value]="l">{{ langFlags[l] }} {{ langLabels[l] }}</option> }
         </select>
         <select class="input" style="height: 32px; padding: 2px 8px; font-size: 12px; width: auto;"
                 [ngModel]="currency.currency()" [ngModelOptions]="{ standalone: true }" (ngModelChange)="setCurrency($event)">
@@ -80,6 +80,7 @@ export class StoreLayout {
 
   readonly langs: Lang[] = ['en', 'hy', 'ru'];
   readonly langLabels = LANG_LABELS;
+  readonly langFlags = LANG_FLAGS;
 
   async logout(): Promise<void> {
     await this.auth.logout();
