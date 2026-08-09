@@ -71,6 +71,7 @@ export interface Cart {
   shipping: number;
   tax: number;
   total: number;
+  currency: string;
 }
 
 // Auth
@@ -109,6 +110,7 @@ export interface OrderSummary {
   createdAt: string;
   total: number;
   itemCount: number;
+  currency: string;
 }
 export interface OrderDetail {
   orderNumber: string;
@@ -127,6 +129,7 @@ export interface OrderDetail {
   shippingCost: number;
   tax: number;
   total: number;
+  currency: string;
   items: OrderItem[];
 }
 
@@ -180,6 +183,7 @@ export interface AdminOrderListItem {
   email: string;
   createdAt: string;
   total: number;
+  currency: string;
   status: string;
   itemCount: number;
 }
@@ -193,6 +197,8 @@ export interface AdminOrderStats {
 }
 export interface RevenueDay { day: string; revenue: number; orders: number; }
 export interface TopProduct { productId: number; name: string; unitsSold: number; revenue: number; }
+/** Revenue figures are always normalized to the store's base currency (see AppConfig.currency),
+ *  regardless of what currency individual orders were charged in. */
 export interface Analytics {
   revenue30d: number;
   revenueDeltaPct: number;
@@ -205,4 +211,9 @@ export interface Analytics {
   lowStockProducts: AdminProductListItem[];
 }
 
-export interface AppConfig { paymentProvider: string; currency: string; }
+export interface AppConfig {
+  paymentProvider: string;
+  currency: string;
+  supportedCurrencies: string[];
+  rates: Record<string, number>;
+}

@@ -1,44 +1,46 @@
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ApiClient } from '../core/api-client';
 import { AdminOrderListItem, AdminOrderStats, PagedResult } from '../core/api.types';
 import { extractError } from '../core/cart-store';
+import { CurrencyStore } from '../core/currency-store';
+import { I18nService } from '../core/i18n.service';
 import { statusTagClass } from '../store/status-tag';
 
 const STATUSES = ['PendingPayment', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
 
 @Component({
   selector: 'app-admin-orders',
-  imports: [CurrencyPipe, DatePipe],
+  imports: [DatePipe],
   template: `
-    <h2 style="margin-bottom: 20px;">Orders</h2>
+    <h2 style="margin-bottom: 20px;">{{ i18n.t('admin.orders.title') }}</h2>
 
     @if (stats(); as s) {
       <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px;">
-        <div class="card elev-sm"><div class="card-kicker">Total orders</div><div style="font-family: var(--font-heading); font-size: 26px;">{{ s.total }}</div></div>
-        <div class="card elev-sm"><div class="card-kicker">Processing</div><div style="font-family: var(--font-heading); font-size: 26px;">{{ s.processing }}</div></div>
-        <div class="card elev-sm"><div class="card-kicker">Shipped</div><div style="font-family: var(--font-heading); font-size: 26px;">{{ s.shipped }}</div></div>
-        <div class="card elev-sm"><div class="card-kicker">Delivered</div><div style="font-family: var(--font-heading); font-size: 26px;">{{ s.delivered }}</div></div>
+        <div class="card elev-sm"><div class="card-kicker">{{ i18n.t('admin.orders.stats.total') }}</div><div style="font-family: var(--font-heading); font-size: 26px;">{{ s.total }}</div></div>
+        <div class="card elev-sm"><div class="card-kicker">{{ i18n.t('admin.orders.stats.processing') }}</div><div style="font-family: var(--font-heading); font-size: 26px;">{{ s.processing }}</div></div>
+        <div class="card elev-sm"><div class="card-kicker">{{ i18n.t('admin.orders.stats.shipped') }}</div><div style="font-family: var(--font-heading); font-size: 26px;">{{ s.shipped }}</div></div>
+        <div class="card elev-sm"><div class="card-kicker">{{ i18n.t('admin.orders.stats.delivered') }}</div><div style="font-family: var(--font-heading); font-size: 26px;">{{ s.delivered }}</div></div>
       </div>
     }
 
     <div class="row" style="gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
       <div class="seg" style="width: fit-content;">
-        <div class="seg-opt" [class.seg-active]="statusFilter() === ''" (click)="setStatus('')">All</div>
+        <div class="seg-opt" [class.seg-active]="statusFilter() === ''" (click)="setStatus('')">{{ i18n.t('admin.orders.filterAll') }}</div>
         @for (s of statuses; track s) {
-          <div class="seg-opt" [class.seg-active]="statusFilter() === s" (click)="setStatus(s)">{{ s }}</div>
+          <div class="seg-opt" [class.seg-active]="statusFilter() === s" (click)="setStatus(s)">{{ i18n.t('status.' + s) }}</div>
         }
       </div>
       <div class="field" style="margin: 0; width: 240px;">
-        <input class="input" placeholder="Search order / customer / email" (input)="onSearch($any($event.target).value)" />
+        <input class="input" [placeholder]="i18n.t('admin.orders.searchPlaceholder')" (input)="onSearch($any($event.target).value)" />
       </div>
     </div>
 
     @if (error(); as err) { <div class="error-text" style="margin-bottom: 10px;">{{ err }}</div> }
 
     <table class="table">
-      <thead><tr><th>Order</th><th>Customer</th><th>Email</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th></tr></thead>
+      <thead><tr><th>{{ i18n.t('admin.orders.table.order') }}</th><th>{{ i18n.t('admin.orders.table.customer') }}</th><th>{{ i18n.t('admin.orders.table.email') }}</th><th>{{ i18n.t('admin.orders.table.date') }}</th><th>{{ i18n.t('admin.orders.table.items') }}</th><th>{{ i18n.t('admin.orders.table.total') }}</th><th>{{ i18n.t('admin.orders.table.status') }}</th></tr></thead>
       <tbody>
         @for (o of result()?.items ?? []; track o.orderNumber) {
           <tr>
@@ -47,12 +49,12 @@ const STATUSES = ['PendingPayment', 'Processing', 'Shipped', 'Delivered', 'Cance
             <td class="text-muted">{{ o.email }}</td>
             <td>{{ o.createdAt | date: 'MMM d, y' }}</td>
             <td>{{ o.itemCount }}</td>
-            <td>{{ o.total | currency }}</td>
+            <td>{{ currency.format(o.total, o.currency) }}</td>
             <td>
               <select class="input" style="width: 150px; min-height: 30px; padding: 3px 8px; font-size: 12px;"
                       [value]="o.status" (change)="updateStatus(o, $any($event.target).value)">
                 @for (s of statuses; track s) {
-                  <option [value]="s" [selected]="s === o.status">{{ s }}</option>
+                  <option [value]="s" [selected]="s === o.status">{{ i18n.t('status.' + s) }}</option>
                 }
               </select>
             </td>
@@ -63,15 +65,17 @@ const STATUSES = ['PendingPayment', 'Processing', 'Shipped', 'Delivered', 'Cance
 
     @if (totalPages() > 1) {
       <div class="row" style="gap: 8px; justify-content: center; margin-top: 20px;">
-        <button class="btn btn-secondary" [disabled]="page() <= 1" (click)="goPage(page() - 1)">← Prev</button>
-        <span class="text-muted" style="font-size: 13px;">Page {{ page() }} of {{ totalPages() }}</span>
-        <button class="btn btn-secondary" [disabled]="page() >= totalPages()" (click)="goPage(page() + 1)">Next →</button>
+        <button class="btn btn-secondary" [disabled]="page() <= 1" (click)="goPage(page() - 1)">{{ i18n.t('common.prev') }}</button>
+        <span class="text-muted" style="font-size: 13px;">{{ i18n.t('common.pageOf', { page: page(), total: totalPages() }) }}</span>
+        <button class="btn btn-secondary" [disabled]="page() >= totalPages()" (click)="goPage(page() + 1)">{{ i18n.t('common.next') }}</button>
       </div>
     }
   `,
 })
 export class AdminOrdersPage implements OnInit {
   private api = inject(ApiClient);
+  currency = inject(CurrencyStore);
+  i18n = inject(I18nService);
 
   readonly statuses = STATUSES;
   statusClass = statusTagClass;

@@ -62,6 +62,9 @@ export class ApiClient {
   }
   clearCart(): Observable<Cart> { return this.http.delete<Cart>('/api/cart'); }
   mergeCart(): Observable<Cart> { return this.http.post<Cart>('/api/cart/merge', {}); }
+  setCartCurrency(currency: string): Observable<Cart> {
+    return this.http.put<Cart>('/api/cart/currency', { currency });
+  }
 
   // checkout / orders
   checkout(request: CheckoutRequest): Observable<CheckoutResponse> {

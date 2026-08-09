@@ -4,7 +4,7 @@ import { ApiClient } from './api-client';
 import { Cart } from './api.types';
 
 const GUEST_ID_KEY = 'volt.cartId';
-const EMPTY_CART: Cart = { id: '', items: [], count: 0, subtotal: 0, shipping: 0, tax: 0, total: 0 };
+const EMPTY_CART: Cart = { id: '', items: [], count: 0, subtotal: 0, shipping: 0, tax: 0, total: 0, currency: 'USD' };
 
 @Injectable({ providedIn: 'root' })
 export class CartStore {

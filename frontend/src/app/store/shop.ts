@@ -4,13 +4,14 @@ import { Subject, debounceTime, firstValueFrom } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ApiClient } from '../core/api-client';
 import { Category, PagedResult, ProductListItem } from '../core/api.types';
+import { I18nService } from '../core/i18n.service';
 import { ProductCard } from './product-card';
 
 const PRICE_BANDS = [
-  { key: 'lt250', label: 'Under $250' },
-  { key: '250-750', label: '$250 – $750' },
-  { key: '750-1500', label: '$750 – $1,500' },
-  { key: 'gt1500', label: 'Over $1,500' },
+  { key: 'lt250', labelKey: 'shop.priceBand.lt250' },
+  { key: '250-750', labelKey: 'shop.priceBand.250-750' },
+  { key: '750-1500', labelKey: 'shop.priceBand.750-1500' },
+  { key: 'gt1500', labelKey: 'shop.priceBand.gt1500' },
 ];
 
 @Component({
@@ -20,7 +21,7 @@ const PRICE_BANDS = [
     <div style="display: flex; gap: 28px; padding: 32px; align-items: flex-start;">
       <div class="col" style="width: 220px; flex: none; gap: 22px;">
         <div>
-          <h6 style="margin-bottom: 10px;">Category</h6>
+          <h6 style="margin-bottom: 10px;">{{ i18n.t('shop.category') }}</h6>
           <div class="col" style="gap: 8px;">
             @for (cat of categories(); track cat.id) {
               <label class="row" style="gap: 8px; font-size: 13px; cursor: pointer;">
@@ -32,33 +33,33 @@ const PRICE_BANDS = [
           </div>
         </div>
         <div>
-          <h6 style="margin-bottom: 10px;">Price</h6>
+          <h6 style="margin-bottom: 10px;">{{ i18n.t('shop.price') }}</h6>
           <div class="col" style="gap: 8px; font-size: 13px;">
             @for (band of priceBands; track band.key) {
               <label class="row" style="gap: 8px; cursor: pointer;">
                 <input type="checkbox" [checked]="selectedBands().includes(band.key)"
                        (change)="toggleBand(band.key)" />
-                {{ band.label }}
+                {{ i18n.t(band.labelKey) }}
               </label>
             }
           </div>
         </div>
-        <button class="btn btn-secondary btn-block" (click)="clearFilters()">Clear filters</button>
+        <button class="btn btn-secondary btn-block" (click)="clearFilters()">{{ i18n.t('shop.clearFilters') }}</button>
       </div>
 
       <div style="flex: 1;">
         <div class="row" style="justify-content: space-between; margin-bottom: 18px; gap: 12px; flex-wrap: wrap;">
-          <h3 style="margin: 0;">All products <span class="text-muted" style="font-size: 14px;">({{ result()?.total ?? 0 }})</span></h3>
+          <h3 style="margin: 0;">{{ i18n.t('shop.allProducts') }} <span class="text-muted" style="font-size: 14px;">({{ result()?.total ?? 0 }})</span></h3>
           <div class="row" style="gap: 10px;">
             <div class="field" style="margin: 0; width: 200px;">
-              <input class="input" placeholder="Search products" [value]="search()"
+              <input class="input" [placeholder]="i18n.t('shop.searchPlaceholder')" [value]="search()"
                      (input)="onSearch($any($event.target).value)" />
             </div>
             <select class="input" style="width: 170px;" [value]="sort()" (change)="onSort($any($event.target).value)">
-              <option value="featured">Sort: Featured</option>
-              <option value="price_asc">Price: Low–High</option>
-              <option value="price_desc">Price: High–Low</option>
-              <option value="rating">Top rated</option>
+              <option value="featured">{{ i18n.t('shop.sort.featured') }}</option>
+              <option value="price_asc">{{ i18n.t('shop.sort.priceAsc') }}</option>
+              <option value="price_desc">{{ i18n.t('shop.sort.priceDesc') }}</option>
+              <option value="rating">{{ i18n.t('shop.sort.topRated') }}</option>
             </select>
           </div>
         </div>
@@ -66,7 +67,7 @@ const PRICE_BANDS = [
         @if (loading()) {
           <div class="row" style="justify-content: center; padding: 60px;"><div class="spinner"></div></div>
         } @else if ((result()?.items ?? []).length === 0) {
-          <p class="text-muted" style="padding: 40px 0;">No products match these filters.</p>
+          <p class="text-muted" style="padding: 40px 0;">{{ i18n.t('shop.noProducts') }}</p>
         } @else {
           <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px;">
             @for (p of result()!.items; track p.id) {
@@ -75,9 +76,9 @@ const PRICE_BANDS = [
           </div>
           @if (totalPages() > 1) {
             <div class="row" style="gap: 8px; justify-content: center; margin-top: 28px;">
-              <button class="btn btn-secondary" [disabled]="page() <= 1" (click)="goPage(page() - 1)">← Prev</button>
-              <span class="text-muted" style="font-size: 13px;">Page {{ page() }} of {{ totalPages() }}</span>
-              <button class="btn btn-secondary" [disabled]="page() >= totalPages()" (click)="goPage(page() + 1)">Next →</button>
+              <button class="btn btn-secondary" [disabled]="page() <= 1" (click)="goPage(page() - 1)">{{ i18n.t('common.prev') }}</button>
+              <span class="text-muted" style="font-size: 13px;">{{ i18n.t('common.pageOf', { page: page(), total: totalPages() }) }}</span>
+              <button class="btn btn-secondary" [disabled]="page() >= totalPages()" (click)="goPage(page() + 1)">{{ i18n.t('common.next') }}</button>
             </div>
           }
         }
@@ -89,6 +90,7 @@ export class ShopPage implements OnInit {
   private api = inject(ApiClient);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  i18n = inject(I18nService);
 
   readonly priceBands = PRICE_BANDS;
 

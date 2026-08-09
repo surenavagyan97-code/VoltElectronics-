@@ -1,12 +1,14 @@
-import { CurrencyPipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { Component, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { ProductListItem } from '../core/api.types';
 import { CartStore } from '../core/cart-store';
+import { CurrencyStore } from '../core/currency-store';
+import { I18nService } from '../core/i18n.service';
 
 @Component({
   selector: 'app-product-card',
-  imports: [CurrencyPipe, DecimalPipe],
+  imports: [DecimalPipe],
   template: `
     <div class="card elev-sm" style="cursor: pointer; height: 100%;" (click)="open()">
       <div class="ph" style="width: 100%;" [style.height.px]="imageHeight()">
@@ -20,16 +22,16 @@ import { CartStore } from '../core/cart-store';
         <div class="tag tag-accent" style="align-self: flex-start;">{{ product().badge }}</div>
       }
       <div class="card-title">{{ product().name }}</div>
-      <div class="card-meta">{{ product().category }} · ★ {{ product().rating | number: '1.1-1' }} · {{ product().stock }} in stock</div>
+      <div class="card-meta">{{ product().category }} · ★ {{ product().rating | number: '1.1-1' }} · {{ product().stock }} {{ i18n.t('common.inStockSuffix') }}</div>
       <div class="row" style="justify-content: space-between; margin-top: 4px;">
         <div class="row" style="gap: 8px;">
-          <div style="font-family: var(--font-heading); font-size: 16px;">{{ product().price | currency }}</div>
+          <div style="font-family: var(--font-heading); font-size: 16px;">{{ currency.formatBase(product().price) }}</div>
           @if (product().compareAtPrice) {
-            <div class="text-muted" style="font-size: 12px; text-decoration: line-through;">{{ product().compareAtPrice | currency }}</div>
+            <div class="text-muted" style="font-size: 12px; text-decoration: line-through;">{{ currency.formatBase(product().compareAtPrice!) }}</div>
           }
         </div>
         <button class="btn btn-icon btn-secondary" [disabled]="product().stock === 0 || cart.busy()"
-                (click)="addToCart($event)" aria-label="Add to cart">
+                (click)="addToCart($event)" [attr.aria-label]="i18n.t('product.addToCart')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
         </button>
       </div>
@@ -41,6 +43,8 @@ export class ProductCard {
   imageHeight = input(150);
 
   cart = inject(CartStore);
+  currency = inject(CurrencyStore);
+  i18n = inject(I18nService);
   private router = inject(Router);
 
   open(): void {

@@ -4,23 +4,24 @@ import { firstValueFrom } from 'rxjs';
 import { ApiClient } from '../core/api-client';
 import { Category } from '../core/api.types';
 import { extractError } from '../core/cart-store';
+import { I18nService } from '../core/i18n.service';
 
 @Component({
   selector: 'app-admin-categories',
   imports: [FormsModule],
   template: `
     <div class="row" style="justify-content: space-between; margin-bottom: 20px;">
-      <h2 style="margin: 0;">Categories</h2>
+      <h2 style="margin: 0;">{{ i18n.t('admin.categories.title') }}</h2>
       <button class="btn btn-primary" (click)="startCreate()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        Add category
+        {{ i18n.t('admin.categories.addCategory') }}
       </button>
     </div>
 
     @if (error(); as err) { <div class="error-text" style="margin-bottom: 10px;">{{ err }}</div> }
 
     <table class="table">
-      <thead><tr><th>Category</th><th>Slug</th><th>Products</th><th></th></tr></thead>
+      <thead><tr><th>{{ i18n.t('admin.categories.table.category') }}</th><th>{{ i18n.t('admin.categories.table.slug') }}</th><th>{{ i18n.t('admin.categories.table.products') }}</th><th></th></tr></thead>
       <tbody>
         @for (cat of categories(); track cat.id) {
           <tr>
@@ -36,13 +37,13 @@ import { extractError } from '../core/cart-store';
             <td>
               <div class="row" style="gap: 4px; justify-content: flex-end;">
                 @if (editingId() === cat.id) {
-                  <button class="btn btn-ghost" (click)="saveEdit(cat)">Save</button>
-                  <button class="btn btn-secondary" (click)="editingId.set(null)">Cancel</button>
+                  <button class="btn btn-ghost" (click)="saveEdit(cat)">{{ i18n.t('common.save') }}</button>
+                  <button class="btn btn-secondary" (click)="editingId.set(null)">{{ i18n.t('common.cancel') }}</button>
                 } @else {
-                  <button class="btn btn-icon btn-ghost" (click)="startEdit(cat)" aria-label="Edit">
+                  <button class="btn btn-icon btn-ghost" (click)="startEdit(cat)" [attr.aria-label]="i18n.t('common.edit')">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg>
                   </button>
-                  <button class="btn btn-icon btn-ghost" (click)="remove(cat)" aria-label="Delete">
+                  <button class="btn btn-icon btn-ghost" (click)="remove(cat)" [attr.aria-label]="i18n.t('common.delete')">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg>
                   </button>
                 }
@@ -52,13 +53,13 @@ import { extractError } from '../core/cart-store';
         }
         @if (creating()) {
           <tr>
-            <td><input class="input" style="width: 220px;" placeholder="Category name" [(ngModel)]="newName" (keyup.enter)="saveCreate()" /></td>
+            <td><input class="input" style="width: 220px;" [placeholder]="i18n.t('admin.categories.namePlaceholder')" [(ngModel)]="newName" (keyup.enter)="saveCreate()" /></td>
             <td class="text-muted">—</td>
             <td>0</td>
             <td>
               <div class="row" style="gap: 4px; justify-content: flex-end;">
-                <button class="btn btn-ghost" (click)="saveCreate()">Save</button>
-                <button class="btn btn-secondary" (click)="creating.set(false)">Cancel</button>
+                <button class="btn btn-ghost" (click)="saveCreate()">{{ i18n.t('common.save') }}</button>
+                <button class="btn btn-secondary" (click)="creating.set(false)">{{ i18n.t('common.cancel') }}</button>
               </div>
             </td>
           </tr>
@@ -69,6 +70,7 @@ import { extractError } from '../core/cart-store';
 })
 export class AdminCategoriesPage implements OnInit {
   private api = inject(ApiClient);
+  i18n = inject(I18nService);
 
   categories = signal<Category[]>([]);
   error = signal<string | null>(null);
