@@ -6,6 +6,7 @@ obj/
 .vs/
 .idea/
 *.user
-wwwroot/uploads/
+**/wwwroot/uploads/
 .claude/
 *.log
+.DS_Store

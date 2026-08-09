@@ -1,0 +1,67 @@
+/* Nocturne — light theme override.
+ *
+ * Load AFTER the Nocturne styles.css. Applying data-theme="light" to any
+ * container re-declares the design system's tokens inside that subtree, so
+ * every component (.card, .btn, .input, .table, .tag, .seg, .nav …) adapts
+ * with no per-component restyling.
+ *
+ *   <link rel="stylesheet" href="styles.css">
+ *   <link rel="stylesheet" href="nocturne-light-theme.css">
+ *   <div data-theme="light"> … app … </div>
+ *
+ * For a whole-app toggle, put the attribute on <html> or <body> and flip it
+ * from your theme store. For system preference, wrap the block below in
+ * @media (prefers-color-scheme: light) with a :root selector instead.
+ *
+ * How it was derived: hues and chroma are unchanged from the dark theme —
+ * only lightness is inverted. Each tonal ramp is reversed end-for-end
+ * (100 <-> 900, 200 <-> 800, …), so a token keeps its RELATIVE value against
+ * the ground in both themes. That is what lets the same markup work in both.
+ *
+ * IMPORTANT consequence for authors: pick ramp steps by ROLE, not by number.
+ * A step used as a foreground on a surface (e.g. accent-300) stays readable in
+ * both themes because it flips light<->dark with the ground. A step chosen
+ * because it "looked right" in dark only (e.g. accent-700 as text) will invert
+ * into a near-invisible pale tint on white. Foreground accents in this design
+ * use accent-300; accent fills use accent-500.
+ */
+
+[data-theme="light"] {
+  --color-bg: #f6f7fc;
+  --color-surface: #ffffff;
+  --color-text: #1b1c24;
+  --color-accent: #5d5294;
+  --color-accent-2: #7972a9;
+  --color-divider: color-mix(in srgb, #1b1c24 14%, transparent);
+
+  /* neutral ramp, reversed */
+  --color-neutral-100: #292b31;
+  --color-neutral-200: #3f424d;
+  --color-neutral-300: #595d6c;
+  --color-neutral-400: #75798c;
+  --color-neutral-500: #9397ab;
+  --color-neutral-600: #b2b6ca;
+  --color-neutral-700: #cfd3e5;
+  --color-neutral-800: #e4e7f5;
+  --color-neutral-900: #f3f5fe;
+
+  /* accent ramp, reversed */
+  --color-accent-100: #2b2741;
+  --color-accent-200: #423a6a;
+  --color-accent-300: #5d5294;
+  --color-accent-400: #796cbf;
+  --color-accent-500: #968ae0;
+  --color-accent-600: #b5abfc;
+  --color-accent-700: #d2cefd;
+  --color-accent-800: #e7e5fe;
+  --color-accent-900: #f5f4ff;
+
+  /* section bands */
+  --color-section: #e7e5fe;
+  --color-section-glow: #f5f4ff;
+
+  /* elevation — ink-tinted shadows on a light ground, not hairline glow */
+  --shadow-sm: 0 0 0 1px #e4e7f5;
+  --shadow-md: 0 0 0 1px #cfd3e5, 0 6px 18px rgba(27, 28, 36, 0.10);
+  --shadow-lg: 0 0 0 1px #b2b6ca, 0 16px 40px rgba(27, 28, 36, 0.16);
+}

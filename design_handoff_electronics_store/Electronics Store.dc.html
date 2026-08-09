@@ -19,21 +19,66 @@
       border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;
       color: var(--color-neutral-500); font-family: monospace; font-size: 11px; text-align: center; flex: none;
     }
+    /* Nocturne light theme — same hues and ramp steps, lightness inverted so
+       every role keeps its relative value against the ground. */
+    [data-theme="light"] {
+      --color-bg: #f6f7fc;
+      --color-surface: #ffffff;
+      --color-text: #1b1c24;
+      --color-accent: #5d5294;
+      --color-accent-2: #7972a9;
+      --color-divider: color-mix(in srgb, #1b1c24 14%, transparent);
+      --color-neutral-100: #292b31;
+      --color-neutral-200: #3f424d;
+      --color-neutral-300: #595d6c;
+      --color-neutral-400: #75798c;
+      --color-neutral-500: #9397ab;
+      --color-neutral-600: #b2b6ca;
+      --color-neutral-700: #cfd3e5;
+      --color-neutral-800: #e4e7f5;
+      --color-neutral-900: #f3f5fe;
+      --color-accent-100: #2b2741;
+      --color-accent-200: #423a6a;
+      --color-accent-300: #5d5294;
+      --color-accent-400: #796cbf;
+      --color-accent-500: #968ae0;
+      --color-accent-600: #b5abfc;
+      --color-accent-700: #d2cefd;
+      --color-accent-800: #e7e5fe;
+      --color-accent-900: #f5f4ff;
+      --color-section: #e7e5fe;
+      --color-section-glow: #f5f4ff;
+      --shadow-sm: 0 0 0 1px #e4e7f5;
+      --shadow-md: 0 0 0 1px #cfd3e5, 0 6px 18px rgba(27,28,36,0.10);
+      --shadow-lg: 0 0 0 1px #b2b6ca, 0 16px 40px rgba(27,28,36,0.16);
+    }
     .row { display: flex; align-items: center; }
     .col { display: flex; flex-direction: column; }
   </style>
 </helmet>
 
-<div style="background: var(--color-bg); color: var(--color-text); font-family: var(--font-body); min-height: 100vh; position: relative;">
+<div data-theme="{{ theme }}" style="background: var(--color-bg); color: var(--color-text); font-family: var(--font-body); min-height: 100vh; position: relative;">
 
-  <div style="position: fixed; top: 16px; right: 16px; z-index: 100; box-shadow: var(--shadow-md); border-radius: var(--radius-md); overflow: hidden;">
-    <div class="seg" style="background: var(--color-surface);">
-      <label class="seg-opt" style="{{ storeSegStyle }}">
-        <input type="radio" name="modeseg" onChange="{{ goStore }}" checked="{{ isStore }}" />Store
-      </label>
-      <label class="seg-opt" style="{{ adminSegStyle }}">
-        <input type="radio" name="modeseg" onChange="{{ goAdmin }}" checked="{{ isAdmin }}" />Admin
-      </label>
+  <div class="row" style="justify-content: flex-end; gap: 10px; padding: 10px 16px; background: var(--color-surface); border-bottom: 1px solid var(--color-divider);">
+    <div style="box-shadow: var(--shadow-sm); border-radius: var(--radius-md); overflow: hidden;">
+      <div class="seg" style="background: var(--color-surface);">
+        <label class="seg-opt" style="{{ storeSegStyle }}">
+          <input type="radio" name="modeseg" onChange="{{ goStore }}" checked="{{ isStore }}" />Store
+        </label>
+        <label class="seg-opt" style="{{ adminSegStyle }}">
+          <input type="radio" name="modeseg" onChange="{{ goAdmin }}" checked="{{ isAdmin }}" />Admin
+        </label>
+      </div>
+    </div>
+    <div style="box-shadow: var(--shadow-sm); border-radius: var(--radius-md); overflow: hidden;">
+      <div class="seg" style="background: var(--color-surface);">
+        <label class="seg-opt" style="{{ darkSegStyle }}">
+          <input type="radio" name="themeseg" onChange="{{ goDark }}" checked="{{ isDark }}" />Dark
+        </label>
+        <label class="seg-opt" style="{{ lightSegStyle }}">
+          <input type="radio" name="themeseg" onChange="{{ goLight }}" checked="{{ isLight }}" />Light
+        </label>
+      </div>
     </div>
   </div>
 
@@ -74,7 +119,8 @@
             <h3 style="margin-bottom: 18px;">Shop by category</h3>
             <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px;">
               <sc-for list="{{ categories }}" as="cat" hint-placeholder-count="6">
-                <div class="card" style="align-items: center; text-align: center; cursor: pointer;" onClick="{{ goListing }}">
+                <div class="card elev-sm" style="align-items: center; text-align: center; cursor: pointer;" onClick="{{ goListing }}">
+                  
                   <div class="ph" style="width: 100%; height: 64px;">{{ cat.name }}</div>
                   <div class="card-title" style="font-size: 14px;">{{ cat.name }}</div>
                   <div class="card-meta">{{ cat.count }} products</div>
@@ -91,6 +137,7 @@
             <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
               <sc-for list="{{ featured }}" as="p" hint-placeholder-count="4">
                 <div class="card elev-sm" style="cursor: pointer;" onClick="{{ goDetail }}">
+                  
                   <div class="ph" style="width: 100%; height: 140px;">{{ p.label }}</div>
                   <sc-if value="{{ p.badge }}" hint-placeholder-val="{{ false }}"><div class="tag tag-accent" style="align-self: flex-start;">{{ p.badge }}</div></sc-if>
                   <div class="card-title">{{ p.name }}</div>
@@ -138,6 +185,7 @@
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
               <sc-for list="{{ products }}" as="p" hint-placeholder-count="10">
                 <div class="card elev-sm" style="cursor: pointer;" onClick="{{ goDetail }}">
+                  
                   <div class="ph" style="width: 100%; height: 150px;">{{ p.label }}</div>
                   <sc-if value="{{ p.badge }}" hint-placeholder-val="{{ false }}"><div class="tag tag-accent" style="align-self: flex-start;">{{ p.badge }}</div></sc-if>
                   <div class="card-title">{{ p.name }}</div>
@@ -201,6 +249,7 @@
             <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
               <sc-for list="{{ featured }}" as="p" hint-placeholder-count="4">
                 <div class="card elev-sm">
+                  
                   <div class="ph" style="width: 100%; height: 120px;">{{ p.label }}</div>
                   <div class="card-title">{{ p.name }}</div>
                   <div style="font-family: var(--font-heading); font-size: 15px;">${{ p.price }}</div>
@@ -235,6 +284,7 @@
               <button class="btn btn-ghost" style="align-self: flex-start; margin-top: 14px;" onClick="{{ goListing }}">← Continue shopping</button>
             </div>
             <div class="card elev-sm" style="gap: 14px;">
+              
               <div class="card-title">Order summary</div>
               <div class="row" style="justify-content: space-between; font-size: 14px;"><span class="text-muted">Subtotal</span><span>${{ cartSubtotal }}</span></div>
               <div class="row" style="justify-content: space-between; font-size: 14px;"><span class="text-muted">Estimated shipping</span><span>$24.00</span></div>
@@ -279,6 +329,7 @@
               </div>
             </div>
             <div class="card elev-sm" style="gap: 14px;">
+              
               <div class="card-title">Order summary</div>
               <sc-for list="{{ cartItems }}" as="item" hint-placeholder-count="3">
                 <div class="row" style="justify-content: space-between; font-size: 13px;"><span>{{ item.name }} × {{ item.qty }}</span><span>${{ item.lineTotal }}</span></div>
@@ -294,7 +345,7 @@
 
       <sc-if value="{{ showConfirm }}" hint-placeholder-val="{{ false }}">
         <div style="padding: 80px 32px; max-width: 560px; margin: 0 auto; text-align: center;">
-          <div style="width: 64px; height: 64px; border-radius: 50%; border: 1px solid var(--color-accent); display: flex; align-items: center; justify-content: center; margin: 0 auto 22px;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+          <div style="width: 64px; height: 64px; border-radius: 50%; border: 1px solid var(--color-accent); color: var(--color-accent); display: flex; align-items: center; justify-content: center; margin: 0 auto 22px;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
           <h2>Order confirmed</h2>
           <p class="text-muted" style="margin-bottom: 24px;">Your order <strong style="color: var(--color-text);">#ORD-58213</strong> has been placed. A confirmation email is on its way.</p>
           <div class="card elev-sm" style="text-align: left; gap: 10px; margin-bottom: 24px;">
@@ -312,15 +363,15 @@
       <sc-if value="{{ showAccount }}" hint-placeholder-val="{{ false }}">
         <div style="padding: 32px; max-width: 1100px; margin: 0 auto; display: flex; gap: 32px;">
           <div class="col" style="width: 200px; flex: none; gap: 4px;">
-            <div class="card" style="align-items: center; text-align: center; margin-bottom: 16px;">
+            <div class="card elev-sm" style="align-items: center; text-align: center; margin-bottom: 16px;">
               <div class="ph" style="width: 56px; height: 56px; border-radius: 50%;">JL</div>
               <div class="card-title" style="font-size: 14px;">Jordan Lee</div>
               <div class="card-meta">jordan@acme.com</div>
             </div>
             <a href="#" style="padding: 9px 12px; border-radius: var(--radius-md); background: color-mix(in srgb, var(--color-accent) 12%, transparent); color: var(--color-accent); font-size: 14px; text-decoration: none;">Order history</a>
-            <a href="#" style="padding: 9px 12px; border-radius: var(--radius-md); font-size: 14px; text-decoration: none;">Addresses</a>
-            <a href="#" style="padding: 9px 12px; border-radius: var(--radius-md); font-size: 14px; text-decoration: none;">Payment methods</a>
-            <a href="#" style="padding: 9px 12px; border-radius: var(--radius-md); font-size: 14px; text-decoration: none;">Account settings</a>
+            <a href="#" style="padding: 9px 12px; border-radius: var(--radius-md); font-size: 14px; text-decoration: none; color: var(--color-text);">Addresses</a>
+            <a href="#" style="padding: 9px 12px; border-radius: var(--radius-md); font-size: 14px; text-decoration: none; color: var(--color-text);">Payment methods</a>
+            <a href="#" style="padding: 9px 12px; border-radius: var(--radius-md); font-size: 14px; text-decoration: none; color: var(--color-text);">Account settings</a>
           </div>
           <div style="flex: 1;">
             <h3 style="margin-bottom: 18px;">Order history</h3>
@@ -356,7 +407,7 @@
           <div>
             <div class="row" style="justify-content: space-between; margin-bottom: 20px;">
               <h2 style="margin: 0;">Products</h2>
-              <button class="btn btn-primary" onClick="{{ goAdminForm }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Add product</button>
+              <button class="btn btn-primary" onClick="{{ goAdminForm }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Add product</button>
             </div>
             <div class="row" style="gap: 10px; margin-bottom: 16px;">
               <div class="field" style="margin: 0; width: 260px;"><input class="input" placeholder="Search products" /></div>
@@ -372,7 +423,7 @@
                     <td>{{ p.name }}</td>
                     <td>{{ p.category }}</td>
                     <td>${{ p.price }}</td>
-                    <td><span class="tag" style="{{ p.stockTagStyle }}">{{ p.stock }} units</span></td>
+                    <td><span class="tag" style="{{ p.stockTagStyle }}">{{ p.stockLabel }}</span></td>
                     <td><span class="tag tag-accent">Active</span></td>
                     <td>
                       <div class="row" style="gap: 4px;">
@@ -464,7 +515,7 @@
           <div>
             <div class="row" style="justify-content: space-between; margin-bottom: 20px;">
               <h2 style="margin: 0;">Categories</h2>
-              <button class="btn btn-primary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Add category</button>
+              <button class="btn btn-primary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Add category</button>
             </div>
             <table class="table">
               <thead><tr><th>Category</th><th>Products</th><th>Total stock</th><th>Status</th><th></th></tr></thead>
@@ -498,6 +549,7 @@
               <div class="card elev-sm"><div class="card-kicker">Low stock alerts</div><div style="font-family: var(--font-heading); font-size: 26px; color: var(--color-accent-300);">3</div><div class="card-meta">below 20 units</div></div>
             </div>
             <div class="card elev-sm" style="margin-bottom: 24px;">
+              
               <div class="card-title" style="margin-bottom: 14px;">Revenue, last 7 days</div>
               <div class="row" style="align-items: flex-end; gap: 14px; height: 160px;">
                 <sc-for list="{{ chartBars }}" as="b" hint-placeholder-count="7">
@@ -568,12 +620,15 @@ function tagStyleFor(status) {
 }
 
 class Component extends DCLogic {
-  state = { mode: 'store', storeScreen: 'home', adminScreen: 'products' };
+  state = { mode: 'store', storeScreen: 'home', adminScreen: 'products', theme: 'dark' };
 
   tabActive() { return { color: 'var(--color-accent)' }; }
 
   renderVals() {
-    const { mode, storeScreen, adminScreen } = this.state;
+    const { mode, storeScreen, adminScreen, theme } = this.state;
+    const isDark = theme !== 'light', isLight = theme === 'light';
+    const goDark = () => this.setState({ theme: 'dark' });
+    const goLight = () => this.setState({ theme: 'light' });
     const isStore = mode === 'store', isAdmin = mode === 'admin';
     const goStore = () => this.setState({ mode: 'store' });
     const goAdmin = () => this.setState({ mode: 'admin' });
@@ -603,6 +658,7 @@ class Component extends DCLogic {
 
     const products = PRODUCTS.map(p => ({
       ...p,
+      stockLabel: p.stock + ' units',
       stockTagStyle: p.stock < 20 ? { background: 'var(--color-accent-800)', color: 'var(--color-accent-100)' } : { background: 'var(--color-neutral-800)', color: 'var(--color-neutral-100)' },
     }));
     const categories = CATEGORIES.map(c => ({
@@ -615,6 +671,8 @@ class Component extends DCLogic {
     return {
       isStore, isAdmin, goStore, goAdmin,
       storeSegStyle: seg(isStore), adminSegStyle: seg(isAdmin),
+      theme: isLight ? 'light' : 'dark', isDark, isLight, goDark, goLight,
+      darkSegStyle: seg(isDark), lightSegStyle: seg(isLight),
 
       showHome: storeScreen === 'home', showListing: storeScreen === 'listing',
       showDetail: storeScreen === 'detail', showCart: storeScreen === 'cart',
@@ -640,7 +698,7 @@ class Component extends DCLogic {
       chartBars: [
         { day: 'Mon', h: 70 }, { day: 'Tue', h: 95 }, { day: 'Wed', h: 60 }, { day: 'Thu', h: 130 },
         { day: 'Fri', h: 110 }, { day: 'Sat', h: 150 }, { day: 'Sun', h: 90 },
-      ].map(b => ({ ...b, barStyle: { width: '100%', height: b.h + 'px', background: 'var(--color-accent-700)', borderRadius: '4px 4px 0 0' } })),
+      ].map(b => ({ ...b, barStyle: { width: '100%', height: b.h + 'px', background: 'var(--color-accent-500)', borderRadius: '4px 4px 0 0' } })),
       topProducts: [
         { name: 'Aurora Pro 15 Laptop', category: 'Laptops', units: 214, revenue: 320786 },
         { name: 'Nimbus Wireless Headphones', category: 'Audio', units: 512, revenue: 127488 },

@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { ThemeStore } from '../core/theme-store';
 
 @Component({
   selector: 'app-admin-layout',
@@ -36,6 +37,19 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
           Analytics
         </a>
         <div style="flex: 1;"></div>
+        <button
+          type="button" class="admin-nav-link text-muted"
+          style="background: none; border: none; cursor: pointer; font: inherit; text-align: left; width: 100%;"
+          (click)="theme.toggle()"
+        >
+          @if (theme.theme() === 'dark') {
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"></path></svg>
+            Light theme
+          } @else {
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12.5A9 9 0 1 1 11.5 3a7 7 0 0 0 9.5 9.5z"></path></svg>
+            Dark theme
+          }
+        </button>
         <a routerLink="/" class="admin-nav-link text-muted">← Back to store</a>
       </div>
       <div style="flex: 1; padding: 28px 36px; min-width: 0;">
@@ -44,4 +58,6 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
     </div>
   `,
 })
-export class AdminLayout {}
+export class AdminLayout {
+  theme = inject(ThemeStore);
+}

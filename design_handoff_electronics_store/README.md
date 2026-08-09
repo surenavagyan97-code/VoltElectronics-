@@ -108,7 +108,27 @@ All product/category imagery is a striped placeholder box (`.ph` class — diago
 
 Icons are inline SVGs, hand-drawn to match the Phosphor icon style Nocturne specifies (stroke-based, 1.6px stroke, currentColor) — swap for actual Phosphor icons (phosphoricons.com) in the real build.
 
+## Theming — dark (default) and light
+
+The app ships **both a dark and a light theme**. They are the same markup: only the design-system tokens change.
+
+**How it works.** `styles.css` declares Nocturne's tokens on `:root` (dark). `nocturne-light-theme.css` re-declares them under a `[data-theme="light"]` selector. Put that attribute on any container and everything inside it — cards, buttons, inputs, tables, tags, nav — switches over, because all component CSS reads the tokens rather than literal colors.
+
+```html
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="nocturne-light-theme.css">
+
+<body data-theme="light">   <!-- omit the attribute (or use "dark") for the default dark theme -->
+```
+
+In the real app, drive that attribute from a theme store / context and persist the choice (localStorage or user settings); optionally initialize from `prefers-color-scheme`. Do **not** fork components or write per-theme component styles — if something doesn't adapt, it means that element hardcodes a color instead of using a token, and the fix is to move it onto a token.
+
+**The one rule when adding new UI: choose ramp steps by role, not by number.** The light theme reverses each tonal ramp end-for-end (100↔900, 200↔800, …), keeping hue and chroma fixed, so every token holds its *relative* value against the ground in both themes. A step picked as a foreground-on-surface (this design uses `--color-accent-300`) stays readable in both. A step picked only because it looked right on dark (e.g. `--color-accent-700` as text) inverts into a near-invisible pale tint on white. Accent fills in this design use `--color-accent-500`.
+
+In the prototype the Dark/Light control sits in a small bar above the app chrome — that bar is a **prototype affordance only**. In production, put the theme control wherever it belongs in your product (account/settings menu) and drop the bar.
+
 ## Files
 - `Electronics Store.dc.html` — full design, all screens (view source for exact markup/classes/inline styles per screen).
-- `styles.css` — Nocturne design-system tokens + component CSS classes used throughout.
+- `styles.css` — Nocturne design-system tokens + component CSS classes used throughout (dark theme on `:root`).
+- `nocturne-light-theme.css` — light-theme token overrides under `[data-theme="light"]`, with derivation notes.
 - `nocturne-design-system-readme.md` — full design-system usage guide (color/type/spacing rules, do's/don'ts).

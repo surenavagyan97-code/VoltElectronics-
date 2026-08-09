@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthStore } from '../core/auth-store';
 import { CartStore } from '../core/cart-store';
+import { ThemeStore } from '../core/theme-store';
 
 @Component({
   selector: 'app-store-layout',
@@ -11,7 +12,7 @@ import { CartStore } from '../core/cart-store';
       <a routerLink="/" class="nav-brand" style="color: inherit;">Volt Electronics</a>
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
       <a routerLink="/shop" routerLinkActive="active">Shop</a>
-      @if (auth.isLoggedIn()) {
+      @if (auth.isLoggedIn() && !auth.isAdmin()) {
         <a routerLink="/account/orders" routerLinkActive="active">Orders</a>
       }
       @if (auth.isAdmin()) {
@@ -19,6 +20,17 @@ import { CartStore } from '../core/cart-store';
       }
       <div style="flex: 1;"></div>
       <div class="row" style="gap: 18px;">
+        <button
+          type="button" class="btn btn-icon btn-ghost" style="color: inherit;"
+          (click)="theme.toggle()"
+          [attr.aria-label]="theme.theme() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'"
+        >
+          @if (theme.theme() === 'dark') {
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"></path></svg>
+          } @else {
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12.5A9 9 0 1 1 11.5 3a7 7 0 0 0 9.5 9.5z"></path></svg>
+          }
+        </button>
         <a routerLink="/cart" style="position: relative; color: inherit; display: block;" aria-label="Cart">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
           @if (cart.count() > 0) {
@@ -49,6 +61,7 @@ import { CartStore } from '../core/cart-store';
 export class StoreLayout {
   auth = inject(AuthStore);
   cart = inject(CartStore);
+  theme = inject(ThemeStore);
   private router = inject(Router);
 
   async logout(): Promise<void> {
