@@ -32,7 +32,7 @@ import { ProductCard } from './product-card';
                   <div class="ph" style="height: 76px; cursor: pointer;"
                        [style.outline]="activeImage() === img.url ? '2px solid var(--color-accent)' : 'none'"
                        (click)="activeImage.set(img.url)">
-                    <img [src]="img.url" [alt]="p.name" />
+                    <img [src]="img.thumbUrl" [alt]="p.name" />
                   </div>
                 }
               </div>

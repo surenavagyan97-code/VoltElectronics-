@@ -85,7 +85,7 @@ public class CatalogService(AppDbContext db) : ICatalogService
         return new ProductDetailDto(
             p.Id, p.Name, p.Slug, p.Sku, p.Category.Name, p.CategoryId,
             p.Price, p.CompareAtPrice, p.Badge, p.Rating, p.ReviewCount, p.Stock, p.Description,
-            p.Images.Select(i => new ProductImageDto(i.Id, i.Url, i.SortOrder)).ToList(),
+            p.Images.Select(i => new ProductImageDto(i.Id, i.Url, i.ThumbUrl, i.CardUrl, i.SortOrder)).ToList(),
             p.Specs.Select(s => new ProductSpecDto(s.Name, s.Value)).ToList(),
             related);
     }
@@ -110,5 +110,5 @@ public class CatalogService(AppDbContext db) : ICatalogService
         p => new ProductListItemDto(
             p.Id, p.Name, p.Slug, p.Category.Name, p.CategoryId,
             p.Price, p.CompareAtPrice, p.Badge, p.Rating, p.ReviewCount, p.Stock,
-            p.Images.OrderBy(i => i.SortOrder).Select(i => (string?)i.Url).FirstOrDefault());
+            p.Images.OrderBy(i => i.SortOrder).Select(i => (string?)i.CardUrl).FirstOrDefault());
 }

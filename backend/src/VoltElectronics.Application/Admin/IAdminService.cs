@@ -12,7 +12,8 @@ public interface IAdminService
     Task<AdminResult> UpdateProductAsync(int id, SaveProductRequest request);
     /// <summary>Archives when the product has order history; hard-deletes otherwise.</summary>
     Task<AdminResult> DeleteProductAsync(int id);
-    Task<(AdminResult Result, ProductImageDto? Image)> AddProductImageAsync(int productId, string url);
+    Task<(AdminResult Result, ProductImageDto? Image)> AddProductImageAsync(
+        int productId, string url, string thumbUrl, string cardUrl);
     Task<AdminResult> RemoveProductImageAsync(int productId, int imageId);
 
     // Categories

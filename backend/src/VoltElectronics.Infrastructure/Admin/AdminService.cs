@@ -30,7 +30,7 @@ public class AdminService(AppDbContext db) : IAdminService
             .Select(p => new AdminProductListItemDto(
                 p.Id, p.Name, p.Slug, p.Sku, p.Category.Name, p.CategoryId,
                 p.Price, p.CompareAtPrice, p.Stock, p.Status.ToString(), p.Badge,
-                p.Images.OrderBy(i => i.SortOrder).Select(i => (string?)i.Url).FirstOrDefault()))
+                p.Images.OrderBy(i => i.SortOrder).Select(i => (string?)i.CardUrl).FirstOrDefault()))
             .ToListAsync();
         return new PagedResult<AdminProductListItemDto>(items, total, page, pageSize);
     }
@@ -47,7 +47,7 @@ public class AdminService(AppDbContext db) : IAdminService
             p.Id, p.Name, p.Slug, p.Sku, p.CategoryId, p.Description,
             p.Price, p.CompareAtPrice, p.Stock, p.Status.ToString(), p.Badge,
             p.Rating, p.ReviewCount,
-            p.Images.Select(i => new ProductImageDto(i.Id, i.Url, i.SortOrder)).ToList(),
+            p.Images.Select(i => new ProductImageDto(i.Id, i.Url, i.ThumbUrl, i.CardUrl, i.SortOrder)).ToList(),
             p.Specs.Select(s => new ProductSpecDto(s.Name, s.Value)).ToList());
     }
 
@@ -122,7 +122,8 @@ public class AdminService(AppDbContext db) : IAdminService
         return AdminResult.Ok;
     }
 
-    public async Task<(AdminResult Result, ProductImageDto? Image)> AddProductImageAsync(int productId, string url)
+    public async Task<(AdminResult Result, ProductImageDto? Image)> AddProductImageAsync(
+        int productId, string url, string thumbUrl, string cardUrl)
     {
         var product = await db.Products.Include(p => p.Images).FirstOrDefaultAsync(p => p.Id == productId);
         if (product is null) return (AdminResult.Fail("Product not found."), null);
@@ -130,11 +131,13 @@ public class AdminService(AppDbContext db) : IAdminService
         var image = new ProductImage
         {
             Url = url,
+            ThumbUrl = thumbUrl,
+            CardUrl = cardUrl,
             SortOrder = product.Images.Count == 0 ? 0 : product.Images.Max(i => i.SortOrder) + 1
         };
         product.Images.Add(image);
         await db.SaveChangesAsync();
-        return (AdminResult.Ok, new ProductImageDto(image.Id, image.Url, image.SortOrder));
+        return (AdminResult.Ok, new ProductImageDto(image.Id, image.Url, image.ThumbUrl, image.CardUrl, image.SortOrder));
     }
 
     public async Task<AdminResult> RemoveProductImageAsync(int productId, int imageId)
@@ -310,7 +313,7 @@ public class AdminService(AppDbContext db) : IAdminService
             .Select(p => new AdminProductListItemDto(
                 p.Id, p.Name, p.Slug, p.Sku, p.Category.Name, p.CategoryId,
                 p.Price, p.CompareAtPrice, p.Stock, p.Status.ToString(), p.Badge,
-                p.Images.OrderBy(i => i.SortOrder).Select(i => (string?)i.Url).FirstOrDefault()))
+                p.Images.OrderBy(i => i.SortOrder).Select(i => (string?)i.CardUrl).FirstOrDefault()))
             .ToListAsync();
 
         return new AnalyticsDto(

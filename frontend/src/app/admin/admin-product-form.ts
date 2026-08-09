@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnInit, effect, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -9,25 +9,26 @@ import { extractError } from '../core/cart-store';
 @Component({
   selector: 'app-admin-product-form',
   imports: [FormsModule, RouterLink],
+  styles: `.input.invalid { border-color: #ff8a8a; }`,
   template: `
     <div style="max-width: 860px;">
       <a class="btn btn-ghost" style="padding: 0; margin-bottom: 12px;" routerLink="/admin/products">← Back to products</a>
       <h2 style="margin-bottom: 22px;">{{ isNew() ? 'Add product' : 'Edit product' }}</h2>
 
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
-        <div class="field" style="grid-column: span 2;"><label>Product name</label>
-          <input class="input" [(ngModel)]="form.name" placeholder="e.g. Aurora Pro 15 Laptop" /></div>
-        <div class="field"><label>SKU</label>
-          <input class="input" [(ngModel)]="form.sku" placeholder="VLT-LP-2201" /></div>
-        <div class="field"><label>Category</label>
-          <select class="input" [(ngModel)]="form.categoryId">
+        <div class="field" style="grid-column: span 2;"><label>Product name *</label>
+          <input class="input" [class.invalid]="invalid(form.name)" [(ngModel)]="form.name" placeholder="e.g. Aurora Pro 15 Laptop" /></div>
+        <div class="field"><label>SKU *</label>
+          <input class="input" [class.invalid]="invalid(form.sku)" [(ngModel)]="form.sku" placeholder="VLT-LP-2201" /></div>
+        <div class="field"><label>Category *</label>
+          <select class="input" [class.invalid]="invalid(form.categoryId)" [(ngModel)]="form.categoryId">
             @for (cat of categories(); track cat.id) {
               <option [ngValue]="cat.id">{{ cat.name }}</option>
             }
           </select>
         </div>
-        <div class="field"><label>Price (USD)</label>
-          <input class="input" type="number" step="0.01" [(ngModel)]="form.price" placeholder="1499.00" /></div>
+        <div class="field"><label>Price (USD) *</label>
+          <input class="input" [class.invalid]="invalid(form.price)" type="number" step="0.01" [(ngModel)]="form.price" placeholder="1499.00" /></div>
         <div class="field"><label>Compare-at price</label>
           <input class="input" type="number" step="0.01" [(ngModel)]="form.compareAtPrice" placeholder="1699.00" /></div>
         <div class="field"><label>Stock quantity</label>
@@ -50,7 +51,7 @@ import { extractError } from '../core/cart-store';
             <div class="row" style="gap: 12px; flex-wrap: wrap;">
               @for (img of images(); track img.id) {
                 <div style="position: relative;">
-                  <div class="ph" style="width: 110px; height: 110px;"><img [src]="img.url" alt="" /></div>
+                  <div class="ph" style="width: 110px; height: 110px;"><img [src]="img.thumbUrl" alt="" /></div>
                   <button class="btn btn-icon btn-secondary" style="position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; background: var(--color-bg);"
                           (click)="removeImage(img)" aria-label="Remove image">×</button>
                 </div>
@@ -82,7 +83,7 @@ import { extractError } from '../core/cart-store';
         </div>
       </div>
 
-      @if (error(); as err) { <div class="error-text" style="margin-top: 14px;">{{ err }}</div> }
+      @if (error(); as err) { <div #errorBox class="error-text" style="margin-top: 14px;">{{ err }}</div> }
 
       <div class="row" style="gap: 10px; margin-top: 26px;">
         <button class="btn btn-primary" [disabled]="busy()" (click)="save()">{{ busy() ? 'Saving…' : 'Save product' }}</button>
@@ -97,11 +98,13 @@ export class AdminProductFormPage implements OnInit {
   private router = inject(Router);
 
   private id: number | null = null;
+  private errorBox = viewChild<ElementRef<HTMLElement>>('errorBox');
   isNew = signal(true);
   categories = signal<Category[]>([]);
   images = signal<ProductImage[]>([]);
   busy = signal(false);
   error = signal<string | null>(null);
+  submitted = signal(false);
 
   form: {
     name: string; sku: string; categoryId: number | null; description: string;
@@ -133,9 +136,27 @@ export class AdminProductFormPage implements OnInit {
     }
   }
 
+  constructor() {
+    // errorBox() only resolves once the @if block has rendered it, which happens on
+    // some later change-detection pass — an effect re-fires once that query settles,
+    // where a plain setTimeout after error.set() would still see it as undefined.
+    effect(() => {
+      if (this.error()) this.errorBox()?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }
+
+  invalid(value: unknown): boolean {
+    return this.submitted() && !value;
+  }
+
+  private showError(message: string): void {
+    this.error.set(message);
+  }
+
   async save(): Promise<void> {
+    this.submitted.set(true);
     if (!this.form.name || !this.form.sku || !this.form.categoryId || !this.form.price) {
-      this.error.set('Name, SKU, category and price are required.');
+      this.showError('Name, SKU, category and price are required.');
       return;
     }
     this.busy.set(true);
@@ -161,7 +182,7 @@ export class AdminProductFormPage implements OnInit {
         void this.router.navigate(['/admin/products']);
       }
     } catch (e) {
-      this.error.set(extractError(e));
+      this.showError(extractError(e));
     } finally {
       this.busy.set(false);
     }

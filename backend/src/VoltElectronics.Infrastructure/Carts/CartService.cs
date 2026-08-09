@@ -156,7 +156,7 @@ public class CartService(AppDbContext db) : ICartService
             .Select(i => new CartItemDto(
                 i.ProductId, i.Product.Name, i.Product.Slug, i.Product.Category.Name,
                 i.Product.Price, i.Qty, i.Product.Price * i.Qty, i.Product.Stock,
-                i.Product.Images.OrderBy(img => img.SortOrder).Select(img => img.Url).FirstOrDefault()))
+                i.Product.Images.OrderBy(img => img.SortOrder).Select(img => img.CardUrl).FirstOrDefault()))
             .ToList();
 
         var (subtotal, shipping, tax, total) = Pricing.Totals(items.Sum(i => i.LineTotal));

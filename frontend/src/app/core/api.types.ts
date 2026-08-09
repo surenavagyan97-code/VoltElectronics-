@@ -31,7 +31,7 @@ export interface ProductListItem {
 }
 
 export interface ProductSpec { name: string; value: string; }
-export interface ProductImage { id: number; url: string; sortOrder: number; }
+export interface ProductImage { id: number; url: string; thumbUrl: string; cardUrl: string; sortOrder: number; }
 
 export interface ProductDetail extends Omit<ProductListItem, 'imageUrl'> {
   sku: string;

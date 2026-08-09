@@ -175,7 +175,7 @@ public class OrderService(
             order.Subtotal, order.ShippingCost, order.Tax, order.Total,
             order.Items.Select(i => new OrderItemDto(
                 i.ProductId, i.ProductName, i.Product?.Slug,
-                i.Product?.Images.OrderBy(img => img.SortOrder).Select(img => img.Url).FirstOrDefault(),
+                i.Product?.Images.OrderBy(img => img.SortOrder).Select(img => img.CardUrl).FirstOrDefault(),
                 i.UnitPrice, i.Qty)).ToList());
     }
 

@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using VoltElectronics.Infrastructure;
@@ -63,7 +64,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseStaticFiles();
+// wwwroot doesn't exist until the first image upload creates it; ASP.NET Core resolves
+// WebRootPath once at host build time, so the default UseStaticFiles() would bind to a
+// NullFileProvider and 404 forever if wwwroot was missing at startup. Create the folder
+// up front and point an explicit PhysicalFileProvider at it instead of relying on the
+// WebRootPath convention.
+var webRoot = Path.Combine(app.Environment.ContentRootPath, "wwwroot");
+Directory.CreateDirectory(webRoot);
+app.UseStaticFiles(new StaticFileOptions { FileProvider = new PhysicalFileProvider(webRoot) });
 app.UseCors("frontend");
 app.UseAuthentication();
 app.UseAuthorization();

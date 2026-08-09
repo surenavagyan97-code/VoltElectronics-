@@ -9,7 +9,7 @@ public record ProductListItemDto(
 
 public record ProductSpecDto(string Name, string Value);
 
-public record ProductImageDto(int Id, string Url, int SortOrder);
+public record ProductImageDto(int Id, string Url, string ThumbUrl, string CardUrl, int SortOrder);
 
 public record ProductDetailDto(
     int Id, string Name, string Slug, string Sku, string Category, int CategoryId,
