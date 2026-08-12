@@ -18,11 +18,3 @@ public record ProductDetailDto(
     IReadOnlyList<ProductImageDto> Images,
     IReadOnlyList<ProductSpecDto> Specs,
     IReadOnlyList<ProductListItemDto> Related);
-
-public record ProductQuery(
-    int Page = 1,
-    int PageSize = 12,
-    int[]? CategoryIds = null,
-    string[]? PriceBands = null, // lt250 | 250-750 | 750-1500 | gt1500
-    string? Search = null,
-    string? Sort = null);        // featured | price_asc | price_desc | rating

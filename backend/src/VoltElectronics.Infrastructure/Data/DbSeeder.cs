@@ -3,17 +3,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using VoltElectronics.Domain.Entities;
-using VoltElectronics.Domain.Enums;
+using VoltElectronics.Application.Identity;
+using VoltElectronics.Domain.Catalog;
+using VoltElectronics.Domain.Ordering;
 using VoltElectronics.Infrastructure.Identity;
 
 namespace VoltElectronics.Infrastructure.Data;
 
 public static class DbSeeder
 {
-    public const string AdminRole = "Admin";
-    public const string CustomerRole = "Customer";
-
     public static async Task SeedAsync(IServiceProvider services)
     {
         var db = services.GetRequiredService<AppDbContext>();
@@ -22,7 +20,7 @@ public static class DbSeeder
         var config = services.GetRequiredService<IConfiguration>();
         var logger = services.GetRequiredService<ILoggerFactory>().CreateLogger("DbSeeder");
 
-        foreach (var role in new[] { AdminRole, CustomerRole })
+        foreach (var role in Roles.All)
         {
             if (!await roleManager.RoleExistsAsync(role))
                 await roleManager.CreateAsync(new IdentityRole(role));
@@ -41,7 +39,7 @@ public static class DbSeeder
             var password = config["Seed:AdminPassword"] ?? "Admin123$";
             var result = await userManager.CreateAsync(admin, password);
             if (result.Succeeded)
-                await userManager.AddToRoleAsync(admin, AdminRole);
+                await userManager.AddToRoleAsync(admin, Roles.Admin);
             else
                 logger.LogWarning("Admin seed failed: {Errors}", string.Join("; ", result.Errors.Select(e => e.Description)));
         }
@@ -50,28 +48,22 @@ public static class DbSeeder
             return;
 
         var cats = new[] { "Laptops", "Phones", "Audio", "TVs", "Wearables", "Cameras", "Tablets", "Monitors", "Gaming" }
-            .Select(n => new Category { Name = n, Slug = n.ToLowerInvariant() })
+            .Select(Category.Create)
             .ToDictionary(c => c.Name);
         db.Categories.AddRange(cats.Values);
+        // Saved before products are built: Product references its category by id, not navigation.
+        await db.SaveChangesAsync();
 
         Product P(string name, string cat, decimal price, int stock, double rating, int reviews, string sku,
-                  string desc, decimal? oldPrice = null, string? badge = null, params (string n, string v)[] specs) =>
-            new()
-            {
-                Name = name,
-                Slug = name.ToLowerInvariant().Replace("\"", "").Replace(" ", "-"),
-                Sku = sku,
-                Category = cats[cat],
-                Price = price,
-                CompareAtPrice = oldPrice,
-                Stock = stock,
-                Rating = rating,
-                ReviewCount = reviews,
-                Badge = badge,
-                Description = desc,
-                Status = ProductStatus.Active,
-                Specs = specs.Select((s, i) => new ProductSpec { Name = s.n, Value = s.v, SortOrder = i }).ToList()
-            };
+                  string desc, decimal? oldPrice = null, string? badge = null, params (string n, string v)[] specs)
+        {
+            var product = Product.Create(
+                name, Slug.From(name), sku, cats[cat].Id, desc,
+                price, oldPrice, stock, ProductStatus.Active, badge);
+            product.SetRating(rating, reviews);
+            product.ReplaceSpecs(specs.Select(s => (s.n, s.v)));
+            return product;
+        }
 
         var products = new List<Product>
         {
@@ -115,7 +107,6 @@ public static class DbSeeder
         string[] cities = ["San Francisco", "Austin", "Seattle", "Denver", "Chicago", "Boston"];
         string[] states = ["CA", "TX", "WA", "CO", "IL", "MA"];
         var now = DateTime.UtcNow;
-        var orders = new List<Order>();
 
         for (var i = 0; i < 32; i++)
         {
@@ -128,17 +119,11 @@ public static class DbSeeder
                 .DistinctBy(p => p.Id)
                 .ToList();
 
-            var items = picked.Select(p => new OrderItem
-            {
-                ProductId = p.Id,
-                ProductName = p.Name,
-                UnitPrice = p.Price,
-                Qty = rng.Next(1, 3)
-            }).ToList();
+            var lines = picked
+                .Select(p => new OrderLine(p.Id, p.Name, p.Price, rng.Next(1, 3)))
+                .ToList();
 
-            var subtotal = items.Sum(x => x.UnitPrice * x.Qty);
-            var shipping = 24m;
-            var tax = Math.Round(subtotal * 0.0875m, 2);
+            var (subtotal, shipping, tax, total) = PricingPolicy.Totals(lines.Sum(l => l.UnitPrice * l.Qty));
             var status = daysAgo switch
             {
                 > 14 => OrderStatus.Delivered,
@@ -147,28 +132,28 @@ public static class DbSeeder
                 _ => rng.Next(3) == 0 ? OrderStatus.Shipped : OrderStatus.Processing
             };
 
-            orders.Add(new Order
-            {
-                OrderNumber = $"ORD-{58150 + i}",
-                GuestEmail = customers[ci].Split(' ')[0].ToLowerInvariant() + "@example.com",
-                Status = status,
-                ShipFullName = customers[ci],
-                ShipStreet = $"{100 + rng.Next(900)} Market St",
-                ShipCity = cities[ci],
-                ShipState = states[ci],
-                ShipZip = $"{94000 + rng.Next(5000)}",
-                Subtotal = subtotal,
-                ShippingCost = shipping,
-                Tax = tax,
-                Total = subtotal + shipping + tax,
-                CreatedAt = created,
-                PaidAt = status == OrderStatus.Cancelled ? null : created.AddMinutes(2),
-                Items = items
-            });
+            var order = Order.Place(
+                $"ORD-{58150 + i}",
+                userId: null,
+                email: customers[ci].Split(' ')[0].ToLowerInvariant() + "@example.com",
+                ShippingAddress.Create(
+                    customers[ci], null, $"{100 + rng.Next(900)} Market St",
+                    cities[ci], states[ci], $"{94000 + rng.Next(5000)}", null),
+                new OrderTotals(subtotal, shipping, tax, total, "USD", 1m),
+                cartId: null,
+                paymentProvider: "Fake",
+                lines);
+            order.ChangeStatus(status);
+            db.Orders.Add(order);
+
+            // Demo data is deliberately backdated; these setters are private on purpose, and going
+            // through MarkPaid would also draw down stock — so write the two audit stamps directly.
+            db.Entry(order).Property(o => o.CreatedAt).CurrentValue = created;
+            if (status != OrderStatus.Cancelled)
+                db.Entry(order).Property(o => o.PaidAt).CurrentValue = created.AddMinutes(2);
         }
 
-        db.Orders.AddRange(orders);
         await db.SaveChangesAsync();
-        logger.LogInformation("Database seeded: {Products} products, {Orders} demo orders", products.Count, orders.Count);
+        logger.LogInformation("Database seeded: {Products} products, 32 demo orders", products.Count);
     }
 }

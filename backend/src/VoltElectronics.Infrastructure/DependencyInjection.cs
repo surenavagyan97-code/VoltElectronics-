@@ -2,19 +2,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using VoltElectronics.Application.Auth;
-using VoltElectronics.Application.Cart;
-using VoltElectronics.Application.Catalog;
 using VoltElectronics.Application.Common;
-using VoltElectronics.Application.Orders;
-using VoltElectronics.Application.Payments;
-using VoltElectronics.Application.Admin;
-using VoltElectronics.Infrastructure.Admin;
+using VoltElectronics.Application.Common.Abstractions;
+using VoltElectronics.Application.Common.Messaging;
+using VoltElectronics.Domain.Common;
 using VoltElectronics.Infrastructure.Auth;
-using VoltElectronics.Infrastructure.Carts;
-using VoltElectronics.Infrastructure.Catalog;
 using VoltElectronics.Infrastructure.Common;
-using VoltElectronics.Infrastructure.Orders;
 using VoltElectronics.Infrastructure.Data;
 using VoltElectronics.Infrastructure.Identity;
 using VoltElectronics.Infrastructure.Payments;
@@ -27,6 +20,7 @@ public static class DependencyInjection
     {
         services.AddDbContext<AppDbContext>(o =>
             o.UseSqlServer(config.GetConnectionString("Default")));
+        services.AddScoped<IUnitOfWork, EfUnitOfWork>();
 
         services.AddIdentityCore<ApplicationUser>(o =>
             {
@@ -39,21 +33,47 @@ public static class DependencyInjection
 
         services.Configure<JwtOptions>(config.GetSection(JwtOptions.SectionName));
         services.AddScoped<TokenService>();
-        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<TokenIssuer>();
 
         services.Configure<CurrencyOptions>(config.GetSection(CurrencyOptions.SectionName));
         services.AddSingleton<ICurrencyConverter, CurrencyConverter>();
+        services.AddSingleton<IOrderNumberGenerator, OrderNumberGenerator>();
 
-        services.AddScoped<ICatalogService, CatalogService>();
-        services.AddScoped<ICartService, CartService>();
-        services.AddScoped<IOrderService, OrderService>();
-        services.AddScoped<IAdminService, AdminService>();
+        services.AddPersistenceAdapters();
 
         services.Configure<PaymentsOptions>(config.GetSection(PaymentsOptions.SectionName));
         if (string.Equals(config["Payments:Provider"], "Ameria", StringComparison.OrdinalIgnoreCase))
-            services.AddHttpClient<IPaymentProvider, AmeriaVposProvider>();
+            services.AddHttpClient<IPaymentGateway, AmeriaVposGateway>();
         else
-            services.AddSingleton<IPaymentProvider, FakePaymentProvider>();
+            services.AddSingleton<IPaymentGateway, FakePaymentGateway>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Everything that hangs off the DbContext, minus the DbContext itself: the unit of work, the
+    /// repositories and readers (bound by convention — adding one is enough to register it), and
+    /// this assembly's query/command handlers. Split out so tests can run the real persistence
+    /// graph over an in-memory database.
+    /// </summary>
+    public static IServiceCollection AddPersistenceAdapters(this IServiceCollection services)
+    {
+        services.AddScoped<IUnitOfWork, EfUnitOfWork>();
+
+        services.Scan(scan => scan
+            .FromAssemblies(typeof(DependencyInjection).Assembly)
+            .AddClasses(c => c.Where(t => t.Name.EndsWith("Repository") || t.Name.EndsWith("Reader")), publicOnly: false)
+            .AsImplementedInterfaces()
+            .WithScopedLifetime());
+
+        // The read side (query handlers projecting straight off the DbContext) and the identity
+        // command handlers live in this assembly; the same scan Application runs on itself.
+        services.AddMessageHandlersFrom(typeof(DependencyInjection).Assembly);
+
+        // Transaction middleware around every command handler registered above (Application's
+        // handlers included — AddApplication always runs before this). Must stay the last word
+        // on ICommandHandler<,> registrations or late additions would escape the transaction.
+        services.Decorate(typeof(ICommandHandler<,>), typeof(TransactionBehavior<,>));
 
         return services;
     }

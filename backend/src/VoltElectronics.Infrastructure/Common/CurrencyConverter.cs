@@ -1,9 +1,10 @@
 using Microsoft.Extensions.Options;
 using VoltElectronics.Application.Common;
+using VoltElectronics.Application.Common.Abstractions;
 
 namespace VoltElectronics.Infrastructure.Common;
 
-public class CurrencyConverter(IOptions<CurrencyOptions> options) : ICurrencyConverter
+public sealed class CurrencyConverter(IOptions<CurrencyOptions> options) : ICurrencyConverter
 {
     private readonly CurrencyOptions _opts = options.Value;
 

@@ -42,9 +42,3 @@ public record AnalyticsDto(
     IReadOnlyList<RevenueDayDto> RevenueByDay7d,
     IReadOnlyList<TopProductDto> TopProducts,
     IReadOnlyList<AdminProductListItemDto> LowStockProducts);
-
-public record AdminResult(bool Success, string? Error)
-{
-    public static readonly AdminResult Ok = new(true, null);
-    public static AdminResult Fail(string error) => new(false, error);
-}

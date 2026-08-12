@@ -1,5 +1,5 @@
 using System.Security.Claims;
-using VoltElectronics.Application.Cart;
+using VoltElectronics.Application.Carts;
 
 namespace VoltElectronics.Api;
 

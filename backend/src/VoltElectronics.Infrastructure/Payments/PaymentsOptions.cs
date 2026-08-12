@@ -14,6 +14,9 @@ public class PaymentsOptions
     public string FrontendBaseUrl { get; set; } = "http://localhost:4200";
 
     public AmeriaVposOptions Ameria { get; set; } = new();
+
+    /// <summary>The one endpoint every gateway redirects the shopper back to.</summary>
+    public string CallbackUrl() => $"{CallbackBaseUrl.TrimEnd('/')}/api/payments/callback";
 }
 
 public class AmeriaVposOptions
