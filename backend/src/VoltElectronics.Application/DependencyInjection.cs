@@ -12,5 +12,6 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services) =>
         services
             .AddMessaging()
-            .AddMessageHandlersFrom(typeof(DependencyInjection).Assembly);
+            .AddMessageHandlersFrom(typeof(DependencyInjection).Assembly)
+            .AddCommandValidatorsFrom(typeof(DependencyInjection).Assembly);
 }

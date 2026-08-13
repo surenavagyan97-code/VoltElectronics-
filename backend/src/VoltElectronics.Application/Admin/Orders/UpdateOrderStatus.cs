@@ -1,3 +1,4 @@
+using FluentValidation;
 using VoltElectronics.Application.Common.Messaging;
 using VoltElectronics.Application.Common.Results;
 using VoltElectronics.Domain.Common;
@@ -7,6 +8,16 @@ namespace VoltElectronics.Application.Admin.Orders;
 
 /// <summary>Fulfilment progress, set by staff — payment state is never changed from here.</summary>
 public sealed record UpdateOrderStatusCommand(string OrderNumber, string Status) : ICommand<Result>;
+
+internal sealed class UpdateOrderStatusValidator : AbstractValidator<UpdateOrderStatusCommand>
+{
+    public UpdateOrderStatusValidator()
+    {
+        RuleFor(c => c.OrderNumber).NotEmpty();
+        // The handler parses the value itself; this just rejects the obviously blank request.
+        RuleFor(c => c.Status).NotEmpty();
+    }
+}
 
 internal sealed class UpdateOrderStatusHandler(
     IOrderRepository orders,

@@ -30,9 +30,9 @@ internal sealed class CheckoutHandler(
 {
     public async Task<Result<CheckoutResponse>> HandleAsync(CheckoutCommand command, CancellationToken cancellationToken)
     {
+        // Shape rules (required fields, email format) are CheckoutValidator's job by the time
+        // this runs; everything below needs the database.
         var shipTo = command.ShipTo;
-        if (string.IsNullOrWhiteSpace(shipTo.Email))
-            return Error.Invalid("Please fill in all required shipping fields.");
 
         var cart = await carts.FindAsync(command.CartKey, cancellationToken);
         if (cart is null || cart.Items.Count == 0) return Error.Invalid("Your cart is empty.");

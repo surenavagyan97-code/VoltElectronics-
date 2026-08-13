@@ -1,4 +1,5 @@
 using System.Reflection;
+using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace VoltElectronics.Application.Common.Messaging;
@@ -32,6 +33,22 @@ public static class MessagingRegistration
                 .AsImplementedInterfaces(i => i.IsGenericType && i.GetGenericTypeDefinition() == contract)
                 .WithScopedLifetime());
         }
+
+        return services;
+    }
+
+    /// <summary>
+    /// Scans an assembly for FluentValidation validators and binds each to its closed
+    /// <see cref="IValidator{T}"/> so <c>ValidationBehavior</c> can resolve them per command.
+    /// Validators are stateless, hence singletons.
+    /// </summary>
+    public static IServiceCollection AddCommandValidatorsFrom(this IServiceCollection services, Assembly assembly)
+    {
+        services.Scan(scan => scan
+            .FromAssemblies(assembly)
+            .AddClasses(c => c.AssignableTo(typeof(IValidator<>)), publicOnly: false)
+            .AsImplementedInterfaces(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IValidator<>))
+            .WithSingletonLifetime());
 
         return services;
     }

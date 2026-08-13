@@ -70,10 +70,13 @@ public static class DependencyInjection
         // command handlers live in this assembly; the same scan Application runs on itself.
         services.AddMessageHandlersFrom(typeof(DependencyInjection).Assembly);
 
-        // Transaction middleware around every command handler registered above (Application's
-        // handlers included — AddApplication always runs before this). Must stay the last word
-        // on ICommandHandler<,> registrations or late additions would escape the transaction.
+        // Command middleware around every handler registered above (Application's included —
+        // AddApplication always runs before this). Decorate order matters: each call wraps the
+        // previous, so validation ends up outermost and an invalid command is rejected before a
+        // transaction is ever opened. Keep these the last word on ICommandHandler<,> registrations
+        // or late additions would escape both behaviors.
         services.Decorate(typeof(ICommandHandler<,>), typeof(TransactionBehavior<,>));
+        services.Decorate(typeof(ICommandHandler<,>), typeof(ValidationBehavior<,>));
 
         return services;
     }
