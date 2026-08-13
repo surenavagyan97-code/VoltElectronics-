@@ -8,6 +8,7 @@ export const routes: Routes = [
     children: [
       { path: '', loadComponent: () => import('./store/home').then((m) => m.HomePage) },
       { path: 'shop', loadComponent: () => import('./store/shop').then((m) => m.ShopPage) },
+      { path: 'contact', loadComponent: () => import('./store/contact').then((m) => m.ContactPage) },
       { path: 'product/:slug', loadComponent: () => import('./store/product-detail').then((m) => m.ProductDetailPage) },
       { path: 'cart', loadComponent: () => import('./store/cart-page').then((m) => m.CartPage) },
       { path: 'checkout', loadComponent: () => import('./store/checkout').then((m) => m.CheckoutPage) },

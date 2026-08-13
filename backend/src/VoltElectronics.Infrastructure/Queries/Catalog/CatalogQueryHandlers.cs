@@ -116,7 +116,7 @@ internal sealed class GetCategoriesHandler(AppDbContext db)
         await db.Categories.AsNoTracking()
             .OrderBy(c => c.Name)
             .Select(c => new CategoryDto(c.Id, c.Name, c.Slug,
-                db.Products.Count(p => p.CategoryId == c.Id && p.Status == ProductStatus.Active)))
+                db.Products.Count(p => p.CategoryId == c.Id && p.Status == ProductStatus.Active), c.ImageUrl))
             .ToListAsync(cancellationToken);
 }
 

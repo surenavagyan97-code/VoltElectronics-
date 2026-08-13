@@ -2,6 +2,7 @@ export const hy: Record<string, string> = {
   // nav / chrome
   'nav.home': 'Գլխավոր',
   'nav.shop': 'Խանութ',
+  'nav.contact': 'Կապ մեզ հետ',
   'nav.orders': 'Պատվերներ',
   'nav.admin': 'Ադմին',
   'nav.cart': 'Զամբյուղ',
@@ -11,7 +12,17 @@ export const hy: Record<string, string> = {
   'theme.toggleToDark': 'Անցնել մուգ թեմային',
   'theme.lightTheme': 'Լուսավոր թեմա',
   'theme.darkTheme': 'Մուգ թեմա',
-  'footer.copyright': '© 2026 Volt Electronics: Գնումների համար հարմար գնագոյացում՝ ըստ պահանջի:',
+  'footer.copyright': '© 2026 Smart Buy: Գնումների համար հարմար գնագոյացում՝ ըստ պահանջի:',
+
+  // contact
+  'contact.title': 'Կապ մեզ հետ',
+  'contact.subtitle': 'Հարցեր ունե՞ք պատվերի, մեծածախ գների կամ ապրանքի վերաբերյալ: Սովորաբար պատասխանում ենք մեկ աշխատանքային օրվա ընթացքում:',
+  'contact.email': 'Էլ. փոստ',
+  'contact.phone': 'Հեռախոս',
+  'contact.address': 'Սրահ',
+  'contact.addressValue': 'Հյուսիսային պող. 1, Երևան, Հայաստան',
+  'contact.hours': 'Աշխատանքային ժամեր',
+  'contact.hoursValue': 'Երկ–Ուրբ 9:00–18:00, Շաբ 10:00–16:00',
   'lang.label': 'Լեզու',
 
   // shared
@@ -134,7 +145,7 @@ export const hy: Record<string, string> = {
 
   // auth
   'auth.signIn': 'Մուտք',
-  'auth.welcomeBack': 'Բարի վերադարձ Volt Electronics:',
+  'auth.welcomeBack': 'Բարի վերադարձ Smart Buy:',
   'auth.password': 'Գաղտնաբառ',
   'auth.signingIn': 'Մուտք գործում…',
   'auth.newHere': 'Նոր եք այստեղ?',
@@ -156,7 +167,7 @@ export const hy: Record<string, string> = {
   'account.table.status': 'Կարգավիճակ',
 
   // admin — shell
-  'admin.brand': 'Volt Ադմին',
+  'admin.brand': 'Ադմին',
   'admin.nav.products': 'Ապրանքներ',
   'admin.nav.categories': 'Կատեգորիաներ',
   'admin.nav.orders': 'Պատվերներ',
@@ -176,6 +187,18 @@ export const hy: Record<string, string> = {
   'admin.products.units': '{count} հատ',
   'admin.products.deleteConfirmTitle': 'Ջնջե՞լ «{name}»-ը:',
   'admin.products.deleteConfirmBody': 'Պատվերների պատմություն ունեցող ապրանքները ջնջվելու փոխարեն արխիվացվում են, որպեսզի նախկին պատվերները մնան անփոփոխ:',
+  'admin.products.export': 'Արտահանել',
+  'admin.products.import': 'Ներմուծել',
+  'admin.products.importing': 'Ներմուծում…',
+  'admin.products.importTitle': 'Ներմուծել ապրանքներ',
+  'admin.products.dropHint': 'Քաշեք և գցեք .xlsx ֆայլն այստեղ',
+  'admin.products.dropBrowse': 'կամ սեղմեք՝ ֆայլ ընտրելու համար',
+  'admin.products.templateLead': 'Զրոյից ե՞ք սկսում:',
+  'admin.products.templateLink': 'Ներբեռնեք ձևանմուշը',
+  'admin.products.onlyXlsx': 'Թույլատրվում են միայն .xlsx ֆայլեր:',
+  'admin.products.importSummary': 'Ներմուծումն ավարտվեց. {created} ստեղծվել է, {updated} թարմացվել է:',
+  'admin.products.importErrors': '{count} տող բաց է թողնվել.',
+  'admin.products.importRowError': 'Տող {row}. {error}',
 
   // admin — product form
   'admin.form.addProduct': 'Ավելացնել ապրանք',
@@ -214,6 +237,8 @@ export const hy: Record<string, string> = {
   'admin.categories.table.slug': 'Slug',
   'admin.categories.table.products': 'Ապրանքներ',
   'admin.categories.namePlaceholder': 'Կատեգորիայի անվանում',
+  'admin.categories.uploadImage': 'Վերբեռնել նկար',
+  'admin.categories.removeImage': 'Հեռացնել նկարը',
 
   // admin — orders
   'admin.orders.title': 'Պատվերներ',

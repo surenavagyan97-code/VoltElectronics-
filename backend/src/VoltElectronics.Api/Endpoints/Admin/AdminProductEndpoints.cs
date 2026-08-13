@@ -1,6 +1,3 @@
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Jpeg;
-using SixLabors.ImageSharp.Processing;
 using VoltElectronics.Application.Admin;
 using VoltElectronics.Application.Admin.Products;
 using VoltElectronics.Application.Admin.Queries;
@@ -11,14 +8,7 @@ namespace VoltElectronics.Api.Endpoints.Admin;
 
 public static class AdminProductEndpoints
 {
-    private static readonly string[] AllowedImageExtensions = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
-    private const long MaxImageBytes = 5 * 1024 * 1024;
-    private static readonly JpegEncoder JpegEncoder = new() { Quality = 82 };
-
-    // Longest-edge caps for the three variants every upload is resized into.
-    private const int ThumbSize = 160;  // admin table + detail-page thumbnail strip
-    private const int CardSize = 640;   // listing/featured cards, cart & order line items
-    private const int DetailSize = 1600; // product detail main viewer
+    private const long MaxImportBytes = 10 * 1024 * 1024;
 
     public static void Map(IEndpointRouteBuilder app)
     {
@@ -30,6 +20,59 @@ public static class AdminProductEndpoints
                 IDispatcher dispatcher, CancellationToken ct,
                 int page = 1, int pageSize = 20, string? search = null) =>
             Results.Ok(await dispatcher.Query(new AdminGetProductsQuery(page, pageSize, search), ct)));
+
+        // Excel round-trip: the exported sheet is also the import template. Rows are matched to
+        // existing products by SKU — matched rows update, new SKUs create, bad rows are reported
+        // per row without sinking the rest of the file.
+        products.MapGet("/export", async (IDispatcher dispatcher, CancellationToken ct) =>
+        {
+            var rows = await dispatcher.Query(new ExportProductsQuery(), ct);
+            return Results.File(
+                ProductsWorkbook.Build(rows),
+                contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                fileDownloadName: $"products-{DateTime.UtcNow:yyyy-MM-dd}.xlsx");
+        });
+
+        // A blank, annotated version of the same sheet for admins to prefill by hand.
+        products.MapGet("/import/template", async (IDispatcher dispatcher, CancellationToken ct) =>
+        {
+            var categories = await dispatcher.Query(new AdminGetCategoriesQuery(), ct);
+            return Results.File(
+                ProductsWorkbook.BuildTemplate(categories),
+                contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                fileDownloadName: "products-import-template.xlsx");
+        });
+
+        products.MapPost("/import", async (IFormFile file, IDispatcher dispatcher, CancellationToken ct) =>
+            {
+                if (file.Length == 0) return Results.BadRequest(new { error = "Empty file." });
+                if (file.Length > MaxImportBytes)
+                    return Results.BadRequest(new { error = "Import file must be 10 MB or smaller." });
+                if (!Path.GetExtension(file.FileName).Equals(".xlsx", StringComparison.OrdinalIgnoreCase))
+                    return Results.BadRequest(new { error = "Only .xlsx files are allowed." });
+
+                List<ImportProductRow> rows;
+                List<ImportRowError> parseErrors;
+                try
+                {
+                    await using var input = file.OpenReadStream();
+                    (rows, parseErrors) = ProductsWorkbook.Parse(input);
+                }
+                catch (Exception)
+                {
+                    return Results.BadRequest(new { error = "The uploaded file isn't a readable Excel workbook." });
+                }
+
+                var result = await dispatcher.Send(new ImportProductsCommand(rows), ct);
+                if (!result.IsSuccess) return ApiResults.Fail(result.Error!);
+
+                var import = result.Value!;
+                return Results.Ok(new ImportProductsResultDto(
+                    import.Created, import.Updated,
+                    parseErrors.Concat(import.Errors).OrderBy(e => e.RowNumber).ToList()));
+            })
+            // JWT auth, no cookies — CSRF doesn't apply, and form binding demands a stance on it.
+            .DisableAntiforgery();
 
         products.MapGet("/{id:int}", async (int id, IDispatcher dispatcher, CancellationToken ct) =>
             await dispatcher.Query(new AdminGetProductQuery(id), ct) is { } product
@@ -53,36 +96,21 @@ public static class AdminProductEndpoints
         products.MapPost("/{id:int}/images", async (
                 int id, IFormFile file, IDispatcher dispatcher, IWebHostEnvironment env, CancellationToken ct) =>
             {
-                if (file.Length == 0) return Results.BadRequest(new { error = "Empty file." });
-                if (file.Length > MaxImageBytes) return Results.BadRequest(new { error = "Image must be 5 MB or smaller." });
-                var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-                if (!AllowedImageExtensions.Contains(ext))
-                    return Results.BadRequest(new { error = $"Only {string.Join(", ", AllowedImageExtensions)} files are allowed." });
+                if (ImageUploads.Reject(file) is { } rejected) return rejected;
 
-                Image source;
-                try
-                {
-                    await using var input = file.OpenReadStream();
-                    source = await Image.LoadAsync(input, ct);
-                }
-                catch (UnknownImageFormatException)
-                {
+                using var source = await ImageUploads.TryLoadAsync(file, ct);
+                if (source is null)
                     return Results.BadRequest(new { error = "The uploaded file isn't a readable image." });
-                }
 
-                using (source)
-                {
-                    var uploads = Path.Combine(env.ContentRootPath, "wwwroot", "uploads");
-                    Directory.CreateDirectory(uploads);
-                    var baseName = Guid.NewGuid().ToString("N");
+                var uploads = ImageUploads.EnsureUploadsDir(env);
+                var baseName = Guid.NewGuid().ToString("N");
 
-                    var thumbUrl = await SaveVariantAsync(source, uploads, baseName, "thumb", ThumbSize, ct);
-                    var cardUrl = await SaveVariantAsync(source, uploads, baseName, "card", CardSize, ct);
-                    var detailUrl = await SaveVariantAsync(source, uploads, baseName, "detail", DetailSize, ct);
+                var thumbUrl = await ImageUploads.SaveVariantAsync(source, uploads, baseName, "thumb", ImageUploads.ThumbSize, ct);
+                var cardUrl = await ImageUploads.SaveVariantAsync(source, uploads, baseName, "card", ImageUploads.CardSize, ct);
+                var detailUrl = await ImageUploads.SaveVariantAsync(source, uploads, baseName, "detail", ImageUploads.DetailSize, ct);
 
-                    return ApiResults.Ok(await dispatcher.Send(
-                        new AddProductImageCommand(id, detailUrl, thumbUrl, cardUrl), ct));
-                }
+                return ApiResults.Ok(await dispatcher.Send(
+                    new AddProductImageCommand(id, detailUrl, thumbUrl, cardUrl), ct));
             })
             // JWT auth, no cookies — CSRF doesn't apply, and form binding demands a stance on it.
             .DisableAntiforgery();
@@ -90,21 +118,5 @@ public static class AdminProductEndpoints
         products.MapDelete("/{id:int}/images/{imageId:int}", async (
                 int id, int imageId, IDispatcher dispatcher, CancellationToken ct) =>
             ApiResults.NoContent(await dispatcher.Send(new RemoveProductImageCommand(id, imageId), ct)));
-    }
-
-    /// <summary>Resizes to fit within size×size (no upscaling, aspect preserved) and saves as JPEG.</summary>
-    private static async Task<string> SaveVariantAsync(
-        Image source, string uploadsDir, string baseName, string suffix, int size, CancellationToken ct)
-    {
-        using var variant = source.Clone(ctx => ctx.Resize(new ResizeOptions
-        {
-            Mode = ResizeMode.Max,
-            Size = new Size(size, size),
-            Sampler = KnownResamplers.Lanczos3,
-        }));
-        var fileName = $"{baseName}-{suffix}.jpg";
-        await using var stream = File.Create(Path.Combine(uploadsDir, fileName));
-        await variant.SaveAsync(stream, JpegEncoder, ct);
-        return $"/uploads/{fileName}";
     }
 }

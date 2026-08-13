@@ -25,5 +25,31 @@ public static class AdminCategoryEndpoints
 
         categories.MapDelete("/{id:int}", async (int id, IDispatcher dispatcher, CancellationToken ct) =>
             ApiResults.NoContent(await dispatcher.Send(new DeleteCategoryCommand(id), ct)));
+
+        // Same split as product images: the API decodes, resizes and writes the file, the command
+        // only records the live URL. Categories carry a single card-sized tile image.
+        categories.MapPost("/{id:int}/image", async (
+                int id, IFormFile file, IDispatcher dispatcher, IWebHostEnvironment env, CancellationToken ct) =>
+            {
+                if (ImageUploads.Reject(file) is { } rejected) return rejected;
+
+                using var source = await ImageUploads.TryLoadAsync(file, ct);
+                if (source is null)
+                    return Results.BadRequest(new { error = "The uploaded file isn't a readable image." });
+
+                var uploads = ImageUploads.EnsureUploadsDir(env);
+                var url = await ImageUploads.SaveVariantAsync(
+                    source, uploads, Guid.NewGuid().ToString("N"), "category", ImageUploads.CardSize, ct);
+
+                var result = await dispatcher.Send(new SetCategoryImageCommand(id, url), ct);
+                return result.IsSuccess
+                    ? Results.Ok(new { imageUrl = result.Value })
+                    : ApiResults.Fail(result.Error!);
+            })
+            // JWT auth, no cookies — CSRF doesn't apply, and form binding demands a stance on it.
+            .DisableAntiforgery();
+
+        categories.MapDelete("/{id:int}/image", async (int id, IDispatcher dispatcher, CancellationToken ct) =>
+            ApiResults.NoContent(await dispatcher.Send(new RemoveCategoryImageCommand(id), ct)));
     }
 }

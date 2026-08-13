@@ -2,6 +2,7 @@ export const ru: Record<string, string> = {
   // nav / chrome
   'nav.home': 'Главная',
   'nav.shop': 'Магазин',
+  'nav.contact': 'Контакты',
   'nav.orders': 'Заказы',
   'nav.admin': 'Админ',
   'nav.cart': 'Корзина',
@@ -11,7 +12,17 @@ export const ru: Record<string, string> = {
   'theme.toggleToDark': 'Переключить на тёмную тему',
   'theme.lightTheme': 'Светлая тема',
   'theme.darkTheme': 'Тёмная тема',
-  'footer.copyright': '© 2026 Volt Electronics. Гибкое ценообразование для закупок по запросу.',
+  'footer.copyright': '© 2026 Smart Buy. Гибкое ценообразование для закупок по запросу.',
+
+  // contact
+  'contact.title': 'Свяжитесь с нами',
+  'contact.subtitle': 'Вопросы о заказе, оптовых ценах или товаре? Обычно отвечаем в течение одного рабочего дня.',
+  'contact.email': 'Эл. почта',
+  'contact.phone': 'Телефон',
+  'contact.address': 'Шоурум',
+  'contact.addressValue': 'Северный пр. 1, Ереван, Армения',
+  'contact.hours': 'Часы работы',
+  'contact.hoursValue': 'Пн–Пт 9:00–18:00, Сб 10:00–16:00',
   'lang.label': 'Язык',
 
   // shared
@@ -134,7 +145,7 @@ export const ru: Record<string, string> = {
 
   // auth
   'auth.signIn': 'Войти',
-  'auth.welcomeBack': 'С возвращением в Volt Electronics.',
+  'auth.welcomeBack': 'С возвращением в Smart Buy.',
   'auth.password': 'Пароль',
   'auth.signingIn': 'Выполняется вход…',
   'auth.newHere': 'Впервые у нас?',
@@ -156,7 +167,7 @@ export const ru: Record<string, string> = {
   'account.table.status': 'Статус',
 
   // admin — shell
-  'admin.brand': 'Volt Админ',
+  'admin.brand': 'Админ',
   'admin.nav.products': 'Товары',
   'admin.nav.categories': 'Категории',
   'admin.nav.orders': 'Заказы',
@@ -176,6 +187,18 @@ export const ru: Record<string, string> = {
   'admin.products.units': '{count} шт.',
   'admin.products.deleteConfirmTitle': 'Удалить «{name}»?',
   'admin.products.deleteConfirmBody': 'Товары с историей заказов архивируются, а не удаляются, чтобы прошлые заказы оставались корректными.',
+  'admin.products.export': 'Экспорт',
+  'admin.products.import': 'Импорт',
+  'admin.products.importing': 'Импорт…',
+  'admin.products.importTitle': 'Импорт товаров',
+  'admin.products.dropHint': 'Перетащите файл .xlsx сюда',
+  'admin.products.dropBrowse': 'или нажмите, чтобы выбрать файл',
+  'admin.products.templateLead': 'Начинаете с нуля?',
+  'admin.products.templateLink': 'Скачайте шаблон',
+  'admin.products.onlyXlsx': 'Допускаются только файлы .xlsx.',
+  'admin.products.importSummary': 'Импорт завершён: создано {created}, обновлено {updated}.',
+  'admin.products.importErrors': 'Пропущенные строки ({count}):',
+  'admin.products.importRowError': 'Строка {row}: {error}',
 
   // admin — product form
   'admin.form.addProduct': 'Добавить товар',
@@ -214,6 +237,8 @@ export const ru: Record<string, string> = {
   'admin.categories.table.slug': 'Слаг',
   'admin.categories.table.products': 'Товары',
   'admin.categories.namePlaceholder': 'Название категории',
+  'admin.categories.uploadImage': 'Загрузить изображение',
+  'admin.categories.removeImage': 'Удалить изображение',
 
   // admin — orders
   'admin.orders.title': 'Заказы',

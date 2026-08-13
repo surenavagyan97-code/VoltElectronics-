@@ -12,6 +12,9 @@ public sealed record AdminGetProductsQuery(int Page = 1, int PageSize = 20, stri
 
 public sealed record AdminGetProductQuery(int Id) : IQuery<AdminProductDetailDto?>;
 
+/// <summary>The full catalog, one row per product, for the Excel export.</summary>
+public sealed record ExportProductsQuery : IQuery<IReadOnlyList<ProductExportRowDto>>;
+
 /// <summary>Every category with its total product count — the storefront's version counts active only.</summary>
 public sealed record AdminGetCategoriesQuery : IQuery<IReadOnlyList<CategoryDto>>;
 

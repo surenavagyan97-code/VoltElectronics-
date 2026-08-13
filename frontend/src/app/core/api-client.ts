@@ -3,9 +3,9 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   AdminOrderListItem, AdminOrderStats, AdminProductDetail, AdminProductListItem, Analytics,
-  AppConfig, AuthResponse, Cart, Category, CheckoutRequest, CheckoutResponse, OrderDetail,
-  OrderSummary, PagedResult, ProductDetail, ProductImage, ProductListItem, ProductQuery,
-  SaveProductRequest,
+  AppConfig, AuthResponse, Cart, Category, CheckoutRequest, CheckoutResponse,
+  ImportProductsResult, OrderDetail, OrderSummary, PagedResult, ProductDetail, ProductImage,
+  ProductListItem, ProductQuery, SaveProductRequest,
 } from './api.types';
 
 /** Typed access to the Volt Electronics API. Base URL is relative — dev uses the
@@ -106,6 +106,17 @@ export class ApiClient {
   adminRemoveImage(productId: number, imageId: number): Observable<void> {
     return this.http.delete<void>(`/api/admin/products/${productId}/images/${imageId}`);
   }
+  adminExportProducts(): Observable<Blob> {
+    return this.http.get('/api/admin/products/export', { responseType: 'blob' });
+  }
+  adminDownloadImportTemplate(): Observable<Blob> {
+    return this.http.get('/api/admin/products/import/template', { responseType: 'blob' });
+  }
+  adminImportProducts(file: File): Observable<ImportProductsResult> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<ImportProductsResult>('/api/admin/products/import', form);
+  }
 
   adminGetCategories(): Observable<Category[]> {
     return this.http.get<Category[]>('/api/admin/categories');
@@ -118,6 +129,14 @@ export class ApiClient {
   }
   adminDeleteCategory(id: number): Observable<void> {
     return this.http.delete<void>(`/api/admin/categories/${id}`);
+  }
+  adminUploadCategoryImage(categoryId: number, file: File): Observable<{ imageUrl: string }> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<{ imageUrl: string }>(`/api/admin/categories/${categoryId}/image`, form);
+  }
+  adminRemoveCategoryImage(categoryId: number): Observable<void> {
+    return this.http.delete<void>(`/api/admin/categories/${categoryId}/image`);
   }
 
   adminGetOrders(page: number, pageSize: number, status?: string, search?: string): Observable<PagedResult<AdminOrderListItem>> {

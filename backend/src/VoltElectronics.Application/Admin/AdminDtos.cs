@@ -18,6 +18,23 @@ public record SaveProductRequest(
     decimal Price, decimal? CompareAtPrice, int Stock, string Status, string? Badge,
     List<ProductSpecDto>? Specs);
 
+// Product Excel import/export. The export row doubles as the import template — SKU is the
+// natural key rows are matched on, and Specs round-trip as "Name: Value" lines in one cell.
+public record ProductExportRowDto(
+    int Id, string Name, string Sku, string Category, string Description,
+    decimal Price, decimal? CompareAtPrice, int Stock, string Status, string? Badge,
+    double Rating, int ReviewCount, string Specs);
+
+/// <summary>One parsed spreadsheet row; RowNumber is the Excel row it came from, for error reporting.</summary>
+public record ImportProductRow(
+    int RowNumber, string? Name, string? Sku, string? Category, string? Description,
+    decimal? Price, decimal? CompareAtPrice, int? Stock, string? Status, string? Badge,
+    double? Rating, int? ReviewCount, string? Specs);
+
+public record ImportRowError(int RowNumber, string Error);
+
+public record ImportProductsResultDto(int Created, int Updated, IReadOnlyList<ImportRowError> Errors);
+
 // Categories
 public record SaveCategoryRequest(string Name);
 

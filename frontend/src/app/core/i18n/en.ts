@@ -3,6 +3,7 @@ export const en: Record<string, string> = {
   // nav / chrome
   'nav.home': 'Home',
   'nav.shop': 'Shop',
+  'nav.contact': 'Contact us',
   'nav.orders': 'Orders',
   'nav.admin': 'Admin',
   'nav.cart': 'Cart',
@@ -12,7 +13,17 @@ export const en: Record<string, string> = {
   'theme.toggleToDark': 'Switch to dark theme',
   'theme.lightTheme': 'Light theme',
   'theme.darkTheme': 'Dark theme',
-  'footer.copyright': '© 2026 Volt Electronics. Procurement-friendly pricing on request.',
+  'footer.copyright': '© 2026 Smart Buy. Procurement-friendly pricing on request.',
+
+  // contact
+  'contact.title': 'Contact us',
+  'contact.subtitle': 'Questions about an order, bulk pricing or a product? We usually reply within one business day.',
+  'contact.email': 'Email',
+  'contact.phone': 'Phone',
+  'contact.address': 'Showroom',
+  'contact.addressValue': '1 Northern Ave, Yerevan, Armenia',
+  'contact.hours': 'Working hours',
+  'contact.hoursValue': 'Mon–Fri 9:00–18:00, Sat 10:00–16:00',
   'lang.label': 'Language',
 
   // shared
@@ -135,7 +146,7 @@ export const en: Record<string, string> = {
 
   // auth
   'auth.signIn': 'Sign in',
-  'auth.welcomeBack': 'Welcome back to Volt Electronics.',
+  'auth.welcomeBack': 'Welcome back to Smart Buy.',
   'auth.password': 'Password',
   'auth.signingIn': 'Signing in…',
   'auth.newHere': 'New here?',
@@ -157,7 +168,7 @@ export const en: Record<string, string> = {
   'account.table.status': 'Status',
 
   // admin — shell
-  'admin.brand': 'Volt Admin',
+  'admin.brand': 'Admin',
   'admin.nav.products': 'Products',
   'admin.nav.categories': 'Categories',
   'admin.nav.orders': 'Orders',
@@ -177,6 +188,18 @@ export const en: Record<string, string> = {
   'admin.products.units': '{count} units',
   'admin.products.deleteConfirmTitle': 'Delete "{name}"?',
   'admin.products.deleteConfirmBody': 'Products with order history are archived instead of deleted, so past orders stay intact.',
+  'admin.products.export': 'Export',
+  'admin.products.import': 'Import',
+  'admin.products.importing': 'Importing…',
+  'admin.products.importTitle': 'Import products',
+  'admin.products.dropHint': 'Drag & drop your .xlsx file here',
+  'admin.products.dropBrowse': 'or click to browse',
+  'admin.products.templateLead': 'Starting from scratch?',
+  'admin.products.templateLink': 'Download the template',
+  'admin.products.onlyXlsx': 'Only .xlsx files are allowed.',
+  'admin.products.importSummary': 'Import finished: {created} created, {updated} updated.',
+  'admin.products.importErrors': '{count} row(s) were skipped:',
+  'admin.products.importRowError': 'Row {row}: {error}',
 
   // admin — product form
   'admin.form.addProduct': 'Add product',
@@ -215,6 +238,8 @@ export const en: Record<string, string> = {
   'admin.categories.table.slug': 'Slug',
   'admin.categories.table.products': 'Products',
   'admin.categories.namePlaceholder': 'Category name',
+  'admin.categories.uploadImage': 'Upload image',
+  'admin.categories.removeImage': 'Remove image',
 
   // admin — orders
   'admin.orders.title': 'Orders',

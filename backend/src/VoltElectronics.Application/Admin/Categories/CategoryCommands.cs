@@ -24,7 +24,7 @@ internal sealed class CreateCategoryHandler(
         categories.Add(category);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return new CategoryDto(category.Id, category.Name, category.Slug, 0);
+        return new CategoryDto(category.Id, category.Name, category.Slug, 0, category.ImageUrl);
     }
 }
 
@@ -46,6 +46,44 @@ internal sealed class UpdateCategoryHandler(
         if (await categories.NameExistsAsync(category.Name, command.Id, cancellationToken))
             return Error.Invalid("A category with this name already exists.");
 
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return Result.Success();
+    }
+}
+
+/// <summary>
+/// Records an already-stored image against a category. As with product images, the API layer
+/// owns decoding, resizing and writing the file — by the time this runs, the URL is live.
+/// </summary>
+public sealed record SetCategoryImageCommand(int CategoryId, string Url) : ICommand<Result<string>>;
+
+internal sealed class SetCategoryImageHandler(
+    ICategoryRepository categories,
+    IUnitOfWork unitOfWork) : ICommandHandler<SetCategoryImageCommand, Result<string>>
+{
+    public async Task<Result<string>> HandleAsync(SetCategoryImageCommand command, CancellationToken cancellationToken)
+    {
+        var category = await categories.GetByIdAsync(command.CategoryId, cancellationToken);
+        if (category is null) return Error.Invalid("Category not found.");
+
+        category.SetImage(command.Url);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return command.Url;
+    }
+}
+
+public sealed record RemoveCategoryImageCommand(int CategoryId) : ICommand<Result>;
+
+internal sealed class RemoveCategoryImageHandler(
+    ICategoryRepository categories,
+    IUnitOfWork unitOfWork) : ICommandHandler<RemoveCategoryImageCommand, Result>
+{
+    public async Task<Result> HandleAsync(RemoveCategoryImageCommand command, CancellationToken cancellationToken)
+    {
+        var category = await categories.GetByIdAsync(command.CategoryId, cancellationToken);
+        if (category is null) return Error.Invalid("Category not found.");
+
+        category.RemoveImage();
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return Result.Success();
     }

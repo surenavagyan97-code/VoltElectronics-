@@ -16,6 +16,13 @@ internal sealed class ProductRepository(AppDbContext db) : IProductRepository
             .AsSplitQuery()
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
+    public Task<Product?> GetAggregateBySkuAsync(string sku, CancellationToken cancellationToken = default) =>
+        db.Products
+            .Include(p => p.Images)
+            .Include(p => p.Specs)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync(p => p.Sku == sku, cancellationToken);
+
     public async Task<IReadOnlyList<Product>> GetByIdsAsync(
         IReadOnlyCollection<int> ids, CancellationToken cancellationToken = default) =>
         await db.Products.Where(p => ids.Contains(p.Id)).ToListAsync(cancellationToken);

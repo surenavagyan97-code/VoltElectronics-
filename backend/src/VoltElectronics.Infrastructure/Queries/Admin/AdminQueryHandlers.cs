@@ -67,6 +67,33 @@ internal sealed class AdminGetProductHandler(AppDbContext db)
     }
 }
 
+internal sealed class ExportProductsHandler(AppDbContext db)
+    : IQueryHandler<ExportProductsQuery, IReadOnlyList<ProductExportRowDto>>
+{
+    public async Task<IReadOnlyList<ProductExportRowDto>> HandleAsync(
+        ExportProductsQuery query, CancellationToken cancellationToken)
+    {
+        // The specs cell is a joined string, which SQL can't produce — project the raw
+        // shape first, then format in memory.
+        var rows = await db.Products.AsNoTracking()
+            .OrderBy(p => p.Name)
+            .Select(p => new
+            {
+                p.Id, p.Name, p.Sku, Category = p.Category.Name, p.Description,
+                p.Price, p.CompareAtPrice, p.Stock, p.Status, p.Badge, p.Rating, p.ReviewCount,
+                Specs = p.Specs.OrderBy(s => s.SortOrder).Select(s => new { s.Name, s.Value }).ToList(),
+            })
+            .ToListAsync(cancellationToken);
+
+        return rows.Select(p => new ProductExportRowDto(
+                p.Id, p.Name, p.Sku, p.Category, p.Description,
+                p.Price, p.CompareAtPrice, p.Stock, p.Status.ToString(), p.Badge,
+                p.Rating, p.ReviewCount,
+                string.Join("\n", p.Specs.Select(s => $"{s.Name}: {s.Value}"))))
+            .ToList();
+    }
+}
+
 internal sealed class AdminGetCategoriesHandler(AppDbContext db)
     : IQueryHandler<AdminGetCategoriesQuery, IReadOnlyList<CategoryDto>>
 {
@@ -75,7 +102,7 @@ internal sealed class AdminGetCategoriesHandler(AppDbContext db)
         await db.Categories.AsNoTracking()
             .OrderBy(c => c.Name)
             .Select(c => new CategoryDto(c.Id, c.Name, c.Slug,
-                db.Products.Count(p => p.CategoryId == c.Id)))
+                db.Products.Count(p => p.CategoryId == c.Id), c.ImageUrl))
             .ToListAsync(cancellationToken);
 }
 

@@ -8,6 +8,9 @@ internal sealed class CategoryRepository(AppDbContext db) : ICategoryRepository
     public Task<Category?> GetByIdAsync(int id, CancellationToken cancellationToken = default) =>
         db.Categories.FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
+    public Task<Category?> GetByNameAsync(string name, CancellationToken cancellationToken = default) =>
+        db.Categories.FirstOrDefaultAsync(c => c.Name == name, cancellationToken);
+
     public Task<bool> ExistsAsync(int id, CancellationToken cancellationToken = default) =>
         db.Categories.AnyAsync(c => c.Id == id, cancellationToken);
 

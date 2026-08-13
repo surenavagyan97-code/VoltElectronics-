@@ -13,6 +13,7 @@ export interface Category {
   name: string;
   slug: string;
   productCount: number;
+  imageUrl: string | null;
 }
 
 export interface ProductListItem {
@@ -176,6 +177,12 @@ export interface SaveProductRequest {
   status: string;
   badge: string | null;
   specs: ProductSpec[];
+}
+export interface ImportRowError { rowNumber: number; error: string; }
+export interface ImportProductsResult {
+  created: number;
+  updated: number;
+  errors: ImportRowError[];
 }
 export interface AdminOrderListItem {
   orderNumber: string;

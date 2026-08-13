@@ -25,6 +25,13 @@ public sealed class Category : AggregateRoot
         Slug = Catalog.Slug.From(trimmed);
     }
 
+    public void SetImage(string url) =>
+        ImageUrl = string.IsNullOrWhiteSpace(url)
+            ? throw new DomainException("Image URL is required.")
+            : url;
+
+    public void RemoveImage() => ImageUrl = null;
+
     private static string Require(string name) =>
         string.IsNullOrWhiteSpace(name)
             ? throw new DomainException("Name is required.")

@@ -2,12 +2,13 @@ import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { CurrencyStore } from '../core/currency-store';
-import { I18nService, LANG_FLAGS, LANG_LABELS, Lang } from '../core/i18n.service';
+import { I18nService } from '../core/i18n.service';
+import { LangSelect } from '../core/lang-select';
 import { ThemeStore } from '../core/theme-store';
 
 @Component({
   selector: 'app-admin-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule, LangSelect],
   styles: `
     .admin-nav-link {
       display: flex; align-items: center; gap: 10px; padding: 9px 12px;
@@ -22,7 +23,13 @@ import { ThemeStore } from '../core/theme-store';
   template: `
     <div style="display: flex; min-height: 100vh;">
       <div class="col" style="width: 220px; flex: none; background: var(--color-surface); padding: 20px 14px; gap: 4px; border-right: 1px solid var(--color-divider);">
-        <div class="nav-brand" style="padding: 0 10px 18px;">{{ i18n.t('admin.brand') }}</div>
+        <div class="brand-logo" style="padding: 0 10px 18px;">
+          <span class="brand-tile" aria-hidden="true">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 2 4.5 13.5h5.2L10.5 22l9-11.5h-5.2L13.5 2z"/></svg>
+          </span>
+          <span class="brand-word" style="font-size: 17px;">Smart<em>Buy</em></span>
+          <span class="text-muted" style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 3px;">{{ i18n.t('admin.brand') }}</span>
+        </div>
         <a routerLink="/admin/products" routerLinkActive="active" class="admin-nav-link">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 8l-9-5-9 5 9 5 9-5z"></path><path d="M3 8v8l9 5 9-5V8"></path><path d="M12 13v8"></path></svg>
           {{ i18n.t('admin.nav.products') }}
@@ -41,11 +48,7 @@ import { ThemeStore } from '../core/theme-store';
         </a>
         <div style="flex: 1;"></div>
         <div class="row" style="gap: 6px; padding: 0 10px;">
-          <select class="input" style="height: 30px; padding: 2px 6px; font-size: 11px; width: auto; flex: 1;"
-                  [attr.aria-label]="i18n.t('lang.label')"
-                  [ngModel]="i18n.lang()" [ngModelOptions]="{ standalone: true }" (ngModelChange)="i18n.setLang($event)">
-            @for (l of langs; track l) { <option [value]="l">{{ langFlags[l] }} {{ langLabels[l] }}</option> }
-          </select>
+          <app-lang-select direction="up" style="flex: 1;" />
           <select class="input" style="height: 30px; padding: 2px 6px; font-size: 11px; width: auto; flex: 1;"
                   [ngModel]="currency.currency()" [ngModelOptions]="{ standalone: true }" (ngModelChange)="currency.setCurrency($event)">
             @for (c of currency.supported(); track c) { <option [value]="c">{{ c }}</option> }
@@ -76,8 +79,4 @@ export class AdminLayout {
   theme = inject(ThemeStore);
   currency = inject(CurrencyStore);
   i18n = inject(I18nService);
-
-  readonly langs: Lang[] = ['en', 'hy', 'ru'];
-  readonly langLabels = LANG_LABELS;
-  readonly langFlags = LANG_FLAGS;
 }

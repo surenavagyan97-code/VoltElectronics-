@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <!-- Smart Buy mark, favicon variant: filled tile + white solid bolt (per the logo scale sheet). -->
+  <rect width="24" height="24" rx="6" fill="#5d5294"/>
+  <path d="M13.5 4 6.5 13h4l-.6 7 7-9h-4l.6-7z" fill="#fff"/>
+</svg>

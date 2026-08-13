@@ -4,17 +4,25 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 import { AuthStore } from '../core/auth-store';
 import { CartStore } from '../core/cart-store';
 import { Currency, CurrencyStore } from '../core/currency-store';
-import { I18nService, LANG_FLAGS, LANG_LABELS, Lang } from '../core/i18n.service';
+import { I18nService } from '../core/i18n.service';
+import { LangSelect } from '../core/lang-select';
 import { ThemeStore } from '../core/theme-store';
 
 @Component({
   selector: 'app-store-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule, LangSelect],
   template: `
+    <div style="display: flex; flex-direction: column; min-height: 100vh;">
     <div class="nav" style="border-bottom: 1px solid var(--color-divider); padding: 14px 32px;">
-      <a routerLink="/" class="nav-brand" style="color: inherit;">Volt Electronics</a>
+      <a routerLink="/" class="nav-brand brand-logo">
+        <span class="brand-tile" aria-hidden="true">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 2 4.5 13.5h5.2L10.5 22l9-11.5h-5.2L13.5 2z"/></svg>
+        </span>
+        <span class="brand-word">Smart<em>Buy</em></span>
+      </a>
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">{{ i18n.t('nav.home') }}</a>
       <a routerLink="/shop" routerLinkActive="active">{{ i18n.t('nav.shop') }}</a>
+      <a routerLink="/contact" routerLinkActive="active">{{ i18n.t('nav.contact') }}</a>
       @if (auth.isLoggedIn() && !auth.isAdmin()) {
         <a routerLink="/account/orders" routerLinkActive="active">{{ i18n.t('nav.orders') }}</a>
       }
@@ -23,11 +31,7 @@ import { ThemeStore } from '../core/theme-store';
       }
       <div style="flex: 1;"></div>
       <div class="row" style="gap: 14px;">
-        <select class="input" style="height: 32px; padding: 2px 8px; font-size: 12px; width: auto;"
-                [attr.aria-label]="i18n.t('lang.label')"
-                [ngModel]="i18n.lang()" [ngModelOptions]="{ standalone: true }" (ngModelChange)="i18n.setLang($event)">
-          @for (l of langs; track l) { <option [value]="l">{{ langFlags[l] }} {{ langLabels[l] }}</option> }
-        </select>
+        <app-lang-select />
         <select class="input" style="height: 32px; padding: 2px 8px; font-size: 12px; width: auto;"
                 [ngModel]="currency.currency()" [ngModelOptions]="{ standalone: true }" (ngModelChange)="setCurrency($event)">
           @for (c of currency.supported(); track c) { <option [value]="c">{{ c }}</option> }
@@ -63,10 +67,13 @@ import { ThemeStore } from '../core/theme-store';
       </div>
     </div>
 
-    <router-outlet />
+    <div style="flex: 1;">
+      <router-outlet />
+    </div>
 
     <div style="border-top: 1px solid var(--color-divider); padding: 28px 32px; opacity: 0.6; font-size: 13px;">
       {{ i18n.t('footer.copyright') }}
+    </div>
     </div>
   `,
 })
@@ -77,10 +84,6 @@ export class StoreLayout {
   currency = inject(CurrencyStore);
   i18n = inject(I18nService);
   private router = inject(Router);
-
-  readonly langs: Lang[] = ['en', 'hy', 'ru'];
-  readonly langLabels = LANG_LABELS;
-  readonly langFlags = LANG_FLAGS;
 
   async logout(): Promise<void> {
     await this.auth.logout();

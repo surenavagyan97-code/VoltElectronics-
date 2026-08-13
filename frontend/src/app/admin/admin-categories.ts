@@ -21,10 +21,23 @@ import { I18nService } from '../core/i18n.service';
     @if (error(); as err) { <div class="error-text" style="margin-bottom: 10px;">{{ err }}</div> }
 
     <table class="table">
-      <thead><tr><th>{{ i18n.t('admin.categories.table.category') }}</th><th>{{ i18n.t('admin.categories.table.slug') }}</th><th>{{ i18n.t('admin.categories.table.products') }}</th><th></th></tr></thead>
+      <thead><tr><th></th><th>{{ i18n.t('admin.categories.table.category') }}</th><th>{{ i18n.t('admin.categories.table.slug') }}</th><th>{{ i18n.t('admin.categories.table.products') }}</th><th></th></tr></thead>
       <tbody>
         @for (cat of categories(); track cat.id) {
           <tr>
+            <td>
+              <div style="position: relative; width: fit-content;">
+                <label class="ph" style="width: 40px; height: 40px; font-size: 8px; cursor: pointer;"
+                       [attr.aria-label]="i18n.t('admin.categories.uploadImage')">
+                  @if (cat.imageUrl) { <img [src]="cat.imageUrl" [alt]="cat.name" /> } @else { img }
+                  <input type="file" accept="image/*" style="display: none;" (change)="uploadImage(cat, $event)" />
+                </label>
+                @if (cat.imageUrl) {
+                  <button class="btn btn-icon btn-secondary" style="position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; font-size: 11px; background: var(--color-bg);"
+                          (click)="removeImage(cat)" [attr.aria-label]="i18n.t('admin.categories.removeImage')">×</button>
+                }
+              </div>
+            </td>
             <td>
               @if (editingId() === cat.id) {
                 <input class="input" style="width: 220px;" [(ngModel)]="editName" (keyup.enter)="saveEdit(cat)" />
@@ -53,6 +66,7 @@ import { I18nService } from '../core/i18n.service';
         }
         @if (creating()) {
           <tr>
+            <td></td>
             <td><input class="input" style="width: 220px;" [placeholder]="i18n.t('admin.categories.namePlaceholder')" [(ngModel)]="newName" (keyup.enter)="saveCreate()" /></td>
             <td class="text-muted">—</td>
             <td>0</td>
@@ -109,6 +123,29 @@ export class AdminCategoriesPage implements OnInit {
     try {
       await firstValueFrom(this.api.adminUpdateCategory(cat.id, this.editName.trim()));
       this.editingId.set(null);
+      await this.load();
+    } catch (e) {
+      this.error.set(extractError(e));
+    }
+  }
+
+  async uploadImage(cat: Category, event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    try {
+      await firstValueFrom(this.api.adminUploadCategoryImage(cat.id, file));
+      await this.load();
+    } catch (e) {
+      this.error.set(extractError(e));
+    } finally {
+      input.value = '';
+    }
+  }
+
+  async removeImage(cat: Category): Promise<void> {
+    try {
+      await firstValueFrom(this.api.adminRemoveCategoryImage(cat.id));
       await this.load();
     } catch (e) {
       this.error.set(extractError(e));

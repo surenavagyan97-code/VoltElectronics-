@@ -1,6 +1,6 @@
 namespace VoltElectronics.Application.Catalog;
 
-public record CategoryDto(int Id, string Name, string Slug, int ProductCount);
+public record CategoryDto(int Id, string Name, string Slug, int ProductCount, string? ImageUrl);
 
 public record ProductListItemDto(
     int Id, string Name, string Slug, string Category, int CategoryId,

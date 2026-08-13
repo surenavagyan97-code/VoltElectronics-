@@ -28,7 +28,9 @@ import { ProductCard } from './product-card';
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 14px;">
         @for (cat of categories(); track cat.id) {
           <div class="card" style="align-items: center; text-align: center; cursor: pointer;" (click)="openCategory(cat)">
-            <div class="ph" style="width: 100%; height: 64px;">{{ cat.name }}</div>
+            <div class="ph" style="width: 100%; height: 64px;">
+              @if (cat.imageUrl) { <img [src]="cat.imageUrl" [alt]="cat.name" /> } @else { {{ cat.name }} }
+            </div>
             <div class="card-title" style="font-size: 14px;">{{ cat.name }}</div>
             <div class="card-meta">{{ i18n.t('home.productsCount', { count: cat.productCount }) }}</div>
           </div>
