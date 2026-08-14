@@ -6,6 +6,7 @@ public sealed class Product : AggregateRoot
 {
     private readonly List<ProductImage> _images = [];
     private readonly List<ProductSpec> _specs = [];
+    private readonly List<ProductTranslation> _translations = [];
 
     private Product() { }
 
@@ -27,6 +28,7 @@ public sealed class Product : AggregateRoot
 
     public IReadOnlyList<ProductImage> Images => _images;
     public IReadOnlyList<ProductSpec> Specs => _specs;
+    public IReadOnlyList<ProductTranslation> Translations => _translations;
 
     public bool IsPurchasable => Status == ProductStatus.Active;
 
@@ -58,6 +60,23 @@ public sealed class Product : AggregateRoot
         Stock = stock;
         Status = status;
         Badge = string.IsNullOrWhiteSpace(badge) ? null : badge.Trim();
+    }
+
+    /// <summary>
+    /// Replaces the per-language display names. Name stays the canonical form (it drives the slug
+    /// and order-line snapshots); readers fall back to it when a translation is missing — the
+    /// standard e-commerce translation-table pattern, so new languages need no schema change.
+    /// </summary>
+    public void ReplaceTranslations(IEnumerable<(string Lang, string Name)> translations)
+    {
+        _translations.Clear();
+        foreach (var (lang, name) in translations)
+        {
+            if (string.IsNullOrWhiteSpace(lang) || string.IsNullOrWhiteSpace(name)) continue;
+            var normalized = lang.Trim().ToLowerInvariant();
+            if (_translations.Any(t => t.Lang == normalized)) continue;
+            _translations.Add(new ProductTranslation(normalized, name.Trim()));
+        }
     }
 
     /// <summary>The name drives the URL, so a rename needs a freshly resolved unique slug.</summary>

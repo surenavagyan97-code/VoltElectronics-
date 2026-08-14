@@ -82,6 +82,10 @@ internal sealed class ImportProductsHandler(
         if (row.Specs is not null)
             product.ReplaceSpecs(ParseSpecs(row.Specs));
 
+        // Null means the file had no "Name (xx)" columns — leave existing translations alone.
+        if (row.Translations is not null)
+            product.ReplaceTranslations(row.Translations.Select(t => (t.Lang, t.Name)));
+
         await unitOfWork.SaveChangesAsync(ct);
         return (null, wasUpdate);
     }

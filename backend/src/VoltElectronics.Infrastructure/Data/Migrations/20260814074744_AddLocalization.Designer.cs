@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using VoltElectronics.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using VoltElectronics.Infrastructure.Data;
 namespace VoltElectronics.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260814074744_AddLocalization")]
+    partial class AddLocalization
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -175,7 +178,7 @@ namespace VoltElectronics.Infrastructure.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Carts", (string)null);
+                    b.ToTable("Carts");
                 });
 
             modelBuilder.Entity("VoltElectronics.Domain.Carts.CartItem", b =>
@@ -234,7 +237,7 @@ namespace VoltElectronics.Infrastructure.Data.Migrations
                     b.HasIndex("Slug")
                         .IsUnique();
 
-                    b.ToTable("Categories", (string)null);
+                    b.ToTable("Categories");
                 });
 
             modelBuilder.Entity("VoltElectronics.Domain.Catalog.Product", b =>
@@ -304,7 +307,7 @@ namespace VoltElectronics.Infrastructure.Data.Migrations
                     b.HasIndex("Slug")
                         .IsUnique();
 
-                    b.ToTable("Products", (string)null);
+                    b.ToTable("Products");
                 });
 
             modelBuilder.Entity("VoltElectronics.Domain.Catalog.ProductImage", b =>
@@ -431,7 +434,7 @@ namespace VoltElectronics.Infrastructure.Data.Migrations
                     b.HasIndex("Key", "Lang")
                         .IsUnique();
 
-                    b.ToTable("ContentPages", (string)null);
+                    b.ToTable("ContentPages");
                 });
 
             modelBuilder.Entity("VoltElectronics.Domain.Identity.RefreshToken", b =>
@@ -467,7 +470,7 @@ namespace VoltElectronics.Infrastructure.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RefreshTokens", (string)null);
+                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("VoltElectronics.Domain.Ordering.Order", b =>
@@ -523,7 +526,7 @@ namespace VoltElectronics.Infrastructure.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Orders", (string)null);
+                    b.ToTable("Orders");
                 });
 
             modelBuilder.Entity("VoltElectronics.Domain.Ordering.OrderItem", b =>
@@ -735,6 +738,50 @@ namespace VoltElectronics.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("VoltElectronics.Domain.Ordering.Order", b =>
                 {
+                    b.OwnsOne("VoltElectronics.Domain.Ordering.OrderTotals", "Totals", b1 =>
+                        {
+                            b1.Property<int>("OrderId")
+                                .HasColumnType("int");
+
+                            b1.Property<string>("Currency")
+                                .IsRequired()
+                                .HasMaxLength(3)
+                                .HasColumnType("nvarchar(3)")
+                                .HasColumnName("Currency");
+
+                            b1.Property<decimal>("ExchangeRate")
+                                .HasPrecision(18, 6)
+                                .HasColumnType("decimal(18,6)")
+                                .HasColumnName("ExchangeRate");
+
+                            b1.Property<decimal>("Shipping")
+                                .HasPrecision(18, 2)
+                                .HasColumnType("decimal(18,2)")
+                                .HasColumnName("ShippingCost");
+
+                            b1.Property<decimal>("Subtotal")
+                                .HasPrecision(18, 2)
+                                .HasColumnType("decimal(18,2)")
+                                .HasColumnName("Subtotal");
+
+                            b1.Property<decimal>("Tax")
+                                .HasPrecision(18, 2)
+                                .HasColumnType("decimal(18,2)")
+                                .HasColumnName("Tax");
+
+                            b1.Property<decimal>("Total")
+                                .HasPrecision(18, 2)
+                                .HasColumnType("decimal(18,2)")
+                                .HasColumnName("Total");
+
+                            b1.HasKey("OrderId");
+
+                            b1.ToTable("Orders");
+
+                            b1.WithOwner()
+                                .HasForeignKey("OrderId");
+                        });
+
                     b.OwnsOne("VoltElectronics.Domain.Ordering.ShippingAddress", "ShipTo", b1 =>
                         {
                             b1.Property<int>("OrderId")
@@ -782,51 +829,7 @@ namespace VoltElectronics.Infrastructure.Data.Migrations
 
                             b1.HasKey("OrderId");
 
-                            b1.ToTable("Orders", (string)null);
-
-                            b1.WithOwner()
-                                .HasForeignKey("OrderId");
-                        });
-
-                    b.OwnsOne("VoltElectronics.Domain.Ordering.OrderTotals", "Totals", b1 =>
-                        {
-                            b1.Property<int>("OrderId")
-                                .HasColumnType("int");
-
-                            b1.Property<string>("Currency")
-                                .IsRequired()
-                                .HasMaxLength(3)
-                                .HasColumnType("nvarchar(3)")
-                                .HasColumnName("Currency");
-
-                            b1.Property<decimal>("ExchangeRate")
-                                .HasPrecision(18, 6)
-                                .HasColumnType("decimal(18,6)")
-                                .HasColumnName("ExchangeRate");
-
-                            b1.Property<decimal>("Shipping")
-                                .HasPrecision(18, 2)
-                                .HasColumnType("decimal(18,2)")
-                                .HasColumnName("ShippingCost");
-
-                            b1.Property<decimal>("Subtotal")
-                                .HasPrecision(18, 2)
-                                .HasColumnType("decimal(18,2)")
-                                .HasColumnName("Subtotal");
-
-                            b1.Property<decimal>("Tax")
-                                .HasPrecision(18, 2)
-                                .HasColumnType("decimal(18,2)")
-                                .HasColumnName("Tax");
-
-                            b1.Property<decimal>("Total")
-                                .HasPrecision(18, 2)
-                                .HasColumnType("decimal(18,2)")
-                                .HasColumnName("Total");
-
-                            b1.HasKey("OrderId");
-
-                            b1.ToTable("Orders", (string)null);
+                            b1.ToTable("Orders");
 
                             b1.WithOwner()
                                 .HasForeignKey("OrderId");

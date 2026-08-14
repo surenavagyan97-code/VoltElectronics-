@@ -7,12 +7,19 @@ import {
   ImportProductsResult, OrderDetail, OrderSummary, PagedResult, ProductDetail, ProductImage,
   ProductListItem, ProductQuery, SaveProductRequest,
 } from './api.types';
+import { I18nService } from './i18n.service';
 
 /** Typed access to the Volt Electronics API. Base URL is relative — dev uses the
  *  Angular proxy (proxy.conf.json), production the nginx reverse proxy. */
 @Injectable({ providedIn: 'root' })
 export class ApiClient {
   private http = inject(HttpClient);
+  private i18n = inject(I18nService);
+
+  /** Catalog and content reads are localized server-side; every such call sends the UI language. */
+  private get lang(): string {
+    return this.i18n.lang();
+  }
 
   // auth
   register(email: string, password: string, fullName: string): Observable<AuthResponse> {
@@ -30,7 +37,7 @@ export class ApiClient {
 
   // catalog
   getProducts(query: ProductQuery): Observable<PagedResult<ProductListItem>> {
-    let params = new HttpParams();
+    let params = new HttpParams().set('lang', this.lang);
     if (query.page) params = params.set('page', query.page);
     if (query.pageSize) params = params.set('pageSize', query.pageSize);
     for (const id of query.categoryIds ?? []) params = params.append('categoryIds', id);
@@ -40,21 +47,23 @@ export class ApiClient {
     return this.http.get<PagedResult<ProductListItem>>('/api/products', { params });
   }
   getFeatured(count = 4): Observable<ProductListItem[]> {
-    return this.http.get<ProductListItem[]>('/api/products/featured', { params: { count } });
+    return this.http.get<ProductListItem[]>('/api/products/featured', { params: { count, lang: this.lang } });
   }
   getProduct(slug: string): Observable<ProductDetail> {
-    return this.http.get<ProductDetail>(`/api/products/${encodeURIComponent(slug)}`);
+    return this.http.get<ProductDetail>(`/api/products/${encodeURIComponent(slug)}`, { params: { lang: this.lang } });
   }
   getProductsByIds(ids: number[]): Observable<ProductListItem[]> {
-    let params = new HttpParams();
+    let params = new HttpParams().set('lang', this.lang);
     for (const id of ids) params = params.append('ids', id);
     return this.http.get<ProductListItem[]>('/api/products/by-ids', { params });
   }
   getCategories(): Observable<Category[]> {
     return this.http.get<Category[]>('/api/categories');
   }
-  getContent(key: string): Observable<ContentPage> {
-    return this.http.get<ContentPage>(`/api/content/${encodeURIComponent(key)}`);
+  /** With fallback (default), a missing translation resolves to the default language. */
+  getContent(key: string, lang?: string, fallback = true): Observable<ContentPage> {
+    const params = new HttpParams().set('lang', lang ?? this.lang).set('fallback', fallback);
+    return this.http.get<ContentPage>(`/api/content/${encodeURIComponent(key)}`, { params });
   }
 
   // cart
@@ -147,8 +156,8 @@ export class ApiClient {
     return this.http.delete<void>(`/api/admin/categories/${categoryId}/image`);
   }
 
-  adminUpdateContent(key: string, body: string): Observable<void> {
-    return this.http.put<void>(`/api/admin/content/${encodeURIComponent(key)}`, { body });
+  adminUpdateContent(key: string, lang: string, body: string): Observable<void> {
+    return this.http.put<void>(`/api/admin/content/${encodeURIComponent(key)}`, { lang, body });
   }
 
   adminGetOrders(page: number, pageSize: number, status?: string, search?: string): Observable<PagedResult<AdminOrderListItem>> {

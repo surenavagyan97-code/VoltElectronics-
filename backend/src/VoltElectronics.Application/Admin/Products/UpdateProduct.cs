@@ -37,6 +37,7 @@ internal sealed class UpdateProductHandler(
             product.ChangeSlug(await products.UniqueSlugAsync(request.Name, command.Id, cancellationToken));
 
         product.ReplaceSpecs(request.Specs.ToSpecPairs());
+        product.ReplaceTranslations(request.Translations.ToTranslationPairs());
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return Result.Success();

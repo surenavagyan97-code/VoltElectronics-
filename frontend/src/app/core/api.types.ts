@@ -51,12 +51,16 @@ export interface ProductQuery {
   sort?: string;
 }
 
-// Editable storefront pages
+// Editable storefront pages (one body per key + language; readers fall back to English)
 export interface ContentPage {
   key: string;
+  lang: string;
   body: string;
   updatedAt: string;
 }
+
+/** One language's display name for a product; missing langs fall back to the canonical name. */
+export interface ProductTranslation { lang: string; name: string; }
 
 // Cart
 export interface CartItem {
@@ -172,6 +176,7 @@ export interface AdminProductDetail {
   reviewCount: number;
   images: ProductImage[];
   specs: ProductSpec[];
+  translations: ProductTranslation[];
 }
 export interface SaveProductRequest {
   name: string;
@@ -184,6 +189,7 @@ export interface SaveProductRequest {
   status: string;
   badge: string | null;
   specs: ProductSpec[];
+  translations: ProductTranslation[];
 }
 export interface ImportRowError { rowNumber: number; error: string; }
 export interface ImportProductsResult {

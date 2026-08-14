@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using ClosedXML.Excel;
 using VoltElectronics.Application.Admin;
 using VoltElectronics.Application.Catalog;
@@ -13,38 +14,50 @@ internal static class ProductsWorkbook
 {
     private const string SheetName = "Products";
 
-    private static readonly string[] Headers =
-        ["Id", "Name", "SKU", "Category", "Description", "Price", "Compare-at price",
-         "Stock", "Status", "Badge", "Rating", "Reviews", "Specs"];
+    /// <summary>Translated-name columns emitted by export and the template; Parse accepts any "Name (xx)".</summary>
+    private static readonly string[] TranslationLangs = ["hy", "ru"];
+
+    private static readonly Regex TranslationHeader =
+        new(@"^Name \((?<lang>[a-z]{2}(-[a-z]{2,4})?)\)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    private static string[] AllHeaders() =>
+        ["Id", "Name", .. TranslationLangs.Select(l => $"Name ({l})"), "SKU", "Category", "Description",
+         "Price", "Compare-at price", "Stock", "Status", "Badge", "Rating", "Reviews", "Specs"];
 
     public static byte[] Build(IReadOnlyList<ProductExportRowDto> rows)
     {
         using var workbook = new XLWorkbook();
         var sheet = workbook.Worksheets.Add(SheetName);
 
-        for (var c = 0; c < Headers.Length; c++)
-            sheet.Cell(1, c + 1).Value = Headers[c];
+        var headers = AllHeaders();
+        for (var c = 0; c < headers.Length; c++)
+            sheet.Cell(1, c + 1).Value = headers[c];
         sheet.Row(1).Style.Font.SetBold();
         sheet.SheetView.FreezeRows(1);
+
+        int Col(string header) => Array.IndexOf(headers, header) + 1;
 
         for (var r = 0; r < rows.Count; r++)
         {
             var row = rows[r];
             var cells = sheet.Row(r + 2);
-            cells.Cell(1).Value = row.Id;
-            cells.Cell(2).Value = row.Name;
-            cells.Cell(3).Value = row.Sku;
-            cells.Cell(4).Value = row.Category;
-            cells.Cell(5).Value = row.Description;
-            cells.Cell(6).Value = row.Price;
-            cells.Cell(7).Value = row.CompareAtPrice is { } cap ? cap : Blank.Value;
-            cells.Cell(8).Value = row.Stock;
-            cells.Cell(9).Value = row.Status;
-            cells.Cell(10).Value = row.Badge ?? "";
-            cells.Cell(11).Value = row.Rating;
-            cells.Cell(12).Value = row.ReviewCount;
-            cells.Cell(13).Value = row.Specs;
-            cells.Cell(13).Style.Alignment.WrapText = true;
+            cells.Cell(Col("Id")).Value = row.Id;
+            cells.Cell(Col("Name")).Value = row.Name;
+            foreach (var lang in TranslationLangs)
+                cells.Cell(Col($"Name ({lang})")).Value =
+                    row.Translations.FirstOrDefault(t => t.Lang == lang)?.Name ?? "";
+            cells.Cell(Col("SKU")).Value = row.Sku;
+            cells.Cell(Col("Category")).Value = row.Category;
+            cells.Cell(Col("Description")).Value = row.Description;
+            cells.Cell(Col("Price")).Value = row.Price;
+            cells.Cell(Col("Compare-at price")).Value = row.CompareAtPrice is { } cap ? cap : Blank.Value;
+            cells.Cell(Col("Stock")).Value = row.Stock;
+            cells.Cell(Col("Status")).Value = row.Status;
+            cells.Cell(Col("Badge")).Value = row.Badge ?? "";
+            cells.Cell(Col("Rating")).Value = row.Rating;
+            cells.Cell(Col("Reviews")).Value = row.ReviewCount;
+            cells.Cell(Col("Specs")).Value = row.Specs;
+            cells.Cell(Col("Specs")).Style.Alignment.WrapText = true;
         }
 
         sheet.Columns().AdjustToContents(minWidth: 8.0, maxWidth: 60.0);
@@ -64,10 +77,10 @@ internal static class ProductsWorkbook
         using var workbook = new XLWorkbook();
         var sheet = workbook.Worksheets.Add(SheetName);
 
-        var templateHeaders = Headers.Where(h => h != "Id").ToArray();
+        var templateHeaders = AllHeaders().Where(h => h != "Id").ToArray();
         var notes = new Dictionary<string, string>
         {
-            ["Name"] = "Required.",
+            ["Name"] = "Required. The canonical name, used when a translation is missing.",
             ["SKU"] = "Required. Rows are matched to existing products by SKU: a known SKU updates that product, a new SKU creates one.",
             ["Category"] = "Required. Matched by name; an unknown name creates a new category. Existing categories are listed on the Instructions sheet.",
             ["Price"] = "Required. A positive number in the store's base currency.",
@@ -78,6 +91,8 @@ internal static class ProductsWorkbook
             ["Reviews"] = "Optional review count.",
             ["Specs"] = "One \"Name: Value\" spec per line within this cell (Alt+Enter for a new line).",
         };
+        foreach (var lang in TranslationLangs)
+            notes[$"Name ({lang})"] = $"Optional display name in \"{lang}\"; shoppers browsing in that language see it instead of Name.";
 
         for (var c = 0; c < templateHeaders.Length; c++)
         {
@@ -104,6 +119,7 @@ internal static class ProductsWorkbook
             "• Fill the Products sheet, one product per row, then upload the file on the admin Products page.",
             "• Rows are matched to existing products by SKU — a known SKU updates that product, a new SKU creates one.",
             "• Name, SKU, Category and Price are required; the other columns are optional.",
+            "• \"Name (hy)\" / \"Name (ru)\" hold translated display names — leave blank to fall back to Name.",
             "• An unknown category name creates that category automatically.",
             "• Specs go in one cell, one \"Name: Value\" pair per line (Alt+Enter inside a cell adds a line).",
             "• Rows with problems are skipped and reported after the import — the rest of the file still goes through.",
@@ -172,6 +188,18 @@ internal static class ProductsWorkbook
                 return null;
             }
 
+            // Null when the file has no translation columns at all ("leave unchanged"); an empty
+            // list when the columns exist but the cells are blank ("clear translations").
+            List<ProductTranslationDto>? translations = null;
+            foreach (var (header, col) in columns)
+            {
+                if (TranslationHeader.Match(header) is not { Success: true } m) continue;
+                translations ??= [];
+                var value = row.Cell(col).GetString().Trim();
+                if (value.Length > 0)
+                    translations.Add(new ProductTranslationDto(m.Groups["lang"].Value.ToLowerInvariant(), value));
+            }
+
             var parsed = new ImportProductRow(
                 rowNumber,
                 Name: Text("Name"),
@@ -185,7 +213,8 @@ internal static class ProductsWorkbook
                 Badge: Text("Badge"),
                 Rating: Double("Rating"),
                 ReviewCount: Int("Reviews"),
-                Specs: Text("Specs"));
+                Specs: Text("Specs"),
+                Translations: translations);
 
             if (rowErrors.Count > 0)
                 errors.Add(new ImportRowError(rowNumber, string.Join(" ", rowErrors)));

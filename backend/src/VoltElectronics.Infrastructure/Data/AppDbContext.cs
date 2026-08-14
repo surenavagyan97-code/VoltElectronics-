@@ -44,13 +44,23 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
             e.HasOne(p => p.Category).WithMany().HasForeignKey(p => p.CategoryId);
             e.HasMany(p => p.Images).WithOne().HasForeignKey(i => i.ProductId).OnDelete(DeleteBehavior.Cascade);
             e.HasMany(p => p.Specs).WithOne().HasForeignKey(s => s.ProductId).OnDelete(DeleteBehavior.Cascade);
+            e.HasMany(p => p.Translations).WithOne().HasForeignKey(t => t.ProductId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<ProductTranslation>(e =>
+        {
+            e.ToTable("ProductTranslations");
+            e.Property(t => t.Lang).HasMaxLength(5);
+            e.Property(t => t.Name).HasMaxLength(200);
+            e.HasIndex(t => new { t.ProductId, t.Lang }).IsUnique();
         });
 
         builder.Entity<ContentPage>(e =>
         {
             e.Ignore(p => p.DomainEvents);
             e.Property(p => p.Key).HasMaxLength(50);
-            e.HasIndex(p => p.Key).IsUnique();
+            e.Property(p => p.Lang).HasMaxLength(5);
+            e.HasIndex(p => new { p.Key, p.Lang }).IsUnique();
         });
 
         // Child entities are reachable only through their aggregate root, so they have no DbSet —

@@ -45,13 +45,14 @@ public static class DbSeeder
                 logger.LogWarning("Admin seed failed: {Errors}", string.Join("; ", result.Errors.Select(e => e.Description)));
         }
 
-        // Editable pages get their initial body once; after that the admin panel owns the text,
-        // so re-seeding must never overwrite it.
-        if (!await db.ContentPages.AnyAsync(p => p.Key == "privacy"))
+        // Editable pages get their initial default-language body once; after that the admin panel
+        // owns the text (including translations), so re-seeding must never overwrite it.
+        foreach (var (key, body) in DefaultContent.Pages)
         {
-            db.ContentPages.Add(ContentPage.Create("privacy", DefaultContent.PrivacyPolicy));
-            await db.SaveChangesAsync();
+            if (!await db.ContentPages.AnyAsync(p => p.Key == key))
+                db.ContentPages.Add(ContentPage.Create(key, ContentPage.DefaultLang, body));
         }
+        await db.SaveChangesAsync();
 
         if (await db.Categories.AnyAsync())
             return;

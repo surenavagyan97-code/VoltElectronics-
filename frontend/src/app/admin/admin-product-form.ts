@@ -5,7 +5,10 @@ import { firstValueFrom } from 'rxjs';
 import { ApiClient } from '../core/api-client';
 import { Category, ProductImage, ProductSpec } from '../core/api.types';
 import { extractError } from '../core/cart-store';
-import { I18nService } from '../core/i18n.service';
+import { I18nService, LANG_LABELS } from '../core/i18n.service';
+
+/** Languages the form offers name translations for; the main Name field is the canonical English. */
+const TRANSLATION_LANGS = ['hy', 'ru'] as const;
 
 @Component({
   selector: 'app-admin-product-form',
@@ -19,6 +22,11 @@ import { I18nService } from '../core/i18n.service';
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
         <div class="field" style="grid-column: span 2;"><label>{{ i18n.t('admin.form.productName') }} *</label>
           <input class="input" [class.invalid]="invalid(form.name)" [(ngModel)]="form.name" [placeholder]="i18n.t('admin.form.productNamePlaceholder')" /></div>
+        @for (t of form.translations; track t.lang) {
+          <div class="field"><label>{{ i18n.t('admin.form.productName') }} ({{ langLabels[t.lang] ?? t.lang }})</label>
+            <input class="input" [(ngModel)]="t.name" [ngModelOptions]="{ standalone: true }"
+                   [placeholder]="i18n.t('admin.form.translationPlaceholder')" /></div>
+        }
         <div class="field"><label>{{ i18n.t('admin.form.sku') }} *</label>
           <input class="input" [class.invalid]="invalid(form.sku)" [(ngModel)]="form.sku" placeholder="VLT-LP-2201" /></div>
         <div class="field"><label>{{ i18n.t('admin.form.category') }} *</label>
@@ -114,14 +122,18 @@ export class AdminProductFormPage implements OnInit {
     { value: 'Archived', label: () => this.i18n.t('admin.form.statusArchived') },
   ];
 
+  readonly langLabels: Record<string, string> = LANG_LABELS;
+
   form: {
     name: string; sku: string; categoryId: number | null; description: string;
     price: number | null; compareAtPrice: number | null; stock: number;
     status: string; badge: string; specs: ProductSpec[];
+    translations: { lang: string; name: string }[];
   } = {
     name: '', sku: '', categoryId: null, description: '',
     price: null, compareAtPrice: null, stock: 0, status: 'Active', badge: '',
     specs: [{ name: '', value: '' }],
+    translations: TRANSLATION_LANGS.map((lang) => ({ lang, name: '' })),
   };
 
   async ngOnInit(): Promise<void> {
@@ -137,6 +149,10 @@ export class AdminProductFormPage implements OnInit {
         price: p.price, compareAtPrice: p.compareAtPrice, stock: p.stock,
         status: p.status, badge: p.badge ?? '',
         specs: p.specs.length ? p.specs.map((s) => ({ ...s })) : [{ name: '', value: '' }],
+        translations: TRANSLATION_LANGS.map((lang) => ({
+          lang,
+          name: p.translations.find((t) => t.lang === lang)?.name ?? '',
+        })),
       };
       this.images.set(p.images);
     } else if (this.categories().length) {
@@ -180,6 +196,7 @@ export class AdminProductFormPage implements OnInit {
       status: this.form.status,
       badge: this.form.badge || null,
       specs: this.form.specs.filter((s) => s.name && s.value),
+      translations: this.form.translations.filter((t) => t.name.trim()),
     };
     try {
       if (this.id === null) {

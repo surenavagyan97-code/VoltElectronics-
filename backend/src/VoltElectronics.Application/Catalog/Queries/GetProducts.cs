@@ -12,4 +12,5 @@ public sealed record GetProductsQuery(
     int[]? CategoryIds = null,
     string[]? PriceBands = null,
     string? Search = null,
-    string? Sort = null) : IQuery<PagedResult<ProductListItemDto>>;
+    string? Sort = null,
+    string? Lang = null) : IQuery<PagedResult<ProductListItemDto>>;

@@ -12,11 +12,20 @@ namespace VoltElectronics.Infrastructure.Queries.Catalog;
 /// <summary>Shared shape of a storefront product card, reused by every catalog projection.</summary>
 internal static class CatalogProjections
 {
-    public static readonly Expression<Func<Product, ProductListItemDto>> ListItem =
+    /// <summary>
+    /// Resolves the display name server-side: the requested language's translation row when one
+    /// exists, otherwise the canonical name — so the storefront always receives complete data.
+    /// </summary>
+    public static Expression<Func<Product, ProductListItemDto>> ListItem(string? lang) =>
         p => new ProductListItemDto(
-            p.Id, p.Name, p.Slug, p.Category.Name, p.CategoryId,
+            p.Id,
+            p.Translations.Where(t => t.Lang == lang).Select(t => t.Name).FirstOrDefault() ?? p.Name,
+            p.Slug, p.Category.Name, p.CategoryId,
             p.Price, p.CompareAtPrice, p.Badge, p.Rating, p.ReviewCount, p.Stock,
             p.Images.OrderBy(i => i.SortOrder).Select(i => (string?)i.CardUrl).FirstOrDefault());
+
+    public static string? NormalizeLang(string? lang) =>
+        string.IsNullOrWhiteSpace(lang) ? null : lang.Trim().ToLowerInvariant();
 }
 
 internal sealed class GetProductsHandler(AppDbContext db)
@@ -33,7 +42,8 @@ internal sealed class GetProductsHandler(AppDbContext db)
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
             var term = query.Search.Trim();
-            q = q.Where(p => p.Name.Contains(term) || p.Category.Name.Contains(term) || p.Sku.Contains(term));
+            q = q.Where(p => p.Name.Contains(term) || p.Category.Name.Contains(term) || p.Sku.Contains(term) ||
+                             p.Translations.Any(t => t.Name.Contains(term)));
         }
 
         if (query.PriceBands is { Length: > 0 })
@@ -60,7 +70,7 @@ internal sealed class GetProductsHandler(AppDbContext db)
         var items = await q
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(CatalogProjections.ListItem)
+            .Select(CatalogProjections.ListItem(CatalogProjections.NormalizeLang(query.Lang)))
             .ToListAsync(cancellationToken);
 
         return new PagedResult<ProductListItemDto>(items, total, page, pageSize);
@@ -72,10 +82,13 @@ internal sealed class GetProductBySlugHandler(AppDbContext db)
 {
     public async Task<ProductDetailDto?> HandleAsync(GetProductBySlugQuery query, CancellationToken cancellationToken)
     {
+        var lang = CatalogProjections.NormalizeLang(query.Lang);
+
         var p = await db.Products.AsNoTracking()
             .Include(x => x.Category)
             .Include(x => x.Images.OrderBy(i => i.SortOrder))
             .Include(x => x.Specs.OrderBy(s => s.SortOrder))
+            .Include(x => x.Translations)
             .AsSplitQuery()
             .FirstOrDefaultAsync(x => x.Slug == query.Slug && x.Status == ProductStatus.Active, cancellationToken);
         if (p is null) return null;
@@ -84,7 +97,7 @@ internal sealed class GetProductBySlugHandler(AppDbContext db)
             .Where(x => x.CategoryId == p.CategoryId && x.Id != p.Id && x.Status == ProductStatus.Active)
             .OrderByDescending(x => x.Rating)
             .Take(4)
-            .Select(CatalogProjections.ListItem)
+            .Select(CatalogProjections.ListItem(lang))
             .ToListAsync(cancellationToken);
 
         // Too few same-category products? Pad with top-rated picks from elsewhere.
@@ -95,12 +108,13 @@ internal sealed class GetProductBySlugHandler(AppDbContext db)
                 .Where(x => !excluded.Contains(x.Id) && x.Status == ProductStatus.Active)
                 .OrderByDescending(x => x.Rating)
                 .Take(4 - related.Count)
-                .Select(CatalogProjections.ListItem)
+                .Select(CatalogProjections.ListItem(lang))
                 .ToListAsync(cancellationToken));
         }
 
+        var name = p.Translations.FirstOrDefault(t => t.Lang == lang)?.Name ?? p.Name;
         return new ProductDetailDto(
-            p.Id, p.Name, p.Slug, p.Sku, p.Category.Name, p.CategoryId,
+            p.Id, name, p.Slug, p.Sku, p.Category.Name, p.CategoryId,
             p.Price, p.CompareAtPrice, p.Badge, p.Rating, p.ReviewCount, p.Stock, p.Description,
             p.Images.Select(i => new ProductImageDto(i.Id, i.Url, i.ThumbUrl, i.CardUrl, i.SortOrder)).ToList(),
             p.Specs.Select(s => new ProductSpecDto(s.Name, s.Value)).ToList(),
@@ -128,7 +142,7 @@ internal sealed class GetProductsByIdsHandler(AppDbContext db)
         await db.Products.AsNoTracking()
             .Where(p => query.Ids.Contains(p.Id) && p.Status == ProductStatus.Active)
             .OrderBy(p => p.Name)
-            .Select(CatalogProjections.ListItem)
+            .Select(CatalogProjections.ListItem(CatalogProjections.NormalizeLang(query.Lang)))
             .ToListAsync(cancellationToken);
 }
 
@@ -142,6 +156,6 @@ internal sealed class GetFeaturedProductsHandler(AppDbContext db)
             .OrderByDescending(p => p.Badge != null)
             .ThenByDescending(p => p.Rating)
             .Take(Math.Clamp(query.Count, 1, 12))
-            .Select(CatalogProjections.ListItem)
+            .Select(CatalogProjections.ListItem(CatalogProjections.NormalizeLang(query.Lang)))
             .ToListAsync(cancellationToken);
 }

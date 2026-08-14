@@ -6,8 +6,8 @@ using VoltElectronics.Domain.Content;
 
 namespace VoltElectronics.Application.Admin.Content;
 
-/// <summary>Upserts an editable page's body — the first save of a new key creates it.</summary>
-public sealed record UpdateContentPageCommand(string Key, string Body) : ICommand<Result>;
+/// <summary>Upserts one language of an editable page — the first save of a key+language creates it.</summary>
+public sealed record UpdateContentPageCommand(string Key, string Lang, string Body) : ICommand<Result>;
 
 internal sealed class UpdateContentPageHandler(
     IContentPageRepository pages,
@@ -16,9 +16,10 @@ internal sealed class UpdateContentPageHandler(
     public async Task<Result> HandleAsync(UpdateContentPageCommand command, CancellationToken cancellationToken)
     {
         var key = command.Key.Trim().ToLowerInvariant();
-        var page = await pages.GetByKeyAsync(key, cancellationToken);
+        var lang = command.Lang.Trim().ToLowerInvariant();
+        var page = await pages.GetAsync(key, lang, cancellationToken);
 
-        if (page is null) pages.Add(ContentPage.Create(key, command.Body));
+        if (page is null) pages.Add(ContentPage.Create(key, lang, command.Body));
         else page.Edit(command.Body);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -31,6 +32,9 @@ internal sealed class UpdateContentPageValidator : AbstractValidator<UpdateConte
     public UpdateContentPageValidator()
     {
         RuleFor(c => c.Key).NotEmpty().MaximumLength(50);
+        RuleFor(c => c.Lang).NotEmpty()
+            .Matches("^[a-z]{2}(-[a-z]{2,4})?$")
+            .WithMessage("Language must be a lowercase code like en, hy or ru.");
         RuleFor(c => c.Body).NotEmpty().MaximumLength(200_000);
     }
 }

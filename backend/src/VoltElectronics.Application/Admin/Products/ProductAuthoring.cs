@@ -26,4 +26,7 @@ internal static class ProductAuthoring
 
     public static IEnumerable<(string Name, string Value)> ToSpecPairs(this List<ProductSpecDto>? specs) =>
         (specs ?? []).Select(s => (s.Name, s.Value));
+
+    public static IEnumerable<(string Lang, string Name)> ToTranslationPairs(this List<ProductTranslationDto>? translations) =>
+        (translations ?? []).Select(t => (t.Lang, t.Name));
 }

@@ -27,6 +27,13 @@ internal sealed class SaveProductRequestValidator : AbstractValidator<SaveProduc
             spec.RuleFor(s => s.Name).MaximumLength(100);
             spec.RuleFor(s => s.Value).MaximumLength(300);
         });
+        RuleForEach(r => r.Translations).ChildRules(t =>
+        {
+            t.RuleFor(x => x.Lang)
+                .Matches("^[a-z]{2}(-[a-z]{2,4})?$")
+                .WithMessage("Translation language must be a lowercase code like hy or ru.");
+            t.RuleFor(x => x.Name).MaximumLength(200);
+        });
     }
 }
 

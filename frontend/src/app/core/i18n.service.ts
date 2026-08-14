@@ -19,9 +19,14 @@ export class I18nService {
   }
 
   setLang(lang: Lang): void {
+    if (lang === this.lang()) return;
     this.lang.set(lang);
     localStorage.setItem(STORAGE_KEY, lang);
     document.documentElement.lang = lang;
+    // Product names and content pages are localized server-side (?lang=...), so already-loaded
+    // data is stale after a switch — reload to refetch everything in the new language, the same
+    // behavior as locale-path storefronts.
+    window.location.reload();
   }
 
   /** Looks up `key` in the current language, falling back to English, then the raw key. */

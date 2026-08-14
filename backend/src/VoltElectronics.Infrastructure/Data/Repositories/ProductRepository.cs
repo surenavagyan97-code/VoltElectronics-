@@ -13,6 +13,7 @@ internal sealed class ProductRepository(AppDbContext db) : IProductRepository
         db.Products
             .Include(p => p.Images)
             .Include(p => p.Specs)
+            .Include(p => p.Translations)
             .AsSplitQuery()
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
@@ -20,6 +21,7 @@ internal sealed class ProductRepository(AppDbContext db) : IProductRepository
         db.Products
             .Include(p => p.Images)
             .Include(p => p.Specs)
+            .Include(p => p.Translations)
             .AsSplitQuery()
             .FirstOrDefaultAsync(p => p.Sku == sku, cancellationToken);
 

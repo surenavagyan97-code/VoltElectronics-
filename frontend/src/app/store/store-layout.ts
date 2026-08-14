@@ -113,8 +113,8 @@ function readRecentSearches(): string[] {
     <div class="topbar">
       <a routerLink="/contact">{{ i18n.t('topbar.delivery') }}</a>
       <a routerLink="/contact">{{ i18n.t('topbar.credit') }}</a>
-      <a routerLink="/contact">{{ i18n.t('topbar.aboutUs') }}</a>
-      <a routerLink="/contact">{{ i18n.t('topbar.jobs') }}</a>
+      <a routerLink="/pages/about">{{ i18n.t('topbar.aboutUs') }}</a>
+      <a routerLink="/pages/jobs">{{ i18n.t('topbar.jobs') }}</a>
       <a routerLink="/contact">{{ i18n.t('topbar.contacts') }}</a>
       <div style="flex: 1;"></div>
       <a href="tel:+37410203040" class="row" style="gap: 6px;">
@@ -250,11 +250,11 @@ function readRecentSearches(): string[] {
         <div>
           <h6>{{ i18n.t('footer.information') }}</h6>
           <div class="footer-links">
-            <a routerLink="/contact">{{ i18n.t('footer.aboutUs') }}</a>
-            <a routerLink="/contact">{{ i18n.t('footer.faq') }}</a>
-            <a routerLink="/contact">{{ i18n.t('footer.jobs') }}</a>
-            <a routerLink="/contact">{{ i18n.t('footer.service') }}</a>
-            <a routerLink="/privacy">{{ i18n.t('footer.privacy') }}</a>
+            <a routerLink="/pages/about">{{ i18n.t('footer.aboutUs') }}</a>
+            <a routerLink="/pages/faq">{{ i18n.t('footer.faq') }}</a>
+            <a routerLink="/pages/jobs">{{ i18n.t('footer.jobs') }}</a>
+            <a routerLink="/pages/service">{{ i18n.t('footer.service') }}</a>
+            <a routerLink="/pages/privacy">{{ i18n.t('footer.privacy') }}</a>
           </div>
         </div>
         <div>
@@ -278,13 +278,13 @@ function readRecentSearches(): string[] {
             <a routerLink="/contact" style="color: var(--color-accent);">{{ i18n.t('footer.paymentLink') }}</a>.
           </div>
           <div class="pay-pills">
-            <span class="pay-pill" title="Visa"><svg viewBox="0 0 42 14" height="15" aria-label="Visa"><text x="0" y="12" font-family="Arial, sans-serif" font-size="14" font-weight="800" font-style="italic" fill="#1A1F71">VISA</text></svg></span>
-            <span class="pay-pill" title="Mastercard"><svg viewBox="0 0 34 20" height="20" aria-label="Mastercard"><circle cx="12" cy="10" r="9" fill="#EB001B"/><circle cx="22" cy="10" r="9" fill="#F79E1B"/><path d="M17 2.9a9 9 0 0 1 0 14.2 9 9 0 0 1 0-14.2z" fill="#FF5F00"/></svg></span>
-            <span class="pay-pill" title="ArCa"><svg viewBox="0 0 36 14" height="15" aria-label="ArCa"><text x="0" y="12" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#223E99">Ar</text><text x="17" y="12" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#E31E24">Ca</text></svg></span>
-            <span class="pay-pill" title="Telcell Wallet"><svg viewBox="0 0 56 12" height="13" aria-label="Telcell"><text x="0" y="10" font-family="Arial, sans-serif" font-size="10" font-weight="800" fill="#F57C20">TELCELL</text></svg></span>
-            <span class="pay-pill" title="Idram"><svg viewBox="0 0 44 16" height="16" aria-label="Idram"><text x="0" y="13" font-family="Arial, sans-serif" font-size="15" font-weight="800" fill="#E3262D">idram</text></svg></span>
-            <span class="pay-pill" title="American Express"><svg viewBox="0 0 44 16" height="18" aria-label="American Express"><rect width="44" height="16" rx="2" fill="#2E77BC"/><text x="22" y="11.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="8.5" font-weight="800" fill="#fff">AMEX</text></svg></span>
-            <span class="pay-pill" title="MyAmeria"><svg viewBox="0 0 66 12" height="13" aria-label="MyAmeria"><path d="M0 10 4 1l4 9h-2.4L4 6.2 2.4 10z" fill="#0DB14B"/><text x="10" y="10" font-family="Arial, sans-serif" font-size="10" font-weight="800" fill="#333">MYAMERIA</text></svg></span>
+            <span class="pay-pill" title="Visa"><svg viewBox="0 0 46 15" height="15" aria-label="Visa"><text x="0" y="13" font-family="Arial, sans-serif" font-size="15" font-weight="800" font-style="italic" letter-spacing="0.5" fill="#1A1F71">VISA</text></svg></span>
+            <span class="pay-pill" title="MasterCard"><svg viewBox="0 0 40 22" height="20" aria-label="MasterCard"><circle cx="14" cy="11" r="10" fill="#EB001B"/><circle cx="26" cy="11" r="10" fill="#F79E1B"/><path d="M20 2.5a10 10 0 0 1 0 17 10 10 0 0 1 0-17z" fill="#FF5F00"/><text x="20" y="14" text-anchor="middle" font-family="Georgia, serif" font-size="7.5" font-style="italic" font-weight="700" fill="#fff">MasterCard</text></svg></span>
+            <span class="pay-pill" title="ArCa"><svg viewBox="0 0 40 15" height="15" aria-label="ArCa"><text x="0" y="13" font-family="Arial, sans-serif" font-size="15" font-weight="800" font-style="italic" fill="#223E99">Ar</text><text x="19" y="13" font-family="Arial, sans-serif" font-size="15" font-weight="800" font-style="italic" fill="#E31E24">Ca</text></svg></span>
+            <span class="pay-pill" title="Telcell Wallet"><svg viewBox="0 0 46 18" height="17" aria-label="Telcell Wallet"><text x="0" y="8" font-family="Arial, sans-serif" font-size="8" font-weight="800" fill="#F57C20">TELCELL</text><text x="0" y="17" font-family="Arial, sans-serif" font-size="7" font-weight="700" letter-spacing="1.2" fill="#F5A623">WALLET</text></svg></span>
+            <span class="pay-pill" title="Idram"><svg viewBox="0 0 50 18" height="17" aria-label="Idram"><circle cx="8" cy="9" r="7" fill="none" stroke="#F26522" stroke-width="2.6"/><circle cx="8" cy="9" r="2.2" fill="#F26522"/><text x="19" y="14" font-family="Arial, sans-serif" font-size="13" font-weight="800" fill="#3A3A3A">idram</text></svg></span>
+            <span class="pay-pill" title="American Express"><svg viewBox="0 0 48 17" height="17" aria-label="American Express"><rect width="48" height="17" rx="2" fill="#2E77BC"/><text x="24" y="7.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="5.4" font-weight="800" fill="#fff">AMERICAN</text><text x="24" y="14" text-anchor="middle" font-family="Arial, sans-serif" font-size="5.4" font-weight="800" fill="#fff">EXPRESS</text></svg></span>
+            <span class="pay-pill" title="MyAmeria"><svg viewBox="0 0 74 14" height="14" aria-label="MyAmeria"><path d="M0 12 5 1l5 11H7L5 7.4 3 12z" fill="#0DB14B"/><text x="13" y="11.5" font-family="Arial, sans-serif" font-size="11" font-weight="800" letter-spacing="0.4" fill="#2B2B2B">MYAMERIA</text></svg></span>
           </div>
         </div>
       </div>

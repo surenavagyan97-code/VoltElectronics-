@@ -31,6 +31,7 @@ internal sealed class CreateProductHandler(
 
         product.ChangeSlug(await products.UniqueSlugAsync(request.Name, null, cancellationToken));
         product.ReplaceSpecs(request.Specs.ToSpecPairs());
+        product.ReplaceTranslations(request.Translations.ToTranslationPairs());
 
         products.Add(product);
         await unitOfWork.SaveChangesAsync(cancellationToken);

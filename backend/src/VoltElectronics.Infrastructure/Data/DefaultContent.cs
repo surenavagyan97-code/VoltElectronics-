@@ -1,11 +1,67 @@
 namespace VoltElectronics.Infrastructure.Data;
 
 /// <summary>
-/// Initial bodies for the admin-editable storefront pages. Seeded once; afterwards the admin
-/// panel owns the text.
+/// Initial default-language bodies for the admin-editable storefront pages. Seeded once;
+/// afterwards the admin panel owns the text and its translations.
 /// </summary>
 internal static class DefaultContent
 {
+    public static readonly IReadOnlyList<(string Key, string Body)> Pages =
+    [
+        ("privacy", PrivacyPolicy),
+        ("about", About),
+        ("faq", Faq),
+        ("jobs", Jobs),
+        ("service", Service),
+    ];
+
+    public const string About =
+"""
+ABOUT US
+
+Smart Buy is an electronics retailer based in Yerevan, Armenia, supplying laptops, phones, displays and networking gear to businesses and consumers since 2020.
+
+We vet every product line for reliability, offer volume pricing for procurement teams, and back everything we sell with local warranty service.
+
+Visit our showroom at 1 Northern Ave, Yerevan, or reach us at info@smartbuy.am.
+""";
+
+    public const string Faq =
+"""
+FREQUENTLY ASKED QUESTIONS
+
+How long does delivery take?
+Orders within Yerevan arrive in 1–2 business days; the rest of Armenia takes 2–4.
+
+Which payment methods do you accept?
+Visa, Mastercard, ArCa, Idram, Telcell Wallet, American Express and MyAmeria — or payment by invoice on approved terms for business customers.
+
+Can I return a product?
+Unopened products can be returned within 14 days of delivery. Defective items are exchanged under warranty at any time.
+
+Do you offer volume pricing?
+Yes — contact our sales team for procurement-friendly quotes on bulk orders.
+""";
+
+    public const string Jobs =
+"""
+JOBS
+
+We're always looking for people who care about electronics and customer service.
+
+Open roles are posted here as they appear. Don't see a fit? Send your CV to info@smartbuy.am — we keep every application on file.
+""";
+
+    public const string Service =
+"""
+SERVICE
+
+Our service centre at 1 Northern Ave, Yerevan handles warranty repairs, diagnostics and trade-ins for everything we sell.
+
+Working hours: Mon–Fri 9:00–18:00, Sat 10:00–16:00.
+Bring your order number or receipt; most diagnostics are completed within two business days.
+""";
+
     public const string PrivacyPolicy =
 """
 PRIVACY POLICY
