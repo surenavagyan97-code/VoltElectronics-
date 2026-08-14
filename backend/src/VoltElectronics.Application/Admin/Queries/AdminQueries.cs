@@ -24,4 +24,7 @@ public sealed record AdminGetOrdersQuery(
 
 public sealed record AdminGetOrderStatsQuery : IQuery<AdminOrderStatsDto>;
 
+/// <summary>Every delivery-person account, with how many undelivered orders each one carries.</summary>
+public sealed record AdminGetCouriersQuery : IQuery<IReadOnlyList<CourierDto>>;
+
 public sealed record GetAnalyticsQuery : IQuery<AnalyticsDto>;

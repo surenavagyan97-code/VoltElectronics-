@@ -33,6 +33,10 @@ public static class AdminOrderEndpoints
                 string orderNumber, UpdateOrderStatusRequest request, IDispatcher dispatcher, CancellationToken ct) =>
             ApiResults.NoContent(await dispatcher.Send(new UpdateOrderStatusCommand(orderNumber, request.Status), ct)));
 
+        orders.MapPut("/{orderNumber}/courier", async (
+                string orderNumber, AssignOrderCourierRequest request, IDispatcher dispatcher, CancellationToken ct) =>
+            ApiResults.NoContent(await dispatcher.Send(new AssignOrderCourierCommand(orderNumber, request.CourierId), ct)));
+
         app.MapGet("/api/admin/analytics", async (IDispatcher dispatcher, CancellationToken ct) =>
                 Results.Ok(await dispatcher.Query(new GetAnalyticsQuery(), ct)))
             .WithTags("Admin")

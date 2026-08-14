@@ -134,7 +134,9 @@ internal sealed class AdminGetOrdersHandler(AppDbContext db)
             .Skip((page - 1) * pageSize).Take(pageSize)
             .Select(o => new AdminOrderListItemDto(
                 o.OrderNumber, o.ShipTo.FullName, o.GuestEmail ?? "", o.CreatedAt,
-                o.Totals.Total, o.Totals.Currency, o.Status.ToString(), o.Items.Sum(i => i.Qty)))
+                o.Totals.Total, o.Totals.Currency, o.Status.ToString(), o.Items.Sum(i => i.Qty),
+                o.AssignedCourierId,
+                db.Users.Where(u => u.Id == o.AssignedCourierId).Select(u => u.FullName).FirstOrDefault()))
             .ToListAsync(cancellationToken);
 
         return new PagedResult<AdminOrderListItemDto>(items, total, page, pageSize);
@@ -156,6 +158,24 @@ internal sealed class AdminGetOrderStatsHandler(AppDbContext db)
             counts.Values.Sum(), C(OrderStatus.PendingPayment), C(OrderStatus.Processing),
             C(OrderStatus.Shipped), C(OrderStatus.Delivered), C(OrderStatus.Cancelled));
     }
+}
+
+internal sealed class AdminGetCouriersHandler(AppDbContext db)
+    : IQueryHandler<AdminGetCouriersQuery, IReadOnlyList<CourierDto>>
+{
+    public async Task<IReadOnlyList<CourierDto>> HandleAsync(
+        AdminGetCouriersQuery query, CancellationToken cancellationToken) =>
+        await (
+            from user in db.Users.AsNoTracking()
+            join userRole in db.UserRoles on user.Id equals userRole.UserId
+            join role in db.Roles on userRole.RoleId equals role.Id
+            where role.Name == Application.Identity.Roles.Courier
+            orderby user.FullName
+            select new CourierDto(
+                user.Id, user.Email ?? "", user.FullName ?? "",
+                db.Orders.Count(o => o.AssignedCourierId == user.Id &&
+                                     (o.Status == OrderStatus.Processing || o.Status == OrderStatus.Shipped))))
+            .ToListAsync(cancellationToken);
 }
 
 internal sealed class GetAnalyticsHandler(AppDbContext db) : IQueryHandler<GetAnalyticsQuery, AnalyticsDto>

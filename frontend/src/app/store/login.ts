@@ -48,7 +48,9 @@ export class LoginPage {
     try {
       await this.auth.login(this.email, this.password);
       await this.cart.mergeAfterLogin();
-      void this.router.navigateByUrl(this.route.snapshot.queryParamMap.get('returnUrl') ?? '/');
+      // Couriers land straight on their assignments — the storefront is not their workplace.
+      const fallback = this.auth.isCourier() ? '/delivery' : '/';
+      void this.router.navigateByUrl(this.route.snapshot.queryParamMap.get('returnUrl') ?? fallback);
     } catch (e) {
       this.error.set(extractError(e));
     } finally {

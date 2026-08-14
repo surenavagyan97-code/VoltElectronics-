@@ -14,3 +14,10 @@ export const adminGuard: CanActivateFn = () => {
   if (auth.isAdmin()) return true;
   return auth.isLoggedIn() ? router.createUrlTree(['/']) : router.createUrlTree(['/login'], { queryParams: { returnUrl: '/admin' } });
 };
+
+export const deliveryGuard: CanActivateFn = () => {
+  const auth = inject(AuthStore);
+  const router = inject(Router);
+  if (auth.isCourier()) return true;
+  return auth.isLoggedIn() ? router.createUrlTree(['/']) : router.createUrlTree(['/login'], { queryParams: { returnUrl: '/delivery' } });
+};

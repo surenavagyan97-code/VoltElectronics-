@@ -2,7 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ApiClient } from '../core/api-client';
-import { AdminOrderListItem, AdminOrderStats, PagedResult } from '../core/api.types';
+import { AdminOrderListItem, AdminOrderStats, Courier, PagedResult } from '../core/api.types';
 import { extractError } from '../core/cart-store';
 import { CurrencyStore } from '../core/currency-store';
 import { I18nService } from '../core/i18n.service';
@@ -40,7 +40,7 @@ const STATUSES = ['PendingPayment', 'Processing', 'Shipped', 'Delivered', 'Cance
     @if (error(); as err) { <div class="error-text" style="margin-bottom: 10px;">{{ err }}</div> }
 
     <table class="table">
-      <thead><tr><th>{{ i18n.t('admin.orders.table.order') }}</th><th>{{ i18n.t('admin.orders.table.customer') }}</th><th>{{ i18n.t('admin.orders.table.email') }}</th><th>{{ i18n.t('admin.orders.table.date') }}</th><th>{{ i18n.t('admin.orders.table.items') }}</th><th>{{ i18n.t('admin.orders.table.total') }}</th><th>{{ i18n.t('admin.orders.table.status') }}</th></tr></thead>
+      <thead><tr><th>{{ i18n.t('admin.orders.table.order') }}</th><th>{{ i18n.t('admin.orders.table.customer') }}</th><th>{{ i18n.t('admin.orders.table.email') }}</th><th>{{ i18n.t('admin.orders.table.date') }}</th><th>{{ i18n.t('admin.orders.table.items') }}</th><th>{{ i18n.t('admin.orders.table.total') }}</th><th>{{ i18n.t('admin.orders.table.status') }}</th><th>{{ i18n.t('admin.orders.table.courier') }}</th></tr></thead>
       <tbody>
         @for (o of result()?.items ?? []; track o.orderNumber) {
           <tr>
@@ -55,6 +55,15 @@ const STATUSES = ['PendingPayment', 'Processing', 'Shipped', 'Delivered', 'Cance
                       [value]="o.status" (change)="updateStatus(o, $any($event.target).value)">
                 @for (s of statuses; track s) {
                   <option [value]="s" [selected]="s === o.status">{{ i18n.t('status.' + s) }}</option>
+                }
+              </select>
+            </td>
+            <td>
+              <select class="input" style="width: 150px; min-height: 30px; padding: 3px 8px; font-size: 12px;"
+                      (change)="assignCourier(o, $any($event.target).value)">
+                <option value="" [selected]="!o.courierId">{{ i18n.t('admin.orders.unassigned') }}</option>
+                @for (c of couriers(); track c.id) {
+                  <option [value]="c.id" [selected]="c.id === o.courierId">{{ c.fullName }}</option>
                 }
               </select>
             </td>
@@ -81,6 +90,7 @@ export class AdminOrdersPage implements OnInit {
   statusClass = statusTagClass;
 
   stats = signal<AdminOrderStats | null>(null);
+  couriers = signal<Courier[]>([]);
   result = signal<PagedResult<AdminOrderListItem> | null>(null);
   statusFilter = signal('');
   search = signal('');
@@ -90,7 +100,7 @@ export class AdminOrdersPage implements OnInit {
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   async ngOnInit(): Promise<void> {
-    await Promise.all([this.loadStats(), this.load()]);
+    await Promise.all([this.loadStats(), this.load(), this.loadCouriers()]);
   }
 
   totalPages(): number {
@@ -127,8 +137,21 @@ export class AdminOrdersPage implements OnInit {
     }
   }
 
+  async assignCourier(order: AdminOrderListItem, courierId: string): Promise<void> {
+    try {
+      await firstValueFrom(this.api.adminAssignOrderCourier(order.orderNumber, courierId || null));
+      await this.load();
+    } catch (e) {
+      this.error.set(extractError(e));
+    }
+  }
+
   private async loadStats(): Promise<void> {
     this.stats.set(await firstValueFrom(this.api.adminGetOrderStats()));
+  }
+
+  private async loadCouriers(): Promise<void> {
+    this.couriers.set(await firstValueFrom(this.api.adminGetCouriers()));
   }
 
   private async load(): Promise<void> {

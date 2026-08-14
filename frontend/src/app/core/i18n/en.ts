@@ -6,6 +6,7 @@ export const en: Record<string, string> = {
   'nav.contact': 'Contact us',
   'nav.orders': 'Orders',
   'nav.admin': 'Admin',
+  'nav.delivery': 'My deliveries',
   'nav.cart': 'Cart',
   'nav.signIn': 'Sign in',
   'nav.signOut': 'Sign out',
@@ -219,6 +220,7 @@ export const en: Record<string, string> = {
   'admin.content.saving': 'Saving…',
   'admin.content.saved': 'Saved ✓',
   'admin.nav.orders': 'Orders',
+  'admin.nav.couriers': 'Delivery people',
   'admin.nav.analytics': 'Analytics',
   'admin.nav.backToStore': '← Back to store',
 
@@ -304,6 +306,33 @@ export const en: Record<string, string> = {
   'admin.orders.table.items': 'Items',
   'admin.orders.table.total': 'Total',
   'admin.orders.table.status': 'Status',
+  'admin.orders.table.courier': 'Courier',
+  'admin.orders.unassigned': 'Unassigned',
+
+  // admin — couriers (delivery people)
+  'admin.couriers.title': 'Delivery people',
+  'admin.couriers.addCourier': 'Add delivery person',
+  'admin.couriers.hint': 'Delivery people sign in with the credentials created here and see only the orders assigned to them.',
+  'admin.couriers.newCourier': 'New delivery person',
+  'admin.couriers.fullName': 'Full name',
+  'admin.couriers.password': 'Password',
+  'admin.couriers.passwordHint': 'At least 8 characters',
+  'admin.couriers.table.name': 'Name',
+  'admin.couriers.table.activeOrders': 'Active orders',
+  'admin.couriers.empty': 'No delivery people yet.',
+  'admin.couriers.deleteConfirm': 'Delete "{name}"? Their assigned orders return to the unassigned pool.',
+
+  // delivery portal
+  'delivery.brand': 'Delivery',
+  'delivery.signOut': 'Sign out',
+  'delivery.title': 'My deliveries',
+  'delivery.filterAll': 'All',
+  'delivery.noOrders': 'No orders assigned to you yet.',
+  'delivery.deliverTo': 'Deliver to',
+  'delivery.items': 'Items',
+  'delivery.toCollect': 'Order total',
+  'delivery.markShipped': 'Start delivery',
+  'delivery.markDelivered': 'Mark delivered',
 
   // admin — analytics
   'admin.analytics.title': 'Analytics',

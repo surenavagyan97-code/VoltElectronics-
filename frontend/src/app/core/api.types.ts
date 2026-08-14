@@ -206,6 +206,31 @@ export interface AdminOrderListItem {
   currency: string;
   status: string;
   itemCount: number;
+  courierId: string | null;
+  courierName: string | null;
+}
+export interface Courier {
+  id: string;
+  email: string;
+  fullName: string;
+  activeOrderCount: number;
+}
+
+// Delivery (what a courier sees about an assigned order)
+export interface DeliveryOrderItem { productName: string; qty: number; }
+export interface DeliveryOrder {
+  orderNumber: string;
+  status: string;
+  createdAt: string;
+  fullName: string;
+  phone: string | null;
+  street: string;
+  city: string;
+  state: string;
+  zip: string;
+  total: number;
+  currency: string;
+  items: DeliveryOrderItem[];
 }
 export interface AdminOrderStats {
   total: number;

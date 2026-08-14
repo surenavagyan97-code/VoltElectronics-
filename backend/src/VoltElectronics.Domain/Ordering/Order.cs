@@ -25,6 +25,9 @@ public sealed class Order : AggregateRoot
     public string? PaymentId { get; private set; }
     public string? PaymentProvider { get; private set; }
     public string? PaymentFailureReason { get; private set; }
+
+    /// <summary>Delivery person responsible for handing the order over; null until an admin assigns one.</summary>
+    public string? AssignedCourierId { get; private set; }
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
     public DateTime? PaidAt { get; private set; }
 
@@ -85,6 +88,11 @@ public sealed class Order : AggregateRoot
     }
 
     public void ChangeStatus(OrderStatus status) => Status = status;
+
+    /// <summary>Null unassigns — e.g. when the courier's account is removed.</summary>
+    public void AssignCourier(string? courierId) => AssignedCourierId = courierId;
+
+    public bool IsAssignedTo(string courierId) => AssignedCourierId == courierId;
 
     /// <summary>
     /// Guest orders are readable by anyone who knows the order number *and* the checkout email;

@@ -103,6 +103,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
             e.HasIndex(o => o.UserId);
             e.HasIndex(o => o.PaymentId);
             e.Property(o => o.GuestEmail).HasMaxLength(256);
+            // Matches the AspNetUsers key length; no FK so order history survives account deletion.
+            e.Property(o => o.AssignedCourierId).HasMaxLength(450);
+            e.HasIndex(o => o.AssignedCourierId);
             e.Property(o => o.PaymentId).HasMaxLength(100);
             e.Property(o => o.PaymentProvider).HasMaxLength(30);
             e.Property(o => o.PaymentFailureReason).HasMaxLength(500);

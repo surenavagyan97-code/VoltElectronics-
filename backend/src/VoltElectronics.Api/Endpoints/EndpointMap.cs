@@ -14,10 +14,12 @@ public static class EndpointMap
         PaymentEndpoints.Map(app);
         ConfigEndpoints.Map(app);
         ContentEndpoints.Map(app);
+        DeliveryEndpoints.Map(app);
 
         AdminProductEndpoints.Map(app);
         AdminCategoryEndpoints.Map(app);
         AdminOrderEndpoints.Map(app);
+        AdminCourierEndpoints.Map(app);
 
         return app;
     }

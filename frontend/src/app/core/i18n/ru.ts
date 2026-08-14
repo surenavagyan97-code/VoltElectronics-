@@ -5,6 +5,7 @@ export const ru: Record<string, string> = {
   'nav.contact': 'Контакты',
   'nav.orders': 'Заказы',
   'nav.admin': 'Админ',
+  'nav.delivery': 'Мои доставки',
   'nav.cart': 'Корзина',
   'nav.signIn': 'Войти',
   'nav.signOut': 'Выйти',
@@ -218,6 +219,7 @@ export const ru: Record<string, string> = {
   'admin.content.saving': 'Сохранение…',
   'admin.content.saved': 'Сохранено ✓',
   'admin.nav.orders': 'Заказы',
+  'admin.nav.couriers': 'Курьеры',
   'admin.nav.analytics': 'Аналитика',
   'admin.nav.backToStore': '← Вернуться в магазин',
 
@@ -303,6 +305,33 @@ export const ru: Record<string, string> = {
   'admin.orders.table.items': 'Товары',
   'admin.orders.table.total': 'Итого',
   'admin.orders.table.status': 'Статус',
+  'admin.orders.table.courier': 'Курьер',
+  'admin.orders.unassigned': 'Не назначен',
+
+  // admin — couriers (delivery people)
+  'admin.couriers.title': 'Курьеры',
+  'admin.couriers.addCourier': 'Добавить курьера',
+  'admin.couriers.hint': 'Курьеры входят с созданными здесь учётными данными и видят только назначенные им заказы.',
+  'admin.couriers.newCourier': 'Новый курьер',
+  'admin.couriers.fullName': 'Имя и фамилия',
+  'admin.couriers.password': 'Пароль',
+  'admin.couriers.passwordHint': 'Не менее 8 символов',
+  'admin.couriers.table.name': 'Имя',
+  'admin.couriers.table.activeOrders': 'Активные заказы',
+  'admin.couriers.empty': 'Курьеров пока нет.',
+  'admin.couriers.deleteConfirm': 'Удалить «{name}»? Назначенные заказы вернутся в список неназначенных.',
+
+  // delivery portal
+  'delivery.brand': 'Доставка',
+  'delivery.signOut': 'Выйти',
+  'delivery.title': 'Мои доставки',
+  'delivery.filterAll': 'Все',
+  'delivery.noOrders': 'Вам пока не назначены заказы.',
+  'delivery.deliverTo': 'Адрес доставки',
+  'delivery.items': 'Товары',
+  'delivery.toCollect': 'Сумма заказа',
+  'delivery.markShipped': 'Начать доставку',
+  'delivery.markDelivered': 'Отметить доставленным',
 
   // admin — analytics
   'admin.analytics.title': 'Аналитика',

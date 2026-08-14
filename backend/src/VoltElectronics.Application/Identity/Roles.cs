@@ -7,6 +7,7 @@ public static class Roles
 {
     public const string Admin = "Admin";
     public const string Customer = "Customer";
+    public const string Courier = "Courier";
 
-    public static readonly string[] All = [Admin, Customer];
+    public static readonly string[] All = [Admin, Customer, Courier];
 }

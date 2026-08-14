@@ -20,6 +20,7 @@ export class AuthStore {
   readonly user = computed(() => this.auth()?.user ?? null);
   readonly isLoggedIn = computed(() => this.auth() !== null);
   readonly isAdmin = computed(() => this.auth()?.user.roles.includes('Admin') ?? false);
+  readonly isCourier = computed(() => this.auth()?.user.roles.includes('Courier') ?? false);
 
   get accessToken(): string | null { return this.auth()?.accessToken ?? null; }
 

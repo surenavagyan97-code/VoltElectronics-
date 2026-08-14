@@ -4,8 +4,8 @@ import { Observable } from 'rxjs';
 import {
   AdminOrderListItem, AdminOrderStats, AdminProductDetail, AdminProductListItem, Analytics,
   AppConfig, AuthResponse, Cart, Category, CheckoutRequest, CheckoutResponse, ContentPage,
-  ImportProductsResult, OrderDetail, OrderSummary, PagedResult, ProductDetail, ProductImage,
-  ProductListItem, ProductQuery, SaveProductRequest,
+  Courier, DeliveryOrder, ImportProductsResult, OrderDetail, OrderSummary, PagedResult,
+  ProductDetail, ProductImage, ProductListItem, ProductQuery, SaveProductRequest,
 } from './api.types';
 import { I18nService } from './i18n.service';
 
@@ -174,6 +174,28 @@ export class ApiClient {
   }
   adminUpdateOrderStatus(orderNumber: string, status: string): Observable<void> {
     return this.http.put<void>(`/api/admin/orders/${encodeURIComponent(orderNumber)}/status`, { status });
+  }
+  adminAssignOrderCourier(orderNumber: string, courierId: string | null): Observable<void> {
+    return this.http.put<void>(`/api/admin/orders/${encodeURIComponent(orderNumber)}/courier`, { courierId });
+  }
+
+  adminGetCouriers(): Observable<Courier[]> {
+    return this.http.get<Courier[]>('/api/admin/couriers');
+  }
+  adminCreateCourier(email: string, password: string, fullName: string): Observable<Courier> {
+    return this.http.post<Courier>('/api/admin/couriers', { email, password, fullName });
+  }
+  adminDeleteCourier(id: string): Observable<void> {
+    return this.http.delete<void>(`/api/admin/couriers/${encodeURIComponent(id)}`);
+  }
+
+  // delivery (courier's own assignments)
+  deliveryGetOrders(status?: string): Observable<DeliveryOrder[]> {
+    const params = status ? new HttpParams().set('status', status) : undefined;
+    return this.http.get<DeliveryOrder[]>('/api/delivery/orders', { params });
+  }
+  deliveryUpdateOrderStatus(orderNumber: string, status: string): Observable<void> {
+    return this.http.put<void>(`/api/delivery/orders/${encodeURIComponent(orderNumber)}/status`, { status });
   }
 
   adminGetAnalytics(): Observable<Analytics> {

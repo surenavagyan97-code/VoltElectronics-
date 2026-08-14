@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { adminGuard, authGuard } from './core/guards';
+import { adminGuard, authGuard, deliveryGuard } from './core/guards';
 
 export const routes: Routes = [
   {
@@ -37,7 +37,16 @@ export const routes: Routes = [
       { path: 'categories', loadComponent: () => import('./admin/admin-categories').then((m) => m.AdminCategoriesPage) },
       { path: 'content', loadComponent: () => import('./admin/admin-content').then((m) => m.AdminContentPage) },
       { path: 'orders', loadComponent: () => import('./admin/admin-orders').then((m) => m.AdminOrdersPage) },
+      { path: 'couriers', loadComponent: () => import('./admin/admin-couriers').then((m) => m.AdminCouriersPage) },
       { path: 'analytics', loadComponent: () => import('./admin/admin-analytics').then((m) => m.AdminAnalyticsPage) },
+    ],
+  },
+  {
+    path: 'delivery',
+    canActivate: [deliveryGuard],
+    loadComponent: () => import('./delivery/delivery-layout').then((m) => m.DeliveryLayout),
+    children: [
+      { path: '', loadComponent: () => import('./delivery/delivery-orders').then((m) => m.DeliveryOrdersPage) },
     ],
   },
   { path: '**', redirectTo: '' },

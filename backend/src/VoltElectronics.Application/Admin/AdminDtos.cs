@@ -50,9 +50,18 @@ public record SaveContentRequest(string Lang, string Body);
 // Orders
 public record AdminOrderListItemDto(
     string OrderNumber, string Customer, string Email, DateTime CreatedAt,
-    decimal Total, string Currency, string Status, int ItemCount);
+    decimal Total, string Currency, string Status, int ItemCount,
+    string? CourierId, string? CourierName);
 
 public record UpdateOrderStatusRequest(string Status);
+
+// Couriers (delivery people)
+public record CourierDto(string Id, string Email, string FullName, int ActiveOrderCount);
+
+public record CreateCourierRequest(string Email, string Password, string FullName);
+
+/// <summary>Null courier id unassigns the order.</summary>
+public record AssignOrderCourierRequest(string? CourierId);
 
 public record AdminOrderStatsDto(int Total, int PendingPayment, int Processing, int Shipped, int Delivered, int Cancelled);
 

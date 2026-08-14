@@ -5,6 +5,7 @@ export const hy: Record<string, string> = {
   'nav.contact': 'Կապ մեզ հետ',
   'nav.orders': 'Պատվերներ',
   'nav.admin': 'Ադմին',
+  'nav.delivery': 'Իմ առաքումները',
   'nav.cart': 'Զամբյուղ',
   'nav.signIn': 'Մուտք',
   'nav.signOut': 'Ելք',
@@ -218,6 +219,7 @@ export const hy: Record<string, string> = {
   'admin.content.saving': 'Պահպանվում է…',
   'admin.content.saved': 'Պահպանված է ✓',
   'admin.nav.orders': 'Պատվերներ',
+  'admin.nav.couriers': 'Առաքիչներ',
   'admin.nav.analytics': 'Վերլուծություն',
   'admin.nav.backToStore': '← Վերադառնալ խանութ',
 
@@ -303,6 +305,33 @@ export const hy: Record<string, string> = {
   'admin.orders.table.items': 'Ապրանքներ',
   'admin.orders.table.total': 'Ընդամենը',
   'admin.orders.table.status': 'Կարգավիճակ',
+  'admin.orders.table.courier': 'Առաքիչ',
+  'admin.orders.unassigned': 'Չնշանակված',
+
+  // admin — couriers (delivery people)
+  'admin.couriers.title': 'Առաքիչներ',
+  'admin.couriers.addCourier': 'Ավելացնել առաքիչ',
+  'admin.couriers.hint': 'Առաքիչները մուտք են գործում այստեղ ստեղծված հաշվի տվյալներով և տեսնում են միայն իրենց նշանակված պատվերները։',
+  'admin.couriers.newCourier': 'Նոր առաքիչ',
+  'admin.couriers.fullName': 'Անուն ազգանուն',
+  'admin.couriers.password': 'Գաղտնաբառ',
+  'admin.couriers.passwordHint': 'Առնվազն 8 նիշ',
+  'admin.couriers.table.name': 'Անուն',
+  'admin.couriers.table.activeOrders': 'Ակտիվ պատվերներ',
+  'admin.couriers.empty': 'Դեռ առաքիչներ չկան։',
+  'admin.couriers.deleteConfirm': 'Ջնջե՞լ «{name}»-ին։ Նրա պատվերները կվերադառնան չնշանակվածների ցանկ։',
+
+  // delivery portal
+  'delivery.brand': 'Առաքում',
+  'delivery.signOut': 'Ելք',
+  'delivery.title': 'Իմ առաքումները',
+  'delivery.filterAll': 'Բոլորը',
+  'delivery.noOrders': 'Ձեզ դեռ պատվերներ չեն նշանակվել։',
+  'delivery.deliverTo': 'Առաքման հասցե',
+  'delivery.items': 'Ապրանքներ',
+  'delivery.toCollect': 'Պատվերի գումարը',
+  'delivery.markShipped': 'Սկսել առաքումը',
+  'delivery.markDelivered': 'Նշել առաքված',
 
   // admin — analytics
   'admin.analytics.title': 'Վերլուծություն',
