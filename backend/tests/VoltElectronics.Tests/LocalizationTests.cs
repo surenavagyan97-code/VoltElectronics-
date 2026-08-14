@@ -18,7 +18,7 @@ public class LocalizationTests : IDisposable
     public async Task Product_names_resolve_per_language_and_fall_back()
     {
         var product = _db.AddProduct("Laptop", 1000m, 5);
-        product.ReplaceTranslations([("hy", "Նոթբուք")]);
+        product.ReplaceTranslations([("hy", "Նոթբուք", null)]);
         _db.Context.SaveChanges();
 
         var hy = await _db.Dispatcher.Query(new GetProductsQuery(Lang: "hy"));
@@ -30,10 +30,23 @@ public class LocalizationTests : IDisposable
     }
 
     [Fact]
+    public async Task Description_falls_back_independently_of_name()
+    {
+        var product = _db.AddProduct("Laptop", 1000m, 5);
+        // Translation carries only a description — the name must still fall back.
+        product.ReplaceTranslations([("ru", null, "Мощный ноутбук")]);
+        _db.Context.SaveChanges();
+
+        var detail = await _db.Dispatcher.Query(new GetProductBySlugQuery(product.Slug, "ru"));
+        Assert.Equal("Laptop", detail!.Name);
+        Assert.Equal("Мощный ноутбук", detail.Description);
+    }
+
+    [Fact]
     public async Task Search_matches_translated_names()
     {
         var product = _db.AddProduct("Laptop", 1000m, 5);
-        product.ReplaceTranslations([("hy", "Նոթբուք")]);
+        product.ReplaceTranslations([("hy", "Նոթբուք", null)]);
         _db.Context.SaveChanges();
 
         var result = await _db.Dispatcher.Query(new GetProductsQuery(Search: "Նոթբ", Lang: "hy"));

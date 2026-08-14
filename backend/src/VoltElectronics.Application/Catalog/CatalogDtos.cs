@@ -9,8 +9,11 @@ public record ProductListItemDto(
 
 public record ProductSpecDto(string Name, string Value);
 
-/// <summary>One language's display name; the canonical name is the fallback for missing langs.</summary>
-public record ProductTranslationDto(string Lang, string Name);
+/// <summary>
+/// One language's display texts; each field falls back to the product's canonical value
+/// when null or missing.
+/// </summary>
+public record ProductTranslationDto(string Lang, string? Name, string? Description = null);
 
 public record ProductImageDto(int Id, string Url, string ThumbUrl, string CardUrl, int SortOrder);
 

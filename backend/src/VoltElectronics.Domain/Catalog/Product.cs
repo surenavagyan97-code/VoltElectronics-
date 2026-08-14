@@ -63,19 +63,22 @@ public sealed class Product : AggregateRoot
     }
 
     /// <summary>
-    /// Replaces the per-language display names. Name stays the canonical form (it drives the slug
-    /// and order-line snapshots); readers fall back to it when a translation is missing — the
-    /// standard e-commerce translation-table pattern, so new languages need no schema change.
+    /// Replaces the per-language display texts. Name and Description stay canonical on the product
+    /// (the name drives the slug and order-line snapshots); readers fall back to them field by
+    /// field when a translation is missing — the standard e-commerce translation-table pattern,
+    /// so new languages need no schema change.
     /// </summary>
-    public void ReplaceTranslations(IEnumerable<(string Lang, string Name)> translations)
+    public void ReplaceTranslations(IEnumerable<(string Lang, string? Name, string? Description)> translations)
     {
         _translations.Clear();
-        foreach (var (lang, name) in translations)
+        foreach (var (lang, name, description) in translations)
         {
-            if (string.IsNullOrWhiteSpace(lang) || string.IsNullOrWhiteSpace(name)) continue;
+            var trimmedName = string.IsNullOrWhiteSpace(name) ? null : name.Trim();
+            var trimmedDescription = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
+            if (string.IsNullOrWhiteSpace(lang) || (trimmedName is null && trimmedDescription is null)) continue;
             var normalized = lang.Trim().ToLowerInvariant();
             if (_translations.Any(t => t.Lang == normalized)) continue;
-            _translations.Add(new ProductTranslation(normalized, name.Trim()));
+            _translations.Add(new ProductTranslation(normalized, trimmedName, trimmedDescription));
         }
     }
 

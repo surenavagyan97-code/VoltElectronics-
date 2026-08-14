@@ -59,8 +59,8 @@ export interface ContentPage {
   updatedAt: string;
 }
 
-/** One language's display name for a product; missing langs fall back to the canonical name. */
-export interface ProductTranslation { lang: string; name: string; }
+/** One language's display texts; each field falls back to the product's canonical value. */
+export interface ProductTranslation { lang: string; name: string | null; description: string | null; }
 
 // Cart
 export interface CartItem {

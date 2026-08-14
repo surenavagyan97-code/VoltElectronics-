@@ -112,10 +112,11 @@ internal sealed class GetProductBySlugHandler(AppDbContext db)
                 .ToListAsync(cancellationToken));
         }
 
-        var name = p.Translations.FirstOrDefault(t => t.Lang == lang)?.Name ?? p.Name;
+        var translation = p.Translations.FirstOrDefault(t => t.Lang == lang);
         return new ProductDetailDto(
-            p.Id, name, p.Slug, p.Sku, p.Category.Name, p.CategoryId,
-            p.Price, p.CompareAtPrice, p.Badge, p.Rating, p.ReviewCount, p.Stock, p.Description,
+            p.Id, translation?.Name ?? p.Name, p.Slug, p.Sku, p.Category.Name, p.CategoryId,
+            p.Price, p.CompareAtPrice, p.Badge, p.Rating, p.ReviewCount, p.Stock,
+            translation?.Description ?? p.Description,
             p.Images.Select(i => new ProductImageDto(i.Id, i.Url, i.ThumbUrl, i.CardUrl, i.SortOrder)).ToList(),
             p.Specs.Select(s => new ProductSpecDto(s.Name, s.Value)).ToList(),
             related);

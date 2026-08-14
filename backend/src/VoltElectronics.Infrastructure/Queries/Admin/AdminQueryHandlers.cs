@@ -65,7 +65,7 @@ internal sealed class AdminGetProductHandler(AppDbContext db)
             p.Rating, p.ReviewCount,
             p.Images.Select(i => new ProductImageDto(i.Id, i.Url, i.ThumbUrl, i.CardUrl, i.SortOrder)).ToList(),
             p.Specs.Select(s => new ProductSpecDto(s.Name, s.Value)).ToList(),
-            p.Translations.Select(t => new ProductTranslationDto(t.Lang, t.Name)).ToList());
+            p.Translations.Select(t => new ProductTranslationDto(t.Lang, t.Name, t.Description)).ToList());
     }
 }
 
@@ -84,7 +84,7 @@ internal sealed class ExportProductsHandler(AppDbContext db)
                 p.Id, p.Name, p.Sku, Category = p.Category.Name, p.Description,
                 p.Price, p.CompareAtPrice, p.Stock, p.Status, p.Badge, p.Rating, p.ReviewCount,
                 Specs = p.Specs.OrderBy(s => s.SortOrder).Select(s => new { s.Name, s.Value }).ToList(),
-                Translations = p.Translations.Select(t => new { t.Lang, t.Name }).ToList(),
+                Translations = p.Translations.Select(t => new { t.Lang, t.Name, t.Description }).ToList(),
             })
             .ToListAsync(cancellationToken);
 
@@ -93,7 +93,7 @@ internal sealed class ExportProductsHandler(AppDbContext db)
                 p.Price, p.CompareAtPrice, p.Stock, p.Status.ToString(), p.Badge,
                 p.Rating, p.ReviewCount,
                 string.Join("\n", p.Specs.Select(s => $"{s.Name}: {s.Value}")),
-                p.Translations.Select(t => new ProductTranslationDto(t.Lang, t.Name)).ToList()))
+                p.Translations.Select(t => new ProductTranslationDto(t.Lang, t.Name, t.Description)).ToList()))
             .ToList();
     }
 }

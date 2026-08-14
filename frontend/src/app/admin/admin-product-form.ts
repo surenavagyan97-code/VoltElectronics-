@@ -53,6 +53,11 @@ const TRANSLATION_LANGS = ['hy', 'ru'] as const;
         </div>
         <div class="field" style="grid-column: span 2;"><label>{{ i18n.t('admin.form.description') }}</label>
           <textarea class="input" [(ngModel)]="form.description" placeholder="A 15-inch aluminum-unibody workstation built for sustained performance..."></textarea></div>
+        @for (t of form.translations; track t.lang) {
+          <div class="field"><label>{{ i18n.t('admin.form.description') }} ({{ langLabels[t.lang] ?? t.lang }})</label>
+            <textarea class="input" [(ngModel)]="t.description" [ngModelOptions]="{ standalone: true }"
+                      [placeholder]="i18n.t('admin.form.translationPlaceholder')"></textarea></div>
+        }
 
         @if (!isNew()) {
           <div class="field" style="grid-column: span 2;">
@@ -128,12 +133,12 @@ export class AdminProductFormPage implements OnInit {
     name: string; sku: string; categoryId: number | null; description: string;
     price: number | null; compareAtPrice: number | null; stock: number;
     status: string; badge: string; specs: ProductSpec[];
-    translations: { lang: string; name: string }[];
+    translations: { lang: string; name: string; description: string }[];
   } = {
     name: '', sku: '', categoryId: null, description: '',
     price: null, compareAtPrice: null, stock: 0, status: 'Active', badge: '',
     specs: [{ name: '', value: '' }],
-    translations: TRANSLATION_LANGS.map((lang) => ({ lang, name: '' })),
+    translations: TRANSLATION_LANGS.map((lang) => ({ lang, name: '', description: '' })),
   };
 
   async ngOnInit(): Promise<void> {
@@ -149,10 +154,10 @@ export class AdminProductFormPage implements OnInit {
         price: p.price, compareAtPrice: p.compareAtPrice, stock: p.stock,
         status: p.status, badge: p.badge ?? '',
         specs: p.specs.length ? p.specs.map((s) => ({ ...s })) : [{ name: '', value: '' }],
-        translations: TRANSLATION_LANGS.map((lang) => ({
-          lang,
-          name: p.translations.find((t) => t.lang === lang)?.name ?? '',
-        })),
+        translations: TRANSLATION_LANGS.map((lang) => {
+          const t = p.translations.find((x) => x.lang === lang);
+          return { lang, name: t?.name ?? '', description: t?.description ?? '' };
+        }),
       };
       this.images.set(p.images);
     } else if (this.categories().length) {
@@ -196,7 +201,9 @@ export class AdminProductFormPage implements OnInit {
       status: this.form.status,
       badge: this.form.badge || null,
       specs: this.form.specs.filter((s) => s.name && s.value),
-      translations: this.form.translations.filter((t) => t.name.trim()),
+      translations: this.form.translations
+        .filter((t) => t.name.trim() || t.description.trim())
+        .map((t) => ({ lang: t.lang, name: t.name.trim() || null, description: t.description.trim() || null })),
     };
     try {
       if (this.id === null) {

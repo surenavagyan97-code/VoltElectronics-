@@ -14,14 +14,21 @@ internal static class ProductsWorkbook
 {
     private const string SheetName = "Products";
 
-    /// <summary>Translated-name columns emitted by export and the template; Parse accepts any "Name (xx)".</summary>
+    /// <summary>
+    /// Translated-text columns emitted by export and the template; Parse accepts any
+    /// "Name (xx)" / "Description (xx)" pair of headers.
+    /// </summary>
     private static readonly string[] TranslationLangs = ["hy", "ru"];
 
-    private static readonly Regex TranslationHeader =
+    private static readonly Regex NameHeader =
         new(@"^Name \((?<lang>[a-z]{2}(-[a-z]{2,4})?)\)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    private static readonly Regex DescriptionHeader =
+        new(@"^Description \((?<lang>[a-z]{2}(-[a-z]{2,4})?)\)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private static string[] AllHeaders() =>
         ["Id", "Name", .. TranslationLangs.Select(l => $"Name ({l})"), "SKU", "Category", "Description",
+         .. TranslationLangs.Select(l => $"Description ({l})"),
          "Price", "Compare-at price", "Stock", "Status", "Badge", "Rating", "Reviews", "Specs"];
 
     public static byte[] Build(IReadOnlyList<ProductExportRowDto> rows)
@@ -49,6 +56,9 @@ internal static class ProductsWorkbook
             cells.Cell(Col("SKU")).Value = row.Sku;
             cells.Cell(Col("Category")).Value = row.Category;
             cells.Cell(Col("Description")).Value = row.Description;
+            foreach (var lang in TranslationLangs)
+                cells.Cell(Col($"Description ({lang})")).Value =
+                    row.Translations.FirstOrDefault(t => t.Lang == lang)?.Description ?? "";
             cells.Cell(Col("Price")).Value = row.Price;
             cells.Cell(Col("Compare-at price")).Value = row.CompareAtPrice is { } cap ? cap : Blank.Value;
             cells.Cell(Col("Stock")).Value = row.Stock;
@@ -92,7 +102,10 @@ internal static class ProductsWorkbook
             ["Specs"] = "One \"Name: Value\" spec per line within this cell (Alt+Enter for a new line).",
         };
         foreach (var lang in TranslationLangs)
+        {
             notes[$"Name ({lang})"] = $"Optional display name in \"{lang}\"; shoppers browsing in that language see it instead of Name.";
+            notes[$"Description ({lang})"] = $"Optional description in \"{lang}\"; falls back to Description when blank.";
+        }
 
         for (var c = 0; c < templateHeaders.Length; c++)
         {
@@ -119,7 +132,7 @@ internal static class ProductsWorkbook
             "• Fill the Products sheet, one product per row, then upload the file on the admin Products page.",
             "• Rows are matched to existing products by SKU — a known SKU updates that product, a new SKU creates one.",
             "• Name, SKU, Category and Price are required; the other columns are optional.",
-            "• \"Name (hy)\" / \"Name (ru)\" hold translated display names — leave blank to fall back to Name.",
+            "• \"Name (hy)\" / \"Name (ru)\" and \"Description (hy)\" / \"Description (ru)\" hold translations — leave blank to fall back to the main Name/Description.",
             "• An unknown category name creates that category automatically.",
             "• Specs go in one cell, one \"Name: Value\" pair per line (Alt+Enter inside a cell adds a line).",
             "• Rows with problems are skipped and reported after the import — the rest of the file still goes through.",
@@ -191,14 +204,25 @@ internal static class ProductsWorkbook
             // Null when the file has no translation columns at all ("leave unchanged"); an empty
             // list when the columns exist but the cells are blank ("clear translations").
             List<ProductTranslationDto>? translations = null;
+            var perLang = new Dictionary<string, (string? Name, string? Description)>();
             foreach (var (header, col) in columns)
             {
-                if (TranslationHeader.Match(header) is not { Success: true } m) continue;
+                var nameMatch = NameHeader.Match(header);
+                var descMatch = DescriptionHeader.Match(header);
+                if (!nameMatch.Success && !descMatch.Success) continue;
+
                 translations ??= [];
+                var lang = (nameMatch.Success ? nameMatch : descMatch).Groups["lang"].Value.ToLowerInvariant();
                 var value = row.Cell(col).GetString().Trim();
-                if (value.Length > 0)
-                    translations.Add(new ProductTranslationDto(m.Groups["lang"].Value.ToLowerInvariant(), value));
+                var entry = perLang.GetValueOrDefault(lang);
+                perLang[lang] = nameMatch.Success
+                    ? (value.Length > 0 ? value : entry.Name, entry.Description)
+                    : (entry.Name, value.Length > 0 ? value : entry.Description);
             }
+            if (translations is not null)
+                translations.AddRange(perLang
+                    .Where(kv => kv.Value.Name is not null || kv.Value.Description is not null)
+                    .Select(kv => new ProductTranslationDto(kv.Key, kv.Value.Name, kv.Value.Description)));
 
             var parsed = new ImportProductRow(
                 rowNumber,
