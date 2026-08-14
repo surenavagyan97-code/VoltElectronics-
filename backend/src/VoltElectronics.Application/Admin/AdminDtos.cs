@@ -38,6 +38,9 @@ public record ImportProductsResultDto(int Created, int Updated, IReadOnlyList<Im
 // Categories
 public record SaveCategoryRequest(string Name);
 
+// Editable storefront pages
+public record SaveContentRequest(string Body);
+
 // Orders
 public record AdminOrderListItemDto(
     string OrderNumber, string Customer, string Email, DateTime CreatedAt,

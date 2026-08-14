@@ -3,6 +3,7 @@ import { Component, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { ProductListItem } from '../core/api.types';
 import { CartStore } from '../core/cart-store';
+import { FavoritesStore } from '../core/favorites-store';
 import { CurrencyStore } from '../core/currency-store';
 import { I18nService } from '../core/i18n.service';
 
@@ -10,7 +11,15 @@ import { I18nService } from '../core/i18n.service';
   selector: 'app-product-card',
   imports: [DecimalPipe],
   template: `
-    <div class="card elev-sm" style="cursor: pointer; height: 100%;" (click)="open()">
+    <div class="card elev-sm" style="cursor: pointer; height: 100%; position: relative;" (click)="open()">
+      <button class="btn btn-icon btn-secondary" style="position: absolute; top: 10px; right: 10px; z-index: 1; background: var(--color-bg);"
+              (click)="toggleFavorite($event)"
+              [attr.aria-label]="i18n.t('fav.title')" [attr.aria-pressed]="favorites.has(product().id)">
+        <svg width="15" height="15" viewBox="0 0 24 24"
+             [attr.fill]="favorites.has(product().id) ? 'var(--color-accent)' : 'none'"
+             [attr.stroke]="favorites.has(product().id) ? 'var(--color-accent)' : 'currentColor'"
+             stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+      </button>
       <div class="ph" style="width: 100%;" [style.height.px]="imageHeight()">
         @if (product().imageUrl) {
           <img [src]="product().imageUrl" [alt]="product().name" />
@@ -44,8 +53,14 @@ export class ProductCard {
 
   cart = inject(CartStore);
   currency = inject(CurrencyStore);
+  favorites = inject(FavoritesStore);
   i18n = inject(I18nService);
   private router = inject(Router);
+
+  toggleFavorite(event: Event): void {
+    event.stopPropagation();
+    this.favorites.toggle(this.product().id);
+  }
 
   open(): void {
     void this.router.navigate(['/product', this.product().slug]);

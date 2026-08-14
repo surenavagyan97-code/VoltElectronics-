@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using VoltElectronics.Domain.Carts;
 using VoltElectronics.Domain.Catalog;
+using VoltElectronics.Domain.Content;
 using VoltElectronics.Domain.Identity;
 using VoltElectronics.Domain.Ordering;
 using VoltElectronics.Infrastructure.Identity;
@@ -15,6 +16,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<Cart> Carts => Set<Cart>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<ContentPage> ContentPages => Set<ContentPage>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -42,6 +44,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
             e.HasOne(p => p.Category).WithMany().HasForeignKey(p => p.CategoryId);
             e.HasMany(p => p.Images).WithOne().HasForeignKey(i => i.ProductId).OnDelete(DeleteBehavior.Cascade);
             e.HasMany(p => p.Specs).WithOne().HasForeignKey(s => s.ProductId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<ContentPage>(e =>
+        {
+            e.Ignore(p => p.DomainEvents);
+            e.Property(p => p.Key).HasMaxLength(50);
+            e.HasIndex(p => p.Key).IsUnique();
         });
 
         // Child entities are reachable only through their aggregate root, so they have no DbSet —

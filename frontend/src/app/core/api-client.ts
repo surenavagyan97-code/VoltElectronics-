@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   AdminOrderListItem, AdminOrderStats, AdminProductDetail, AdminProductListItem, Analytics,
-  AppConfig, AuthResponse, Cart, Category, CheckoutRequest, CheckoutResponse,
+  AppConfig, AuthResponse, Cart, Category, CheckoutRequest, CheckoutResponse, ContentPage,
   ImportProductsResult, OrderDetail, OrderSummary, PagedResult, ProductDetail, ProductImage,
   ProductListItem, ProductQuery, SaveProductRequest,
 } from './api.types';
@@ -45,8 +45,16 @@ export class ApiClient {
   getProduct(slug: string): Observable<ProductDetail> {
     return this.http.get<ProductDetail>(`/api/products/${encodeURIComponent(slug)}`);
   }
+  getProductsByIds(ids: number[]): Observable<ProductListItem[]> {
+    let params = new HttpParams();
+    for (const id of ids) params = params.append('ids', id);
+    return this.http.get<ProductListItem[]>('/api/products/by-ids', { params });
+  }
   getCategories(): Observable<Category[]> {
     return this.http.get<Category[]>('/api/categories');
+  }
+  getContent(key: string): Observable<ContentPage> {
+    return this.http.get<ContentPage>(`/api/content/${encodeURIComponent(key)}`);
   }
 
   // cart
@@ -137,6 +145,10 @@ export class ApiClient {
   }
   adminRemoveCategoryImage(categoryId: number): Observable<void> {
     return this.http.delete<void>(`/api/admin/categories/${categoryId}/image`);
+  }
+
+  adminUpdateContent(key: string, body: string): Observable<void> {
+    return this.http.put<void>(`/api/admin/content/${encodeURIComponent(key)}`, { body });
   }
 
   adminGetOrders(page: number, pageSize: number, status?: string, search?: string): Observable<PagedResult<AdminOrderListItem>> {

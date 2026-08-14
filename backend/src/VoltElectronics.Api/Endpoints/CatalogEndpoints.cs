@@ -1,3 +1,4 @@
+using VoltElectronics.Application.Catalog;
 using VoltElectronics.Application.Catalog.Queries;
 using VoltElectronics.Application.Common.Messaging;
 
@@ -18,6 +19,16 @@ public static class CatalogEndpoints
 
         products.MapGet("/featured", async (IDispatcher dispatcher, CancellationToken ct, int count = 4) =>
             Results.Ok(await dispatcher.Query(new GetFeaturedProductsQuery(count), ct)));
+
+        // The favorites page: ids live in the shopper's browser, so it asks for exactly those.
+        // Literal segment, so it wins over the {slug} route below.
+        products.MapGet("/by-ids", async (int[] ids, IDispatcher dispatcher, CancellationToken ct) =>
+        {
+            var items = ids.Length == 0
+                ? Array.Empty<ProductListItemDto>()
+                : await dispatcher.Query(new GetProductsByIdsQuery(ids.Take(100).ToArray()), ct);
+            return Results.Ok(items);
+        });
 
         products.MapGet("/{slug}", async (string slug, IDispatcher dispatcher, CancellationToken ct) =>
             await dispatcher.Query(new GetProductBySlugQuery(slug), ct) is { } product

@@ -120,6 +120,18 @@ internal sealed class GetCategoriesHandler(AppDbContext db)
             .ToListAsync(cancellationToken);
 }
 
+internal sealed class GetProductsByIdsHandler(AppDbContext db)
+    : IQueryHandler<GetProductsByIdsQuery, IReadOnlyList<ProductListItemDto>>
+{
+    public async Task<IReadOnlyList<ProductListItemDto>> HandleAsync(
+        GetProductsByIdsQuery query, CancellationToken cancellationToken) =>
+        await db.Products.AsNoTracking()
+            .Where(p => query.Ids.Contains(p.Id) && p.Status == ProductStatus.Active)
+            .OrderBy(p => p.Name)
+            .Select(CatalogProjections.ListItem)
+            .ToListAsync(cancellationToken);
+}
+
 internal sealed class GetFeaturedProductsHandler(AppDbContext db)
     : IQueryHandler<GetFeaturedProductsQuery, IReadOnlyList<ProductListItemDto>>
 {

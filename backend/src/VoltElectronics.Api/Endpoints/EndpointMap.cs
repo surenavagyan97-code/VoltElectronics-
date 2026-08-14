@@ -13,6 +13,7 @@ public static class EndpointMap
         OrderEndpoints.Map(app);
         PaymentEndpoints.Map(app);
         ConfigEndpoints.Map(app);
+        ContentEndpoints.Map(app);
 
         AdminProductEndpoints.Map(app);
         AdminCategoryEndpoints.Map(app);

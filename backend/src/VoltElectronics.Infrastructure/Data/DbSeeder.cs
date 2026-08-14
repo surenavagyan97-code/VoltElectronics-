@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using VoltElectronics.Application.Identity;
 using VoltElectronics.Domain.Catalog;
+using VoltElectronics.Domain.Content;
 using VoltElectronics.Domain.Ordering;
 using VoltElectronics.Infrastructure.Identity;
 
@@ -42,6 +43,14 @@ public static class DbSeeder
                 await userManager.AddToRoleAsync(admin, Roles.Admin);
             else
                 logger.LogWarning("Admin seed failed: {Errors}", string.Join("; ", result.Errors.Select(e => e.Description)));
+        }
+
+        // Editable pages get their initial body once; after that the admin panel owns the text,
+        // so re-seeding must never overwrite it.
+        if (!await db.ContentPages.AnyAsync(p => p.Key == "privacy"))
+        {
+            db.ContentPages.Add(ContentPage.Create("privacy", DefaultContent.PrivacyPolicy));
+            await db.SaveChangesAsync();
         }
 
         if (await db.Categories.AnyAsync())

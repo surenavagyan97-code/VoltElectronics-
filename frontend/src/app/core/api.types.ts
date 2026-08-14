@@ -51,6 +51,13 @@ export interface ProductQuery {
   sort?: string;
 }
 
+// Editable storefront pages
+export interface ContentPage {
+  key: string;
+  body: string;
+  updatedAt: string;
+}
+
 // Cart
 export interface CartItem {
   productId: number;
