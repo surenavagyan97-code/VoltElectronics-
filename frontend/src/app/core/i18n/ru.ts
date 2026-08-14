@@ -50,6 +50,8 @@ export const ru: Record<string, string> = {
   'search.noHistory': 'Вы ещё ничего не искали',
   'search.recommended': 'Рекомендуем вам',
   'search.refresh': 'Обновить',
+  'search.noResults': 'Товары по вашему запросу не найдены.',
+  'search.viewAllResults': 'Показать все результаты по «{term}»',
 
   // favorites
   'fav.title': 'Избранное',

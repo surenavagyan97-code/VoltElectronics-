@@ -50,6 +50,8 @@ export const hy: Record<string, string> = {
   'search.noHistory': 'Դուք դեռ ոչինչ չեք որոնել',
   'search.recommended': 'Առաջարկվում է ձեզ',
   'search.refresh': 'Թարմացնել',
+  'search.noResults': 'Ձեր որոնմանը համապատասխանող ապրանք չի գտնվել:',
+  'search.viewAllResults': 'Տեսնել բոլոր արդյունքները՝ "{term}"',
 
   // favorites
   'fav.title': 'Ընտրանի',

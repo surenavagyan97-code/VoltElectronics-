@@ -51,6 +51,8 @@ export const en: Record<string, string> = {
   'search.noHistory': "You haven't searched for anything yet",
   'search.recommended': 'Recommended for you',
   'search.refresh': 'Refresh',
+  'search.noResults': 'No products match your search.',
+  'search.viewAllResults': 'View all results for "{term}"',
 
   // favorites
   'fav.title': 'Favorites',

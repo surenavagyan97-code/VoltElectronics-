@@ -2,9 +2,9 @@ import { Component, ElementRef, HostListener, OnInit, inject, signal, viewChild 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink, RouterOutlet } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { Subject, catchError, debounceTime, distinctUntilChanged, firstValueFrom, of, switchMap } from 'rxjs';
 import { ApiClient } from '../core/api-client';
-import { Category } from '../core/api.types';
+import { Category, ProductListItem } from '../core/api.types';
 import { AuthStore } from '../core/auth-store';
 import { CartStore } from '../core/cart-store';
 import { CompareStore } from '../core/compare-store';
@@ -60,6 +60,11 @@ function readRecentSearches(): string[] {
     }
     .search-item:hover { background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
     .search-item svg { opacity: 0.55; flex: none; }
+    .suggestion-item.active { background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
+    .suggestion-thumb { width: 32px; height: 32px; flex: none; border-radius: 6px; font-size: 8px; }
+    .suggestion-name {
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+    }
     .search-link {
       display: flex; align-items: center; gap: 5px; background: none; border: none;
       cursor: pointer; color: var(--color-accent); font: inherit; font-size: 13px; padding: 0;
@@ -147,47 +152,78 @@ function readRecentSearches(): string[] {
       <div class="searchbox" #searchWrap>
         <input class="input" [placeholder]="i18n.t('header.searchPlaceholder')"
                [(ngModel)]="searchTerm" [ngModelOptions]="{ standalone: true }"
-               (focus)="searchOpen.set(true)" (keyup.enter)="submitSearch()" />
+               (ngModelChange)="onSearchInput($event)"
+               (focus)="searchOpen.set(true)" (keydown)="onSearchKeydown($event)"
+               role="combobox" aria-autocomplete="list" [attr.aria-expanded]="searchOpen()" />
         <button class="btn btn-primary" (click)="submitSearch()">{{ i18n.t('header.search') }}</button>
 
         @if (searchOpen()) {
           <div class="search-panel">
-            <div class="row" style="justify-content: space-between; margin-bottom: 6px;">
-              <strong style="font-size: 14px;">{{ i18n.t('search.recent') }}</strong>
-              @if (recent().length) {
-                <button class="search-link" (click)="clearHistory()">
-                  {{ i18n.t('search.clear') }}
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg>
-                </button>
+            @if (searchTerm.trim().length >= 2) {
+              @if (suggestionsLoading()) {
+                <div class="row" style="justify-content: center; padding: 14px;"><div class="spinner"></div></div>
+              } @else if (suggestions().length === 0) {
+                <div class="text-muted" style="font-size: 13px; padding: 2px 0 8px;">{{ i18n.t('search.noResults') }}</div>
+              } @else {
+                <div class="col" style="gap: 2px;" role="listbox">
+                  @for (p of suggestions(); track p.id; let i = $index) {
+                    <button type="button" class="search-item suggestion-item" role="option"
+                            [class.active]="activeSuggestionIndex() === i" [attr.aria-selected]="activeSuggestionIndex() === i"
+                            (mouseenter)="activeSuggestionIndex.set(i)" (click)="goToProduct(p)">
+                      <div class="ph suggestion-thumb">
+                        @if (p.imageUrl) { <img [src]="p.imageUrl" [alt]="p.name" /> }
+                      </div>
+                      <div class="col" style="gap: 0; flex: 1; min-width: 0; align-items: flex-start;">
+                        <span class="suggestion-name">{{ p.name }}</span>
+                        <span class="text-muted" style="font-size: 11px;">{{ p.category }}</span>
+                      </div>
+                      <span style="flex: none;">{{ currency.formatBase(p.price) }}</span>
+                    </button>
+                  }
+                </div>
               }
-            </div>
-            @if (!recent().length) {
-              <div class="text-muted" style="font-size: 13px; padding: 2px 0 8px;">{{ i18n.t('search.noHistory') }}</div>
+              <button type="button" class="search-link" style="margin-top: 8px;" (click)="submitSearch()">
+                {{ i18n.t('search.viewAllResults', { term: searchTerm }) }}
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+              </button>
             } @else {
-              <div class="col" style="gap: 2px; margin-bottom: 8px;">
-                @for (term of recent(); track term) {
-                  <button class="search-item" (click)="runSearch(term)">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                    {{ term }}
+              <div class="row" style="justify-content: space-between; margin-bottom: 6px;">
+                <strong style="font-size: 14px;">{{ i18n.t('search.recent') }}</strong>
+                @if (recent().length) {
+                  <button class="search-link" (click)="clearHistory()">
+                    {{ i18n.t('search.clear') }}
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg>
+                  </button>
+                }
+              </div>
+              @if (!recent().length) {
+                <div class="text-muted" style="font-size: 13px; padding: 2px 0 8px;">{{ i18n.t('search.noHistory') }}</div>
+              } @else {
+                <div class="col" style="gap: 2px; margin-bottom: 8px;">
+                  @for (term of recent(); track term) {
+                    <button class="search-item" (click)="runSearch(term)">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                      {{ term }}
+                    </button>
+                  }
+                </div>
+              }
+              <div class="row" style="justify-content: space-between; margin: 6px 0;">
+                <strong style="font-size: 14px;">{{ i18n.t('search.recommended') }}</strong>
+                <button class="search-link" (click)="refreshRecommendations()">
+                  {{ i18n.t('search.refresh') }}
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                </button>
+              </div>
+              <div class="col" style="gap: 2px;">
+                @for (name of recommended(); track name) {
+                  <button class="search-item" (click)="runSearch(name)">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    {{ name }}
                   </button>
                 }
               </div>
             }
-            <div class="row" style="justify-content: space-between; margin: 6px 0;">
-              <strong style="font-size: 14px;">{{ i18n.t('search.recommended') }}</strong>
-              <button class="search-link" (click)="refreshRecommendations()">
-                {{ i18n.t('search.refresh') }}
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-              </button>
-            </div>
-            <div class="col" style="gap: 2px;">
-              @for (name of recommended(); track name) {
-                <button class="search-item" (click)="runSearch(name)">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                  {{ name }}
-                </button>
-              }
-            </div>
           </div>
         }
       </div>
@@ -356,6 +392,11 @@ export class StoreLayout implements OnInit {
   // Product names drawn once from the featured pool; Refresh reshuffles the sample.
   private recommendPool: string[] = [];
 
+  suggestions = signal<ProductListItem[]>([]);
+  suggestionsLoading = signal(false);
+  activeSuggestionIndex = signal(-1);
+  private searchInput$ = new Subject<string>();
+
   // Mirrors the shop sidebar's own queryParamMap subscription, so the header chips
   // stay in sync (highlighted + toggle behavior) with whatever the URL says is selected.
   selectedCategoryIds = signal<number[]>([]);
@@ -364,6 +405,26 @@ export class StoreLayout implements OnInit {
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((qp) => {
       this.selectedCategoryIds.set(qp.getAll('categoryIds').map(Number).filter((n) => !Number.isNaN(n)));
     });
+
+    // Live product-name matches as the shopper types, debounced so every keystroke
+    // doesn't fire a request. Below 2 characters we just clear rather than query.
+    this.searchInput$
+      .pipe(
+        debounceTime(200),
+        distinctUntilChanged(),
+        switchMap((term) => {
+          const q = term.trim();
+          if (q.length < 2) return of(null);
+          this.suggestionsLoading.set(true);
+          return this.api.getProducts({ search: q, pageSize: 6, sort: 'featured' }).pipe(catchError(() => of(null)));
+        }),
+        takeUntilDestroyed(),
+      )
+      .subscribe((res) => {
+        this.suggestionsLoading.set(false);
+        this.activeSuggestionIndex.set(-1);
+        this.suggestions.set(res?.items ?? []);
+      });
   }
 
   async ngOnInit(): Promise<void> {
@@ -389,6 +450,38 @@ export class StoreLayout implements OnInit {
   runSearch(term: string): void {
     this.searchTerm = term;
     this.submitSearch();
+  }
+
+  onSearchInput(term: string): void {
+    this.searchInput$.next(term);
+  }
+
+  goToProduct(p: ProductListItem): void {
+    this.searchOpen.set(false);
+    this.searchTerm = '';
+    this.suggestions.set([]);
+    void this.router.navigate(['/product', p.slug]);
+  }
+
+  onSearchKeydown(event: KeyboardEvent): void {
+    const showingSuggestions = this.searchTerm.trim().length >= 2 && this.suggestions().length > 0;
+    if (!showingSuggestions) {
+      if (event.key === 'Enter') this.submitSearch();
+      return;
+    }
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      this.activeSuggestionIndex.set((this.activeSuggestionIndex() + 1) % this.suggestions().length);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      const n = this.suggestions().length;
+      this.activeSuggestionIndex.set((this.activeSuggestionIndex() + n - 1) % n);
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      const idx = this.activeSuggestionIndex();
+      if (idx >= 0) this.goToProduct(this.suggestions()[idx]);
+      else this.submitSearch();
+    }
   }
 
   clearHistory(): void {
