@@ -5,6 +5,7 @@ export const en: Record<string, string> = {
   'nav.shop': 'Shop',
   'nav.contact': 'Contact us',
   'nav.orders': 'Orders',
+  'nav.profile': 'Profile',
   'nav.admin': 'Admin',
   'nav.delivery': 'My deliveries',
   'nav.cart': 'Cart',
@@ -22,7 +23,7 @@ export const en: Record<string, string> = {
   'topbar.aboutUs': 'About us',
   'topbar.jobs': 'Jobs',
   'topbar.contacts': 'Contacts',
-  'header.allCategory': 'All Category',
+  'header.allCategory': 'All Categories',
   'header.searchPlaceholder': 'Search to find ...',
   'header.search': 'Search',
   'header.account': 'Account',
@@ -55,6 +56,17 @@ export const en: Record<string, string> = {
   'fav.title': 'Favorites',
   'fav.empty': 'Nothing here yet — tap the heart on a product to save it.',
   'fav.browse': 'Browse the catalog',
+
+  // compare
+  'compare.title': 'Compare',
+  'compare.empty': 'Nothing here yet — tap the compare icon on a product to add it.',
+  'compare.browse': 'Browse the catalog',
+  'compare.add': 'Add to compare',
+  'compare.remove': 'Remove from compare',
+  'compare.clearAll': 'Clear all',
+  'compare.category': 'Category',
+  'compare.rating': 'Rating',
+  'compare.availability': 'Availability',
 
   // contact
   'contact.title': 'Contact us',
@@ -108,7 +120,7 @@ export const en: Record<string, string> = {
   'shop.clearFilters': 'Clear filters',
   'shop.allProducts': 'All products',
   'shop.searchPlaceholder': 'Search products',
-  'shop.sort.featured': 'Sort: Featured',
+  'shop.sort.featured': 'Featured',
   'shop.sort.priceAsc': 'Price: Low–High',
   'shop.sort.priceDesc': 'Price: High–Low',
   'shop.sort.topRated': 'Top rated',

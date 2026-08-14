@@ -48,8 +48,8 @@ export class LoginPage {
     try {
       await this.auth.login(this.email, this.password);
       await this.cart.mergeAfterLogin();
-      // Couriers land straight on their assignments — the storefront is not their workplace.
-      const fallback = this.auth.isCourier() ? '/delivery' : '/';
+      // Couriers and admins land straight in their own workspace — the storefront isn't it.
+      const fallback = this.auth.isCourier() ? '/delivery' : this.auth.isAdmin() ? '/admin' : '/';
       void this.router.navigateByUrl(this.route.snapshot.queryParamMap.get('returnUrl') ?? fallback);
     } catch (e) {
       this.error.set(extractError(e));

@@ -12,6 +12,7 @@ export const routes: Routes = [
       { path: 'pages/:key', loadComponent: () => import('./store/content-page').then((m) => m.ContentPagePage) },
       { path: 'privacy', redirectTo: 'pages/privacy' },
       { path: 'favorites', loadComponent: () => import('./store/favorites').then((m) => m.FavoritesPage) },
+      { path: 'compare', loadComponent: () => import('./store/compare').then((m) => m.ComparePage) },
       { path: 'product/:slug', loadComponent: () => import('./store/product-detail').then((m) => m.ProductDetailPage) },
       { path: 'cart', loadComponent: () => import('./store/cart-page').then((m) => m.CartPage) },
       { path: 'checkout', loadComponent: () => import('./store/checkout').then((m) => m.CheckoutPage) },

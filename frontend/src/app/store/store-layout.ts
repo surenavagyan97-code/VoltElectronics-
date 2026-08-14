@@ -1,11 +1,13 @@
 import { Component, ElementRef, HostListener, OnInit, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink, RouterOutlet } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ApiClient } from '../core/api-client';
 import { Category } from '../core/api.types';
 import { AuthStore } from '../core/auth-store';
 import { CartStore } from '../core/cart-store';
+import { CompareStore } from '../core/compare-store';
 import { Currency, CurrencyStore } from '../core/currency-store';
 import { FavoritesStore } from '../core/favorites-store';
 import { I18nService } from '../core/i18n.service';
@@ -27,17 +29,14 @@ function readRecentSearches(): string[] {
   selector: 'app-store-layout',
   imports: [RouterOutlet, RouterLink, FormsModule, LangSelect],
   styles: `
-    /* — utility bar — */
-    .topbar {
-      display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
-      padding: 8px 32px; font-size: 13px;
-      border-bottom: 1px solid var(--color-divider);
+    /* — pinned header — */
+    .site-header {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--color-bg);
     }
-    .topbar a { color: inherit; text-decoration: none; opacity: 0.85; }
-    .topbar a:hover { color: var(--color-accent); opacity: 1; }
 
     /* — main header — */
-    .mainbar { display: flex; align-items: center; gap: 20px; padding: 18px 32px 10px; flex-wrap: wrap; }
+    .mainbar { display: flex; align-items: center; gap: 20px; padding: 14px 32px; flex-wrap: wrap; }
     .brand-block { color: inherit; text-decoration: none; flex: none; }
     .brand-mark { font-weight: 800; font-size: 22px; letter-spacing: 6px; line-height: 1; }
     .brand-mark em {
@@ -72,19 +71,33 @@ function readRecentSearches(): string[] {
     }
     .header-action:hover { color: var(--color-accent); }
 
+    /* — user menu — */
+    .user-menu-wrap { position: relative; }
+    .user-menu {
+      position: absolute; top: calc(100% + 8px); right: 0; min-width: 160px; z-index: 50;
+      display: flex; flex-direction: column; gap: 2px; padding: 4px;
+      background: var(--color-surface); border: 1px solid var(--color-divider);
+      border-radius: 8px; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.14);
+    }
+    .user-menu-opt {
+      display: flex; align-items: center; gap: 8px; padding: 8px 10px; white-space: nowrap;
+      border: none; background: none; cursor: pointer; border-radius: 6px; width: 100%;
+      font: inherit; font-size: 13px; color: var(--color-text); text-align: left; text-decoration: none;
+    }
+    .user-menu-opt:hover { background: color-mix(in srgb, var(--color-accent) 10%, transparent); color: var(--color-accent); }
+
     /* — category chips — */
     .chips {
       display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
       padding: 6px 32px 16px; border-bottom: 1px solid var(--color-divider);
     }
-    .chips-home { color: inherit; text-decoration: none; font-size: 14px; margin-right: 6px; }
-    .chips-home:hover { color: var(--color-accent); }
     .chip {
       border: 1px solid color-mix(in srgb, var(--color-accent) 55%, transparent);
       color: var(--color-accent); background: transparent;
       border-radius: 8px; padding: 6px 14px; font-size: 13px; cursor: pointer; font-family: inherit;
     }
     .chip:hover { background: color-mix(in srgb, var(--color-accent) 12%, transparent); }
+    .chip.chip-active { background: var(--color-accent); color: var(--color-bg); }
 
     /* — footer — */
     .footer { border-top: 1px solid var(--color-divider); padding: 40px 32px 0; }
@@ -110,45 +123,11 @@ function readRecentSearches(): string[] {
   template: `
     <div style="display: flex; flex-direction: column; min-height: 100vh;">
 
-    <div class="topbar">
-      <a routerLink="/contact">{{ i18n.t('topbar.delivery') }}</a>
-      <a routerLink="/contact">{{ i18n.t('topbar.credit') }}</a>
-      <a routerLink="/pages/about">{{ i18n.t('topbar.aboutUs') }}</a>
-      <a routerLink="/pages/jobs">{{ i18n.t('topbar.jobs') }}</a>
-      <a routerLink="/contact">{{ i18n.t('topbar.contacts') }}</a>
-      <div style="flex: 1;"></div>
-      <a href="tel:+37410203040" class="row" style="gap: 6px;">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.34 1.79.66 2.64a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.44-1.23a2 2 0 0 1 2.11-.45c.85.32 1.74.54 2.64.66A2 2 0 0 1 22 16.92z"></path></svg>
-        +374 10 20 30 40
-      </a>
-      <app-lang-select />
-      <select class="input" style="height: 32px; padding: 2px 8px; font-size: 12px; width: auto;"
-              [ngModel]="currency.currency()" [ngModelOptions]="{ standalone: true }" (ngModelChange)="setCurrency($event)">
-        @for (c of currency.supported(); track c) { <option [value]="c">{{ c }}</option> }
-      </select>
-      <button type="button" class="btn btn-icon btn-ghost" style="color: inherit;" (click)="theme.toggle()"
-              [attr.aria-label]="theme.theme() === 'dark' ? i18n.t('theme.toggleToLight') : i18n.t('theme.toggleToDark')">
-        @if (theme.theme() === 'dark') {
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"></path></svg>
-        } @else {
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12.5A9 9 0 1 1 11.5 3a7 7 0 0 0 9.5 9.5z"></path></svg>
-        }
-      </button>
-      @if (auth.isLoggedIn()) {
-        <span class="text-muted">{{ auth.user()?.fullName }}</span>
-        <button class="btn btn-ghost" style="font-size: 13px; padding: 2px 6px;" (click)="logout()">{{ i18n.t('nav.signOut') }}</button>
-      }
-    </div>
-
+    <div class="site-header">
     <div class="mainbar">
       <a routerLink="/" class="brand-block">
         <div class="brand-mark">SMART<em>BUY</em></div>
         <div class="brand-domain">smartbuy.am</div>
-      </a>
-
-      <a class="btn btn-secondary" routerLink="/shop" style="flex: none;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-        {{ i18n.t('header.allCategory') }}
       </a>
 
       <div class="searchbox" #searchWrap>
@@ -199,10 +178,29 @@ function readRecentSearches(): string[] {
         }
       </div>
 
-      <div class="row" style="gap: 18px; flex: none;">
-        <a class="header-action" [routerLink]="auth.isLoggedIn() ? '/account/orders' : '/login'">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6 8-6s8 2 8 6"></path></svg>
-          {{ i18n.t('header.account') }}
+      <div class="row" style="gap: 18px; flex: none; align-items: center;">
+        <a href="tel:+37410203040" class="header-action">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.34 1.79.66 2.64a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.44-1.23a2 2 0 0 1 2.11-.45c.85.32 1.74.54 2.64.66A2 2 0 0 1 22 16.92z"></path></svg>
+          +374 10 20 30 40
+        </a>
+        <app-lang-select />
+        <select class="input" style="height: 32px; padding: 2px 8px; font-size: 12px; width: auto;"
+                [ngModel]="currency.currency()" [ngModelOptions]="{ standalone: true }" (ngModelChange)="setCurrency($event)">
+          @for (c of currency.supported(); track c) { <option [value]="c">{{ c }}</option> }
+        </select>
+        <button type="button" class="btn btn-icon header-action" (click)="theme.toggle()"
+                [attr.aria-label]="theme.theme() === 'dark' ? i18n.t('theme.toggleToLight') : i18n.t('theme.toggleToDark')">
+          @if (theme.theme() === 'dark') {
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"></path></svg>
+          } @else {
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12.5A9 9 0 1 1 11.5 3a7 7 0 0 0 9.5 9.5z"></path></svg>
+          }
+        </button>
+        <a routerLink="/cart" class="header-action" style="position: relative;" [attr.aria-label]="i18n.t('nav.cart')">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+          @if (cart.count() > 0) {
+            <div style="position: absolute; top: -7px; right: -9px; background: var(--color-accent); color: var(--color-bg); font-size: 10px; font-weight: 600; border-radius: 999px; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; padding: 0 3px;">{{ cart.count() }}</div>
+          }
         </a>
         <a routerLink="/favorites" class="header-action" style="position: relative;" [attr.aria-label]="i18n.t('fav.title')">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
@@ -210,31 +208,51 @@ function readRecentSearches(): string[] {
             <div style="position: absolute; top: -7px; right: -9px; background: var(--color-accent); color: var(--color-bg); font-size: 10px; font-weight: 600; border-radius: 999px; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; padding: 0 3px;">{{ favorites.count() }}</div>
           }
         </a>
-        @if (auth.isAdmin()) {
-          <a class="header-action" routerLink="/admin" [attr.aria-label]="i18n.t('nav.admin')">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="4" y1="20" x2="4" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="20" y1="20" x2="20" y2="14"></line></svg>
-          </a>
-        }
+        <a routerLink="/compare" class="header-action" style="position: relative;" [attr.aria-label]="i18n.t('compare.title')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="4" y1="20" x2="4" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="20" y1="20" x2="20" y2="14"></line></svg>
+          @if (compare.count() > 0) {
+            <div style="position: absolute; top: -7px; right: -9px; background: var(--color-accent); color: var(--color-bg); font-size: 10px; font-weight: 600; border-radius: 999px; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; padding: 0 3px;">{{ compare.count() }}</div>
+          }
+        </a>
         @if (auth.isCourier()) {
           <a class="header-action" routerLink="/delivery" [attr.aria-label]="i18n.t('nav.delivery')">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="1" y="3" width="15" height="13" rx="1"></rect><path d="M16 8h4l3 4v4h-7V8z"></path><circle cx="5.5" cy="18.5" r="2"></circle><circle cx="18.5" cy="18.5" r="2"></circle></svg>
           </a>
         }
-        <a routerLink="/cart" class="header-action" style="position: relative;" [attr.aria-label]="i18n.t('nav.cart')">
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-          @if (cart.count() > 0) {
-            <div style="position: absolute; top: -7px; right: -9px; background: var(--color-accent); color: var(--color-bg); font-size: 10px; font-weight: 600; border-radius: 999px; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; padding: 0 3px;">{{ cart.count() }}</div>
-          }
-        </a>
+        @if (auth.isLoggedIn()) {
+          <div class="user-menu-wrap" #userMenuWrap>
+            <button type="button" class="header-action" (click)="userMenuOpen.set(!userMenuOpen())"
+                    [attr.aria-expanded]="userMenuOpen()" aria-haspopup="menu">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6 8-6s8 2 8 6"></path></svg>
+              {{ auth.user()?.fullName }}
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" style="opacity: 0.6;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            @if (userMenuOpen()) {
+              <div class="user-menu" role="menu">
+                <a routerLink="/account/orders" class="user-menu-opt" role="menuitem" (click)="userMenuOpen.set(false)">{{ i18n.t('nav.profile') }}</a>
+                <button type="button" class="user-menu-opt" role="menuitem" (click)="logout()">{{ i18n.t('nav.signOut') }}</button>
+              </div>
+            }
+          </div>
+        } @else {
+          <a routerLink="/login" class="header-action">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6 8-6s8 2 8 6"></path></svg>
+            {{ i18n.t('header.account') }}
+          </a>
+        }
       </div>
     </div>
 
     <div class="chips">
-      <a routerLink="/" class="chips-home">{{ i18n.t('nav.home') }}</a>
+      <a class="btn btn-secondary" routerLink="/shop" style="flex: none;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        {{ i18n.t('header.allCategory') }}
+      </a>
       <span style="opacity: 0.3;">|</span>
       @for (cat of categories(); track cat.id) {
-        <button class="chip" (click)="openCategory(cat.id)">{{ cat.name }}</button>
+        <button class="chip" [class.chip-active]="selectedCategoryIds().includes(cat.id)" (click)="toggleCategory(cat.id)">{{ cat.name }}</button>
       }
+    </div>
     </div>
 
     <div style="flex: 1;">
@@ -304,21 +322,35 @@ export class StoreLayout implements OnInit {
   cart = inject(CartStore);
   theme = inject(ThemeStore);
   currency = inject(CurrencyStore);
+  compare = inject(CompareStore);
   favorites = inject(FavoritesStore);
   i18n = inject(I18nService);
   private api = inject(ApiClient);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   private searchWrap = viewChild<ElementRef<HTMLElement>>('searchWrap');
+  private userMenuWrap = viewChild<ElementRef<HTMLElement>>('userMenuWrap');
 
   categories = signal<Category[]>([]);
   searchTerm = '';
 
   searchOpen = signal(false);
+  userMenuOpen = signal(false);
   recent = signal<string[]>(readRecentSearches());
   recommended = signal<string[]>([]);
   // Product names drawn once from the featured pool; Refresh reshuffles the sample.
   private recommendPool: string[] = [];
+
+  // Mirrors the shop sidebar's own queryParamMap subscription, so the header chips
+  // stay in sync (highlighted + toggle behavior) with whatever the URL says is selected.
+  selectedCategoryIds = signal<number[]>([]);
+
+  constructor() {
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((qp) => {
+      this.selectedCategoryIds.set(qp.getAll('categoryIds').map(Number).filter((n) => !Number.isNaN(n)));
+    });
+  }
 
   async ngOnInit(): Promise<void> {
     const [categories, featured] = await Promise.all([
@@ -357,20 +389,31 @@ export class StoreLayout implements OnInit {
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
-    const wrap = this.searchWrap()?.nativeElement;
-    if (this.searchOpen() && wrap && !wrap.contains(event.target as Node)) this.searchOpen.set(false);
+    const searchWrap = this.searchWrap()?.nativeElement;
+    if (this.searchOpen() && searchWrap && !searchWrap.contains(event.target as Node)) this.searchOpen.set(false);
+
+    const userMenuWrap = this.userMenuWrap()?.nativeElement;
+    if (this.userMenuOpen() && userMenuWrap && !userMenuWrap.contains(event.target as Node)) this.userMenuOpen.set(false);
   }
 
   @HostListener('document:keydown.escape')
   onEscape(): void {
     this.searchOpen.set(false);
+    this.userMenuOpen.set(false);
   }
 
-  openCategory(id: number): void {
-    void this.router.navigate(['/shop'], { queryParams: { categoryIds: id } });
+  toggleCategory(id: number): void {
+    const ids = this.selectedCategoryIds().includes(id)
+      ? this.selectedCategoryIds().filter((x) => x !== id)
+      : [...this.selectedCategoryIds(), id];
+    void this.router.navigate(['/shop'], {
+      queryParams: { categoryIds: ids.length ? ids : null },
+      queryParamsHandling: 'merge',
+    });
   }
 
   async logout(): Promise<void> {
+    this.userMenuOpen.set(false);
     await this.auth.logout();
     await this.cart.reloadAsGuest();
     void this.router.navigateByUrl('/');

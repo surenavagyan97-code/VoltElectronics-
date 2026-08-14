@@ -22,11 +22,14 @@ const PRICE_BANDS = [
       <div class="col" style="width: 220px; flex: none; gap: 22px;">
         <div>
           <h6 style="margin-bottom: 10px;">{{ i18n.t('shop.category') }}</h6>
-          <div class="col" style="gap: 8px;">
+          <div class="col" style="gap: 8px; max-height: 280px; overflow-y: auto; padding-right: 4px;">
             @for (cat of categories(); track cat.id) {
-              <label class="row" style="gap: 8px; font-size: 13px; cursor: pointer;">
+              <label class="checkbox" style="font-size: 13px;">
                 <input type="checkbox" [checked]="selectedCategories().includes(cat.id)"
                        (change)="toggleCategory(cat.id)" />
+                <span class="box">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </span>
                 {{ cat.name }} <span class="text-muted">({{ cat.productCount }})</span>
               </label>
             }
@@ -36,9 +39,12 @@ const PRICE_BANDS = [
           <h6 style="margin-bottom: 10px;">{{ i18n.t('shop.price') }}</h6>
           <div class="col" style="gap: 8px; font-size: 13px;">
             @for (band of priceBands; track band.key) {
-              <label class="row" style="gap: 8px; cursor: pointer;">
+              <label class="checkbox">
                 <input type="checkbox" [checked]="selectedBands().includes(band.key)"
                        (change)="toggleBand(band.key)" />
+                <span class="box">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </span>
                 {{ i18n.t(band.labelKey) }}
               </label>
             }
@@ -49,12 +55,8 @@ const PRICE_BANDS = [
 
       <div style="flex: 1;">
         <div class="row" style="justify-content: space-between; margin-bottom: 18px; gap: 12px; flex-wrap: wrap;">
-          <h3 style="margin: 0;">{{ i18n.t('shop.allProducts') }} <span class="text-muted" style="font-size: 14px;">({{ result()?.total ?? 0 }})</span></h3>
+          <h3 style="margin: 0;">{{ i18n.t('shop.allProducts') }}</h3>
           <div class="row" style="gap: 10px;">
-            <div class="field" style="margin: 0; width: 200px;">
-              <input class="input" [placeholder]="i18n.t('shop.searchPlaceholder')" [value]="search()"
-                     (input)="onSearch($any($event.target).value)" />
-            </div>
             <select class="input" style="width: 170px;" [value]="sort()" (change)="onSort($any($event.target).value)">
               <option value="featured">{{ i18n.t('shop.sort.featured') }}</option>
               <option value="price_asc">{{ i18n.t('shop.sort.priceAsc') }}</option>
@@ -117,6 +119,7 @@ export class ShopPage implements OnInit {
     // when the shopper is already on /shop. Emits immediately, so this also does the first load.
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((qp) => {
       this.selectedCategories.set(qp.getAll('categoryIds').map(Number).filter((n) => !Number.isNaN(n)));
+      this.selectedBands.set(qp.getAll('priceBands'));
       this.search.set(qp.get('search') ?? '');
       this.page.set(1);
       void this.load();
@@ -140,24 +143,30 @@ export class ShopPage implements OnInit {
     void this.load();
   }
 
+  // Sidebar filters navigate rather than touch the signals directly — the queryParamMap
+  // subscription above is the single source of truth, so the URL always mirrors what's
+  // selected (shareable/bookmarkable, and survives a refresh).
   toggleCategory(id: number): void {
-    this.selectedCategories.update((ids) =>
-      ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]);
-    this.page.set(1);
-    void this.load();
+    const ids = this.selectedCategories().includes(id)
+      ? this.selectedCategories().filter((x) => x !== id)
+      : [...this.selectedCategories(), id];
+    void this.router.navigate([], {
+      queryParams: { categoryIds: ids.length ? ids : null },
+      queryParamsHandling: 'merge',
+    });
   }
 
   toggleBand(key: string): void {
-    this.selectedBands.update((bands) =>
-      bands.includes(key) ? bands.filter((b) => b !== key) : [...bands, key]);
-    this.page.set(1);
-    void this.load();
+    const bands = this.selectedBands().includes(key)
+      ? this.selectedBands().filter((b) => b !== key)
+      : [...this.selectedBands(), key];
+    void this.router.navigate([], {
+      queryParams: { priceBands: bands.length ? bands : null },
+      queryParamsHandling: 'merge',
+    });
   }
 
   clearFilters(): void {
-    this.selectedBands.set([]);
-    // Clearing the URL params triggers the queryParamMap subscription, which resets the rest
-    // and reloads.
     void this.router.navigate([], { queryParams: {} });
   }
 

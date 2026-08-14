@@ -66,7 +66,7 @@ import { I18nService, LANG_LABELS, Lang } from './i18n.service';
             [attr.aria-label]="i18n.t('lang.label')" [attr.aria-expanded]="open()" aria-haspopup="listbox">
       <ng-container *ngTemplateOutlet="flag; context: { $implicit: i18n.lang() }" />
       {{ labels[i18n.lang()] }}
-      <svg class="caret" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      <svg class="caret" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="6 9 12 15 18 9"></polyline></svg>
     </button>
 
     @if (open()) {

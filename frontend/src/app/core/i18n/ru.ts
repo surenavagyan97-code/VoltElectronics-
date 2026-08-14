@@ -4,6 +4,7 @@ export const ru: Record<string, string> = {
   'nav.shop': 'Магазин',
   'nav.contact': 'Контакты',
   'nav.orders': 'Заказы',
+  'nav.profile': 'Профиль',
   'nav.admin': 'Админ',
   'nav.delivery': 'Мои доставки',
   'nav.cart': 'Корзина',
@@ -54,6 +55,17 @@ export const ru: Record<string, string> = {
   'fav.title': 'Избранное',
   'fav.empty': 'Здесь пока пусто — нажмите на сердечко на товаре, чтобы сохранить его.',
   'fav.browse': 'Перейти в каталог',
+
+  // compare
+  'compare.title': 'Сравнение',
+  'compare.empty': 'Здесь пока пусто — нажмите на значок сравнения на товаре, чтобы добавить его.',
+  'compare.browse': 'Перейти в каталог',
+  'compare.add': 'Добавить к сравнению',
+  'compare.remove': 'Убрать из сравнения',
+  'compare.clearAll': 'Очистить всё',
+  'compare.category': 'Категория',
+  'compare.rating': 'Рейтинг',
+  'compare.availability': 'Наличие',
 
   // contact
   'contact.title': 'Свяжитесь с нами',
@@ -107,7 +119,7 @@ export const ru: Record<string, string> = {
   'shop.clearFilters': 'Сбросить фильтры',
   'shop.allProducts': 'Все товары',
   'shop.searchPlaceholder': 'Поиск товаров',
-  'shop.sort.featured': 'Сортировка: Популярные',
+  'shop.sort.featured': 'Популярные',
   'shop.sort.priceAsc': 'Цена: по возрастанию',
   'shop.sort.priceDesc': 'Цена: по убыванию',
   'shop.sort.topRated': 'Высокий рейтинг',

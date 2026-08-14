@@ -56,7 +56,7 @@ import { CHECKOUT_EMAIL_KEY } from './checkout';
       } @else {
         <h2>{{ i18n.t('confirmation.orderNotFound') }}</h2>
         <p class="text-muted" style="margin-bottom: 24px;">{{ i18n.t('confirmation.orderNotFoundBody') }}</p>
-        <a class="btn btn-primary" routerLink="/">{{ i18n.t('confirmation.backToStore') }}</a>
+        <a class="btn btn-primary" target="_blank" routerLink="/">{{ i18n.t('confirmation.backToStore') }}</a>
       }
     </div>
   `,

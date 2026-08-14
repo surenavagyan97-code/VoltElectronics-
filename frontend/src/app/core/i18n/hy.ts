@@ -4,6 +4,7 @@ export const hy: Record<string, string> = {
   'nav.shop': 'Խանութ',
   'nav.contact': 'Կապ մեզ հետ',
   'nav.orders': 'Պատվերներ',
+  'nav.profile': 'Պրոֆիլ',
   'nav.admin': 'Ադմին',
   'nav.delivery': 'Իմ առաքումները',
   'nav.cart': 'Զամբյուղ',
@@ -54,6 +55,17 @@ export const hy: Record<string, string> = {
   'fav.title': 'Ընտրանի',
   'fav.empty': 'Այստեղ դեռ ոչինչ չկա — սեղմեք սրտիկը ապրանքի վրա՝ պահելու համար:',
   'fav.browse': 'Դիտել կատալոգը',
+
+  // compare
+  'compare.title': 'Համեմատել',
+  'compare.empty': 'Այստեղ դեռ ոչինչ չկա — սեղմեք համեմատման նշանը ապրանքի վրա՝ ավելացնելու համար:',
+  'compare.browse': 'Դիտել կատալոգը',
+  'compare.add': 'Ավելացնել համեմատության',
+  'compare.remove': 'Հեռացնել համեմատությունից',
+  'compare.clearAll': 'Մաքրել բոլորը',
+  'compare.category': 'Կատեգորիա',
+  'compare.rating': 'Վարկանիշ',
+  'compare.availability': 'Հասանելիություն',
 
   // contact
   'contact.title': 'Կապ մեզ հետ',
@@ -107,7 +119,7 @@ export const hy: Record<string, string> = {
   'shop.clearFilters': 'Մաքրել զտիչները',
   'shop.allProducts': 'Բոլոր ապրանքները',
   'shop.searchPlaceholder': 'Փնտրել ապրանքներ',
-  'shop.sort.featured': 'Դասավորել՝ Առաջարկվող',
+  'shop.sort.featured': 'Առաջարկվող',
   'shop.sort.priceAsc': 'Գին՝ Ցածրից-Բարձր',
   'shop.sort.priceDesc': 'Գին՝ Բարձրից-Ցածր',
   'shop.sort.topRated': 'Բարձր վարկանիշ',

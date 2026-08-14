@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { ApiClient } from '../core/api-client';
 import { ProductDetail } from '../core/api.types';
 import { CartStore } from '../core/cart-store';
+import { CompareStore } from '../core/compare-store';
 import { CurrencyStore } from '../core/currency-store';
 import { I18nService } from '../core/i18n.service';
 import { ProductCard } from './product-card';
@@ -83,6 +84,13 @@ import { ProductCard } from './product-card';
             @if (cart.error(); as err) {
               <div class="error-text">{{ err }}</div>
             }
+            <button class="btn btn-secondary btn-block" [class.is-compare]="compare.has(p.id)"
+                    [disabled]="!compare.has(p.id) && compare.isFull()" (click)="toggleCompare()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   [attr.stroke]="compare.has(p.id) ? 'var(--color-accent)' : 'currentColor'"
+                   stroke-width="1.8"><line x1="4" y1="20" x2="4" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="20" y1="20" x2="20" y2="14"></line></svg>
+              {{ compare.has(p.id) ? i18n.t('compare.remove') : i18n.t('compare.add') }}
+            </button>
             <button class="btn btn-secondary btn-block">{{ i18n.t('product.requestBulkQuote') }}</button>
           </div>
         </div>
@@ -113,6 +121,7 @@ export class ProductDetailPage {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   cart = inject(CartStore);
+  compare = inject(CompareStore);
   currency = inject(CurrencyStore);
   i18n = inject(I18nService);
 
@@ -156,5 +165,10 @@ export class ProductDetailPage {
     if (!p) return;
     this.added.set(false);
     if (await this.cart.add(p.id, this.qty())) this.added.set(true);
+  }
+
+  toggleCompare(): void {
+    const p = this.product();
+    if (p) this.compare.toggle(p.id);
   }
 }

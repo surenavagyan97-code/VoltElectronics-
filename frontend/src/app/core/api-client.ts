@@ -57,6 +57,11 @@ export class ApiClient {
     for (const id of ids) params = params.append('ids', id);
     return this.http.get<ProductListItem[]>('/api/products/by-ids', { params });
   }
+  getProductsForCompare(ids: number[]): Observable<ProductDetail[]> {
+    let params = new HttpParams().set('lang', this.lang);
+    for (const id of ids) params = params.append('ids', id);
+    return this.http.get<ProductDetail[]>('/api/products/compare', { params });
+  }
   getCategories(): Observable<Category[]> {
     return this.http.get<Category[]>('/api/categories');
   }

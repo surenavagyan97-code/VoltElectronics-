@@ -32,6 +32,17 @@ public static class CatalogEndpoints
             return Results.Ok(items);
         });
 
+        // The compare page: same "ids live in the browser" shape as /by-ids, but with specs
+        // included since that's the whole point of a side-by-side comparison.
+        // Literal segment, so it wins over the {slug} route below.
+        products.MapGet("/compare", async (int[] ids, IDispatcher dispatcher, CancellationToken ct, string? lang = null) =>
+        {
+            var items = ids.Length == 0
+                ? Array.Empty<ProductDetailDto>()
+                : await dispatcher.Query(new GetProductsForCompareQuery(ids.Take(10).ToArray(), lang), ct);
+            return Results.Ok(items);
+        });
+
         products.MapGet("/{slug}", async (string slug, IDispatcher dispatcher, CancellationToken ct, string? lang = null) =>
             await dispatcher.Query(new GetProductBySlugQuery(slug, lang), ct) is { } product
                 ? Results.Ok(product)

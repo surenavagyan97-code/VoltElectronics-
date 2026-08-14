@@ -147,6 +147,42 @@ internal sealed class GetProductsByIdsHandler(AppDbContext db)
             .ToListAsync(cancellationToken);
 }
 
+internal sealed class GetProductsForCompareHandler(AppDbContext db)
+    : IQueryHandler<GetProductsForCompareQuery, IReadOnlyList<ProductDetailDto>>
+{
+    public async Task<IReadOnlyList<ProductDetailDto>> HandleAsync(
+        GetProductsForCompareQuery query, CancellationToken cancellationToken)
+    {
+        var lang = CatalogProjections.NormalizeLang(query.Lang);
+
+        var products = await db.Products.AsNoTracking()
+            .Where(p => query.Ids.Contains(p.Id) && p.Status == ProductStatus.Active)
+            .Include(x => x.Category)
+            .Include(x => x.Images.OrderBy(i => i.SortOrder))
+            .Include(x => x.Specs.OrderBy(s => s.SortOrder))
+            .Include(x => x.Translations)
+            .AsSplitQuery()
+            .ToListAsync(cancellationToken);
+
+        // Preserve the order the shopper added them in, not whatever order EF returned them.
+        return query.Ids
+            .Select(id => products.FirstOrDefault(p => p.Id == id))
+            .Where(p => p is not null)
+            .Select(p =>
+            {
+                var translation = p!.Translations.FirstOrDefault(t => t.Lang == lang);
+                return new ProductDetailDto(
+                    p.Id, translation?.Name ?? p.Name, p.Slug, p.Sku, p.Category.Name, p.CategoryId,
+                    p.Price, p.CompareAtPrice, p.Badge, p.Rating, p.ReviewCount, p.Stock,
+                    translation?.Description ?? p.Description,
+                    p.Images.Select(i => new ProductImageDto(i.Id, i.Url, i.ThumbUrl, i.CardUrl, i.SortOrder)).ToList(),
+                    p.Specs.Select(s => new ProductSpecDto(s.Name, s.Value)).ToList(),
+                    Array.Empty<ProductListItemDto>());
+            })
+            .ToList();
+    }
+}
+
 internal sealed class GetFeaturedProductsHandler(AppDbContext db)
     : IQueryHandler<GetFeaturedProductsQuery, IReadOnlyList<ProductListItemDto>>
 {

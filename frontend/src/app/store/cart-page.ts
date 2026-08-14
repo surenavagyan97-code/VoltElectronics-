@@ -18,13 +18,13 @@ import { I18nService } from '../core/i18n.service';
         </div>
       } @else {
         <div style="display: grid; grid-template-columns: 1fr 340px; gap: 32px; margin-top: 20px; align-items: flex-start;">
-          <div class="col" style="gap: 0;">
+          <div class="col" style="gap: 0; min-width: 0;">
             @for (item of cart.cart().items; track item.productId) {
-              <div class="row" style="gap: 18px; padding: 18px 0; border-bottom: 1px solid var(--color-divider);">
-                <a [routerLink]="['/product', item.slug]" class="ph" style="width: 88px; height: 88px; text-decoration: none;">
+              <div class="row" style="gap: 18px; padding: 18px 0; border-bottom: 1px solid var(--color-divider); flex-wrap: wrap;">
+                <a [routerLink]="['/product', item.slug]" class="ph" style="width: 88px; height: 88px; text-decoration: none; flex: none;">
                   @if (item.imageUrl) { <img [src]="item.imageUrl" [alt]="item.name" /> } @else { {{ item.name }} }
                 </a>
-                <div class="col" style="flex: 1; gap: 4px;">
+                <div class="col" style="flex: 1; gap: 4px; min-width: 160px;">
                   <a [routerLink]="['/product', item.slug]" class="card-title" style="font-size: 15px; color: inherit; text-decoration: none;">{{ item.name }}</a>
                   <div class="card-meta">{{ item.category }} · {{ currency.format(item.price, cart.cart().currency) }} {{ i18n.t('cart.each') }}</div>
                   <button class="btn btn-ghost" style="padding: 0; font-size: 12px; align-self: flex-start; margin-top: 4px;"
@@ -33,14 +33,14 @@ import { I18nService } from '../core/i18n.service';
                     {{ i18n.t('cart.remove') }}
                   </button>
                 </div>
-                <div class="seg">
+                <div class="seg" style="flex: none;">
                   <button class="seg-opt" style="padding: 6px 10px; background: none; border-top: none; border-right: none; border-bottom: none; color: inherit; font: inherit;"
                           [disabled]="cart.busy()" (click)="cart.updateQty(item.productId, item.qty - 1)">−</button>
                   <div class="seg-opt" style="padding: 6px 14px;">{{ item.qty }}</div>
                   <button class="seg-opt" style="padding: 6px 10px; background: none; border-top: none; border-right: none; border-bottom: none; color: inherit; font: inherit;"
                           [disabled]="cart.busy() || item.qty >= item.stock" (click)="cart.updateQty(item.productId, item.qty + 1)">+</button>
                 </div>
-                <div style="font-family: var(--font-heading); font-size: 16px; width: 90px; text-align: right;">{{ currency.format(item.lineTotal, cart.cart().currency) }}</div>
+                <div style="font-family: var(--font-heading); font-size: 16px; flex: none; text-align: right; white-space: nowrap; margin-left: auto;">{{ currency.format(item.lineTotal, cart.cart().currency) }}</div>
               </div>
             }
             @if (cart.error(); as err) {
