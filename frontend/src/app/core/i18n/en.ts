@@ -15,6 +15,38 @@ export const en: Record<string, string> = {
   'theme.darkTheme': 'Dark theme',
   'footer.copyright': '© 2026 Smart Buy. Procurement-friendly pricing on request.',
 
+  // header
+  'topbar.delivery': 'Delivery',
+  'topbar.credit': 'Credit',
+  'topbar.aboutUs': 'About us',
+  'topbar.jobs': 'Jobs',
+  'topbar.contacts': 'Contacts',
+  'header.allCategory': 'All Category',
+  'header.searchPlaceholder': 'Search to find ...',
+  'header.search': 'Search',
+  'header.account': 'Account',
+
+  // footer columns
+  'footer.toTheBuyer': 'To the buyer',
+  'footer.promotion': 'Promotion',
+  'footer.delivery': 'Delivery',
+  'footer.payment': 'Payment',
+  'footer.credit': 'Credit',
+  'footer.order': 'Order',
+  'footer.blog': 'Blog',
+  'footer.reporting': 'Reporting',
+  'footer.information': 'Information',
+  'footer.aboutUs': 'About us',
+  'footer.faq': 'FAQ',
+  'footer.jobs': 'Jobs',
+  'footer.ourStores': 'Our stores',
+  'footer.service': 'Service',
+  'footer.privacy': 'Privacy Policy',
+  'footer.contactTitle': 'Contact',
+  'footer.paymentTypes': 'Types of payment',
+  'footer.paymentLead': 'Pay by invoice on approved terms, or',
+  'footer.paymentLink': 'choose another payment method',
+
   // contact
   'contact.title': 'Contact us',
   'contact.subtitle': 'Questions about an order, bulk pricing or a product? We usually reply within one business day.',

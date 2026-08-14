@@ -1,6 +1,9 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterOutlet } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
+import { ApiClient } from '../core/api-client';
+import { Category } from '../core/api.types';
 import { AuthStore } from '../core/auth-store';
 import { CartStore } from '../core/cart-store';
 import { Currency, CurrencyStore } from '../core/currency-store';
@@ -10,80 +13,240 @@ import { ThemeStore } from '../core/theme-store';
 
 @Component({
   selector: 'app-store-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule, LangSelect],
+  imports: [RouterOutlet, RouterLink, FormsModule, LangSelect],
+  styles: `
+    /* — utility bar — */
+    .topbar {
+      display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+      padding: 8px 32px; font-size: 13px;
+      border-bottom: 1px solid var(--color-divider);
+    }
+    .topbar a { color: inherit; text-decoration: none; opacity: 0.85; }
+    .topbar a:hover { color: var(--color-accent); opacity: 1; }
+
+    /* — main header — */
+    .mainbar { display: flex; align-items: center; gap: 20px; padding: 18px 32px 10px; flex-wrap: wrap; }
+    .brand-block { color: inherit; text-decoration: none; flex: none; }
+    .brand-mark { font-weight: 800; font-size: 22px; letter-spacing: 6px; line-height: 1; }
+    .brand-mark em {
+      font-style: normal;
+      background: linear-gradient(95deg, var(--color-accent), var(--color-accent-2));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .brand-domain { font-size: 10px; letter-spacing: 3px; opacity: 0.55; margin-top: 4px; }
+    .searchbox { flex: 1; display: flex; min-width: 240px; max-width: 620px; }
+    .searchbox .input { flex: 1; border-top-right-radius: 0; border-bottom-right-radius: 0; }
+    .searchbox .btn { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+    .header-action {
+      display: flex; align-items: center; gap: 6px; color: inherit;
+      text-decoration: none; font-size: 13px; background: none; border: none;
+      cursor: pointer; font: inherit;
+    }
+    .header-action:hover { color: var(--color-accent); }
+
+    /* — category chips — */
+    .chips {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      padding: 6px 32px 16px; border-bottom: 1px solid var(--color-divider);
+    }
+    .chips-home { color: inherit; text-decoration: none; font-size: 14px; margin-right: 6px; }
+    .chips-home:hover { color: var(--color-accent); }
+    .chip {
+      border: 1px solid color-mix(in srgb, var(--color-accent) 55%, transparent);
+      color: var(--color-accent); background: transparent;
+      border-radius: 8px; padding: 6px 14px; font-size: 13px; cursor: pointer; font-family: inherit;
+    }
+    .chip:hover { background: color-mix(in srgb, var(--color-accent) 12%, transparent); }
+
+    /* — footer — */
+    .footer { border-top: 1px solid var(--color-divider); padding: 40px 32px 0; }
+    .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 32px; }
+    .footer h6 { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 16px; }
+    .footer-links { display: flex; flex-direction: column; gap: 10px; font-size: 14px; }
+    .footer-links a { color: inherit; text-decoration: none; opacity: 0.8; }
+    .footer-links a:hover { color: var(--color-accent); opacity: 1; }
+    .footer-bottom {
+      border-top: 1px solid var(--color-divider); margin-top: 36px;
+      padding: 22px 0; opacity: 0.6; font-size: 13px;
+    }
+    .pay-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .pay-pill {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: #fff; border-radius: 999px; padding: 5px 12px; min-width: 54px; height: 26px;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.10);
+    }
+    .socials { display: flex; gap: 12px; align-items: center; }
+    .socials svg { opacity: 0.7; }
+    .socials svg:hover { opacity: 1; color: var(--color-accent); }
+  `,
   template: `
     <div style="display: flex; flex-direction: column; min-height: 100vh;">
-    <div class="nav" style="border-bottom: 1px solid var(--color-divider); padding: 14px 32px;">
-      <a routerLink="/" class="nav-brand brand-logo">
-        <span class="brand-tile" aria-hidden="true">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 2 4.5 13.5h5.2L10.5 22l9-11.5h-5.2L13.5 2z"/></svg>
-        </span>
-        <span class="brand-word">Smart<em>Buy</em></span>
-      </a>
-      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">{{ i18n.t('nav.home') }}</a>
-      <a routerLink="/shop" routerLinkActive="active">{{ i18n.t('nav.shop') }}</a>
-      <a routerLink="/contact" routerLinkActive="active">{{ i18n.t('nav.contact') }}</a>
-      @if (auth.isLoggedIn() && !auth.isAdmin()) {
-        <a routerLink="/account/orders" routerLinkActive="active">{{ i18n.t('nav.orders') }}</a>
-      }
-      @if (auth.isAdmin()) {
-        <a routerLink="/admin">{{ i18n.t('nav.admin') }}</a>
-      }
+
+    <div class="topbar">
+      <a routerLink="/contact">{{ i18n.t('topbar.delivery') }}</a>
+      <a routerLink="/contact">{{ i18n.t('topbar.credit') }}</a>
+      <a routerLink="/contact">{{ i18n.t('topbar.aboutUs') }}</a>
+      <a routerLink="/contact">{{ i18n.t('topbar.jobs') }}</a>
+      <a routerLink="/contact">{{ i18n.t('topbar.contacts') }}</a>
       <div style="flex: 1;"></div>
-      <div class="row" style="gap: 14px;">
-        <app-lang-select />
-        <select class="input" style="height: 32px; padding: 2px 8px; font-size: 12px; width: auto;"
-                [ngModel]="currency.currency()" [ngModelOptions]="{ standalone: true }" (ngModelChange)="setCurrency($event)">
-          @for (c of currency.supported(); track c) { <option [value]="c">{{ c }}</option> }
-        </select>
-        <button
-          type="button" class="btn btn-icon btn-ghost" style="color: inherit;"
-          (click)="theme.toggle()"
-          [attr.aria-label]="theme.theme() === 'dark' ? i18n.t('theme.toggleToLight') : i18n.t('theme.toggleToDark')"
-        >
-          @if (theme.theme() === 'dark') {
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"></path></svg>
-          } @else {
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12.5A9 9 0 1 1 11.5 3a7 7 0 0 0 9.5 9.5z"></path></svg>
-          }
-        </button>
-        <a routerLink="/cart" style="position: relative; color: inherit; display: block;" [attr.aria-label]="i18n.t('nav.cart')">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-          @if (cart.count() > 0) {
-            <div style="position: absolute; top: -6px; right: -8px; background: var(--color-accent); color: var(--color-bg); font-size: 10px; font-weight: 600; border-radius: 999px; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; padding: 0 3px;">{{ cart.count() }}</div>
-          }
-        </a>
-        @if (auth.isLoggedIn()) {
-          <div class="row" style="gap: 10px;">
-            <span class="text-muted" style="font-size: 13px;">{{ auth.user()?.fullName }}</span>
-            <button class="btn btn-ghost" style="font-size: 13px;" (click)="logout()">{{ i18n.t('nav.signOut') }}</button>
-          </div>
+      <a href="tel:+37410203040" class="row" style="gap: 6px;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.34 1.79.66 2.64a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.44-1.23a2 2 0 0 1 2.11-.45c.85.32 1.74.54 2.64.66A2 2 0 0 1 22 16.92z"></path></svg>
+        +374 10 20 30 40
+      </a>
+      <app-lang-select />
+      <select class="input" style="height: 32px; padding: 2px 8px; font-size: 12px; width: auto;"
+              [ngModel]="currency.currency()" [ngModelOptions]="{ standalone: true }" (ngModelChange)="setCurrency($event)">
+        @for (c of currency.supported(); track c) { <option [value]="c">{{ c }}</option> }
+      </select>
+      <button type="button" class="btn btn-icon btn-ghost" style="color: inherit;" (click)="theme.toggle()"
+              [attr.aria-label]="theme.theme() === 'dark' ? i18n.t('theme.toggleToLight') : i18n.t('theme.toggleToDark')">
+        @if (theme.theme() === 'dark') {
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"></path></svg>
         } @else {
-          <a routerLink="/login" class="row" style="gap: 6px; color: inherit;" [attr.aria-label]="i18n.t('nav.signIn')">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6 8-6s8 2 8 6"></path></svg>
-            <span style="font-size: 13px;">{{ i18n.t('nav.signIn') }}</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12.5A9 9 0 1 1 11.5 3a7 7 0 0 0 9.5 9.5z"></path></svg>
+        }
+      </button>
+      @if (auth.isLoggedIn()) {
+        <span class="text-muted">{{ auth.user()?.fullName }}</span>
+        <button class="btn btn-ghost" style="font-size: 13px; padding: 2px 6px;" (click)="logout()">{{ i18n.t('nav.signOut') }}</button>
+      }
+    </div>
+
+    <div class="mainbar">
+      <a routerLink="/" class="brand-block">
+        <div class="brand-mark">SMART<em>BUY</em></div>
+        <div class="brand-domain">smartbuy.am</div>
+      </a>
+
+      <a class="btn btn-secondary" routerLink="/shop" style="flex: none;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        {{ i18n.t('header.allCategory') }}
+      </a>
+
+      <div class="searchbox">
+        <input class="input" [placeholder]="i18n.t('header.searchPlaceholder')"
+               [(ngModel)]="searchTerm" [ngModelOptions]="{ standalone: true }" (keyup.enter)="submitSearch()" />
+        <button class="btn btn-primary" (click)="submitSearch()">{{ i18n.t('header.search') }}</button>
+      </div>
+
+      <div class="row" style="gap: 18px; flex: none;">
+        <a class="header-action" [routerLink]="auth.isLoggedIn() ? '/account/orders' : '/login'">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6 8-6s8 2 8 6"></path></svg>
+          {{ i18n.t('header.account') }}
+        </a>
+        @if (auth.isAdmin()) {
+          <a class="header-action" routerLink="/admin" [attr.aria-label]="i18n.t('nav.admin')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="4" y1="20" x2="4" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="20" y1="20" x2="20" y2="14"></line></svg>
           </a>
         }
+        <a routerLink="/cart" class="header-action" style="position: relative;" [attr.aria-label]="i18n.t('nav.cart')">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+          @if (cart.count() > 0) {
+            <div style="position: absolute; top: -7px; right: -9px; background: var(--color-accent); color: var(--color-bg); font-size: 10px; font-weight: 600; border-radius: 999px; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; padding: 0 3px;">{{ cart.count() }}</div>
+          }
+        </a>
       </div>
+    </div>
+
+    <div class="chips">
+      <a routerLink="/" class="chips-home">{{ i18n.t('nav.home') }}</a>
+      <span style="opacity: 0.3;">|</span>
+      @for (cat of categories(); track cat.id) {
+        <button class="chip" (click)="openCategory(cat.id)">{{ cat.name }}</button>
+      }
     </div>
 
     <div style="flex: 1;">
       <router-outlet />
     </div>
 
-    <div style="border-top: 1px solid var(--color-divider); padding: 28px 32px; opacity: 0.6; font-size: 13px;">
-      {{ i18n.t('footer.copyright') }}
+    <div class="footer">
+      <div class="footer-grid">
+        <div>
+          <h6>{{ i18n.t('footer.toTheBuyer') }}</h6>
+          <div class="footer-links">
+            <a routerLink="/shop">{{ i18n.t('footer.promotion') }}</a>
+            <a routerLink="/contact">{{ i18n.t('footer.delivery') }}</a>
+            <a routerLink="/contact">{{ i18n.t('footer.payment') }}</a>
+            <a routerLink="/contact">{{ i18n.t('footer.credit') }}</a>
+            <a routerLink="/account/orders">{{ i18n.t('footer.order') }}</a>
+            <a routerLink="/contact">{{ i18n.t('footer.blog') }}</a>
+            <a routerLink="/contact">{{ i18n.t('footer.reporting') }}</a>
+          </div>
+        </div>
+        <div>
+          <h6>{{ i18n.t('footer.information') }}</h6>
+          <div class="footer-links">
+            <a routerLink="/contact">{{ i18n.t('footer.aboutUs') }}</a>
+            <a routerLink="/contact">{{ i18n.t('footer.faq') }}</a>
+            <a routerLink="/contact">{{ i18n.t('footer.jobs') }}</a>
+            <a routerLink="/contact">{{ i18n.t('footer.ourStores') }}</a>
+            <a routerLink="/contact">{{ i18n.t('footer.service') }}</a>
+            <a routerLink="/contact">{{ i18n.t('footer.privacy') }}</a>
+          </div>
+        </div>
+        <div>
+          <h6>{{ i18n.t('footer.contactTitle') }}</h6>
+          <div class="footer-links">
+            <span style="opacity: 0.8;">{{ i18n.t('contact.addressValue') }}</span>
+            <a href="mailto:info@smartbuy.am">info&#64;smartbuy.am</a>
+            <a href="tel:+37410203040">+374 10 20 30 40</a>
+            <div class="socials" style="margin-top: 4px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-label="Facebook"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-label="Instagram"><rect x="2" y="2" width="20" height="20" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><line x1="17.5" y1="6.5" x2="17.5" y2="6.5" stroke-linecap="round" stroke-width="2.4"></line></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-label="Chat"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-4-.97L3 21l1.97-5.5a8.5 8.5 0 1 1 16.03-4z"></path></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-label="Email"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-10 6L2 7"></path></svg>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h6>{{ i18n.t('footer.paymentTypes') }}</h6>
+          <div style="font-size: 14px; opacity: 0.85;">
+            {{ i18n.t('footer.paymentLead') }}
+            <a routerLink="/contact" style="color: var(--color-accent);">{{ i18n.t('footer.paymentLink') }}</a>.
+          </div>
+          <div class="pay-pills">
+            <span class="pay-pill" title="Visa"><svg viewBox="0 0 42 14" height="11" aria-label="Visa"><text x="0" y="12" font-family="Arial, sans-serif" font-size="14" font-weight="800" font-style="italic" fill="#1A1F71">VISA</text></svg></span>
+            <span class="pay-pill" title="Mastercard"><svg viewBox="0 0 34 20" height="14" aria-label="Mastercard"><circle cx="12" cy="10" r="9" fill="#EB001B"/><circle cx="22" cy="10" r="9" fill="#F79E1B"/><path d="M17 2.9a9 9 0 0 1 0 14.2 9 9 0 0 1 0-14.2z" fill="#FF5F00"/></svg></span>
+            <span class="pay-pill" title="ArCa"><svg viewBox="0 0 36 14" height="11" aria-label="ArCa"><text x="0" y="12" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#223E99">Ar</text><text x="17" y="12" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#E31E24">Ca</text></svg></span>
+            <span class="pay-pill" title="Telcell Wallet"><svg viewBox="0 0 56 12" height="9" aria-label="Telcell"><text x="0" y="10" font-family="Arial, sans-serif" font-size="10" font-weight="800" fill="#F57C20">TELCELL</text></svg></span>
+            <span class="pay-pill" title="Idram"><svg viewBox="0 0 38 14" height="11" aria-label="Idram"><circle cx="3" cy="9" r="3" fill="#E3262D"/><text x="8" y="12" font-family="Arial, sans-serif" font-size="13" font-weight="800" fill="#333">dram</text></svg></span>
+            <span class="pay-pill" title="American Express"><svg viewBox="0 0 44 16" height="13" aria-label="American Express"><rect width="44" height="16" rx="2" fill="#2E77BC"/><text x="22" y="11.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="8.5" font-weight="800" fill="#fff">AMEX</text></svg></span>
+            <span class="pay-pill" title="MyAmeria"><svg viewBox="0 0 66 12" height="9" aria-label="MyAmeria"><path d="M0 10 4 1l4 9h-2.4L4 6.2 2.4 10z" fill="#0DB14B"/><text x="10" y="10" font-family="Arial, sans-serif" font-size="10" font-weight="800" fill="#333">MYAMERIA</text></svg></span>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">{{ i18n.t('footer.copyright') }}</div>
     </div>
+
     </div>
   `,
 })
-export class StoreLayout {
+export class StoreLayout implements OnInit {
   auth = inject(AuthStore);
   cart = inject(CartStore);
   theme = inject(ThemeStore);
   currency = inject(CurrencyStore);
   i18n = inject(I18nService);
+  private api = inject(ApiClient);
   private router = inject(Router);
+
+  categories = signal<Category[]>([]);
+  searchTerm = '';
+
+  async ngOnInit(): Promise<void> {
+    this.categories.set(await firstValueFrom(this.api.getCategories()));
+  }
+
+  submitSearch(): void {
+    void this.router.navigate(['/shop'], {
+      queryParams: { search: this.searchTerm.trim() || null },
+    });
+  }
+
+  openCategory(id: number): void {
+    void this.router.navigate(['/shop'], { queryParams: { categoryIds: id } });
+  }
 
   async logout(): Promise<void> {
     await this.auth.logout();

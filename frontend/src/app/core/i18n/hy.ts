@@ -14,6 +14,38 @@ export const hy: Record<string, string> = {
   'theme.darkTheme': 'Մուգ թեմա',
   'footer.copyright': '© 2026 Smart Buy: Գնումների համար հարմար գնագոյացում՝ ըստ պահանջի:',
 
+  // header
+  'topbar.delivery': 'Առաքում',
+  'topbar.credit': 'Ապառիկ',
+  'topbar.aboutUs': 'Մեր մասին',
+  'topbar.jobs': 'Աշխատատեղեր',
+  'topbar.contacts': 'Կոնտակտներ',
+  'header.allCategory': 'Բոլոր կատեգորիաները',
+  'header.searchPlaceholder': 'Որոնեք ապրանքներ ...',
+  'header.search': 'Որոնել',
+  'header.account': 'Հաշիվ',
+
+  // footer columns
+  'footer.toTheBuyer': 'Գնորդին',
+  'footer.promotion': 'Ակցիաներ',
+  'footer.delivery': 'Առաքում',
+  'footer.payment': 'Վճարում',
+  'footer.credit': 'Ապառիկ',
+  'footer.order': 'Պատվեր',
+  'footer.blog': 'Բլոգ',
+  'footer.reporting': 'Հաշվետվություններ',
+  'footer.information': 'Տեղեկատվություն',
+  'footer.aboutUs': 'Մեր մասին',
+  'footer.faq': 'ՀՏՀ',
+  'footer.jobs': 'Աշխատատեղեր',
+  'footer.ourStores': 'Մեր խանութները',
+  'footer.service': 'Սպասարկում',
+  'footer.privacy': 'Գաղտնիության քաղաքականություն',
+  'footer.contactTitle': 'Կապ',
+  'footer.paymentTypes': 'Վճարման եղանակներ',
+  'footer.paymentLead': 'Վճարեք հաշիվ-ապրանքագրով՝ հաստատված պայմաններով, կամ',
+  'footer.paymentLink': 'ընտրեք վճարման այլ եղանակ',
+
   // contact
   'contact.title': 'Կապ մեզ հետ',
   'contact.subtitle': 'Հարցեր ունե՞ք պատվերի, մեծածախ գների կամ ապրանքի վերաբերյալ: Սովորաբար պատասխանում ենք մեկ աշխատանքային օրվա ընթացքում:',

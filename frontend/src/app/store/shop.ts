@@ -112,16 +112,19 @@ export class ShopPage implements OnInit {
       this.page.set(1);
       void this.load();
     });
+
+    // Subscribed (not snapshotted) so the header's search box and category chips keep working
+    // when the shopper is already on /shop. Emits immediately, so this also does the first load.
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((qp) => {
+      this.selectedCategories.set(qp.getAll('categoryIds').map(Number).filter((n) => !Number.isNaN(n)));
+      this.search.set(qp.get('search') ?? '');
+      this.page.set(1);
+      void this.load();
+    });
   }
 
   async ngOnInit(): Promise<void> {
-    const qp = this.route.snapshot.queryParamMap;
-    const cats = qp.getAll('categoryIds').map(Number).filter((n) => !Number.isNaN(n));
-    if (cats.length) this.selectedCategories.set(cats);
-    if (qp.get('search')) this.search.set(qp.get('search')!);
-
     this.categories.set(await firstValueFrom(this.api.getCategories()));
-    await this.load();
   }
 
   totalPages(): number {
@@ -152,12 +155,10 @@ export class ShopPage implements OnInit {
   }
 
   clearFilters(): void {
-    this.selectedCategories.set([]);
     this.selectedBands.set([]);
-    this.search.set('');
-    this.page.set(1);
+    // Clearing the URL params triggers the queryParamMap subscription, which resets the rest
+    // and reloads.
     void this.router.navigate([], { queryParams: {} });
-    void this.load();
   }
 
   goPage(page: number): void {

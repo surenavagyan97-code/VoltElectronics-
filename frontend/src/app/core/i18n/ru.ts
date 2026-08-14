@@ -14,6 +14,38 @@ export const ru: Record<string, string> = {
   'theme.darkTheme': 'Тёмная тема',
   'footer.copyright': '© 2026 Smart Buy. Гибкое ценообразование для закупок по запросу.',
 
+  // header
+  'topbar.delivery': 'Доставка',
+  'topbar.credit': 'Кредит',
+  'topbar.aboutUs': 'О нас',
+  'topbar.jobs': 'Вакансии',
+  'topbar.contacts': 'Контакты',
+  'header.allCategory': 'Все категории',
+  'header.searchPlaceholder': 'Найти товар ...',
+  'header.search': 'Поиск',
+  'header.account': 'Аккаунт',
+
+  // footer columns
+  'footer.toTheBuyer': 'Покупателю',
+  'footer.promotion': 'Акции',
+  'footer.delivery': 'Доставка',
+  'footer.payment': 'Оплата',
+  'footer.credit': 'Кредит',
+  'footer.order': 'Заказ',
+  'footer.blog': 'Блог',
+  'footer.reporting': 'Отчётность',
+  'footer.information': 'Информация',
+  'footer.aboutUs': 'О нас',
+  'footer.faq': 'Вопросы и ответы',
+  'footer.jobs': 'Вакансии',
+  'footer.ourStores': 'Наши магазины',
+  'footer.service': 'Сервис',
+  'footer.privacy': 'Политика конфиденциальности',
+  'footer.contactTitle': 'Контакты',
+  'footer.paymentTypes': 'Способы оплаты',
+  'footer.paymentLead': 'Оплачивайте по счёту на согласованных условиях или',
+  'footer.paymentLink': 'выберите другой способ оплаты',
+
   // contact
   'contact.title': 'Свяжитесь с нами',
   'contact.subtitle': 'Вопросы о заказе, оптовых ценах или товаре? Обычно отвечаем в течение одного рабочего дня.',

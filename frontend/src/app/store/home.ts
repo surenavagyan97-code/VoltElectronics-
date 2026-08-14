@@ -10,14 +10,16 @@ import { ProductCard } from './product-card';
   selector: 'app-home',
   imports: [RouterLink, ProductCard],
   template: `
-    <div style="background: linear-gradient(135deg, var(--color-section), var(--color-section-glow)); padding: 64px 32px; display: flex; align-items: center; gap: 48px; flex-wrap: wrap;">
+    <!-- Indigo hero from the Electronics Store design sheet — deliberately the same deep
+         indigo in both themes, with white text. -->
+    <div style="background: linear-gradient(120deg, #383c8e, #4a4fae); color: #fff; padding: 64px 32px; display: flex; align-items: center; gap: 48px; flex-wrap: wrap;">
       <div style="max-width: 460px;">
-        <div class="tag tag-outline" style="margin-bottom: 14px;">{{ i18n.t('home.hero.kicker') }}</div>
-        <h1 style="font-size: 46px; margin-bottom: 14px;">{{ i18n.t('home.hero.title') }}</h1>
-        <p style="opacity: 0.8; font-size: 15px; margin-bottom: 22px;">{{ i18n.t('home.hero.subtitle') }}</p>
+        <div style="display: inline-block; border: 1px solid rgba(255, 255, 255, 0.45); border-radius: 6px; padding: 4px 12px; font-size: 12px; margin-bottom: 16px;">{{ i18n.t('home.hero.kicker') }}</div>
+        <h1 style="font-size: 46px; margin-bottom: 14px; color: #fff;">{{ i18n.t('home.hero.title') }}</h1>
+        <p style="opacity: 0.85; font-size: 15px; margin-bottom: 22px;">{{ i18n.t('home.hero.subtitle') }}</p>
         <div class="row" style="gap: 10px;">
-          <a class="btn btn-primary" routerLink="/shop">{{ i18n.t('home.hero.browseCatalog') }}</a>
-          <button class="btn btn-secondary">{{ i18n.t('home.hero.talkToSales') }}</button>
+          <a class="btn" routerLink="/shop" style="border: 1px solid rgba(255, 255, 255, 0.55); color: #fff; background: transparent;">{{ i18n.t('home.hero.browseCatalog') }}</a>
+          <a class="btn" routerLink="/contact" style="background: #fff; color: #383c8e;">{{ i18n.t('home.hero.talkToSales') }}</a>
         </div>
       </div>
       <div class="ph" style="width: 380px; height: 260px;">{{ i18n.t('home.hero.imagePlaceholder') }}</div>
