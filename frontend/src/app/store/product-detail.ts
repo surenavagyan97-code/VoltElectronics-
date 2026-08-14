@@ -13,6 +13,12 @@ import { ProductCard } from './product-card';
 @Component({
   selector: 'app-product-detail',
   imports: [DecimalPipe, RouterLink, ProductCard],
+  styles: `
+    .product-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+    @media (max-width: 760px) {
+      .product-grid { grid-template-columns: 1fr; gap: 24px; }
+    }
+  `,
   template: `
     @if (product(); as p) {
       <div style="padding: 32px; max-width: 1200px; margin: 0 auto;">
@@ -20,7 +26,7 @@ import { ProductCard } from './product-card';
           <a routerLink="/shop" style="color: inherit; text-decoration: none;">{{ i18n.t('nav.shop') }}</a>
           / {{ p.category }} / {{ p.name }}
         </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 48px;">
+        <div class="product-grid">
           <div class="col" style="gap: 12px;">
             <div class="ph" style="width: 100%; height: 380px;">
               @if (activeImage(); as img) {

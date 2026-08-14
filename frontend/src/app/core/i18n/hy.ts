@@ -117,6 +117,8 @@ export const hy: Record<string, string> = {
   'shop.priceBand.750-1500': '$750 – $1,500',
   'shop.priceBand.gt1500': 'Ավելի քան $1,500',
   'shop.clearFilters': 'Մաքրել զտիչները',
+  'shop.filters': 'Զտիչներ',
+  'shop.showResults': 'Ցույց տալ արդյունքները',
   'shop.allProducts': 'Բոլոր ապրանքները',
   'shop.searchPlaceholder': 'Փնտրել ապրանքներ',
   'shop.sort.featured': 'Առաջարկվող',

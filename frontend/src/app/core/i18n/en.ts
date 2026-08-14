@@ -118,6 +118,8 @@ export const en: Record<string, string> = {
   'shop.priceBand.750-1500': '$750 – $1,500',
   'shop.priceBand.gt1500': 'Over $1,500',
   'shop.clearFilters': 'Clear filters',
+  'shop.filters': 'Filters',
+  'shop.showResults': 'Show results',
   'shop.allProducts': 'All products',
   'shop.searchPlaceholder': 'Search products',
   'shop.sort.featured': 'Featured',

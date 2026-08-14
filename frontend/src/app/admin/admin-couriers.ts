@@ -9,8 +9,9 @@ import { I18nService } from '../core/i18n.service';
 @Component({
   selector: 'app-admin-couriers',
   imports: [FormsModule],
+  styles: `.table-scroll { overflow-x: auto; }`,
   template: `
-    <div class="row" style="justify-content: space-between; margin-bottom: 20px;">
+    <div class="row" style="justify-content: space-between; margin-bottom: 20px; gap: 12px; flex-wrap: wrap;">
       <h2 style="margin: 0;">{{ i18n.t('admin.couriers.title') }}</h2>
       <button class="btn btn-primary" (click)="startCreate()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -41,6 +42,7 @@ import { I18nService } from '../core/i18n.service';
       </div>
     }
 
+    <div class="table-scroll">
     <table class="table">
       <thead><tr><th>{{ i18n.t('admin.couriers.table.name') }}</th><th>{{ i18n.t('common.email') }}</th><th>{{ i18n.t('admin.couriers.table.activeOrders') }}</th><th></th></tr></thead>
       <tbody>
@@ -62,6 +64,7 @@ import { I18nService } from '../core/i18n.service';
         }
       </tbody>
     </table>
+    </div>
   `,
 })
 export class AdminCouriersPage implements OnInit {

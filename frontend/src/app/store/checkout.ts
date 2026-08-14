@@ -14,6 +14,14 @@ export const CHECKOUT_EMAIL_KEY = 'volt.checkoutEmail';
 @Component({
   selector: 'app-checkout',
   imports: [FormsModule, RouterLink],
+  styles: `
+    .checkout-layout { display: grid; grid-template-columns: 1fr 340px; gap: 32px; align-items: flex-start; }
+    .checkout-address-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 760px) {
+      .checkout-layout { grid-template-columns: 1fr; }
+      .checkout-address-grid { grid-template-columns: 1fr; }
+    }
+  `,
   template: `
     <div style="padding: 32px; max-width: 1100px; margin: 0 auto;">
       <h2 style="margin-bottom: 24px;">{{ i18n.t('checkout.title') }}</h2>
@@ -21,7 +29,7 @@ export const CHECKOUT_EMAIL_KEY = 'volt.checkoutEmail';
       @if (cart.cart().items.length === 0) {
         <p class="text-muted">{{ i18n.t('checkout.emptyCart') }} <a routerLink="/shop">{{ i18n.t('checkout.backToShop') }}</a></p>
       } @else {
-        <div style="display: grid; grid-template-columns: 1fr 340px; gap: 32px; align-items: flex-start;">
+        <div class="checkout-layout">
           <form class="col" style="gap: 28px;" (ngSubmit)="placeOrder()">
             <div>
               <h4 style="margin-bottom: 14px;">{{ i18n.t('checkout.contact') }}</h4>
@@ -31,7 +39,7 @@ export const CHECKOUT_EMAIL_KEY = 'volt.checkoutEmail';
             </div>
             <div>
               <h4 style="margin-bottom: 14px;">{{ i18n.t('checkout.shippingAddress') }}</h4>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+              <div class="checkout-address-grid">
                 <div class="field"><label>{{ i18n.t('common.fullName') }}</label><input class="input" name="fullName" [(ngModel)]="form.fullName" required placeholder="Jordan Lee" /></div>
                 <div class="field"><label>{{ i18n.t('checkout.companyOptional') }}</label><input class="input" name="company" [(ngModel)]="form.company" placeholder="Acme Corp" /></div>
                 <div class="field" style="grid-column: span 2;"><label>{{ i18n.t('checkout.streetAddress') }}</label><input class="input" name="street" [(ngModel)]="form.street" required placeholder="500 Market St, Suite 200" /></div>

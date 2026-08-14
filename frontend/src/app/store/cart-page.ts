@@ -7,6 +7,12 @@ import { I18nService } from '../core/i18n.service';
 @Component({
   selector: 'app-cart-page',
   imports: [RouterLink],
+  styles: `
+    .cart-layout { display: grid; grid-template-columns: 1fr 340px; gap: 32px; margin-top: 20px; align-items: flex-start; }
+    @media (max-width: 760px) {
+      .cart-layout { grid-template-columns: 1fr; }
+    }
+  `,
   template: `
     <div style="padding: 32px; max-width: 1100px; margin: 0 auto;">
       <h2>{{ i18n.t('cart.title') }} <span class="text-muted" style="font-size: 18px;">{{ i18n.t('cart.itemsCount', { count: cart.count() }) }}</span></h2>
@@ -17,7 +23,7 @@ import { I18nService } from '../core/i18n.service';
           <a class="btn btn-primary" routerLink="/shop">{{ i18n.t('cart.browseCatalog') }}</a>
         </div>
       } @else {
-        <div style="display: grid; grid-template-columns: 1fr 340px; gap: 32px; margin-top: 20px; align-items: flex-start;">
+        <div class="cart-layout">
           <div class="col" style="gap: 0; min-width: 0;">
             @for (item of cart.cart().items; track item.productId) {
               <div class="row" style="gap: 18px; padding: 18px 0; border-bottom: 1px solid var(--color-divider); flex-wrap: wrap;">

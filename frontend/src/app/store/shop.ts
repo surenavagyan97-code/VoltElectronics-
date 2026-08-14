@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, debounceTime, firstValueFrom } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -17,9 +17,43 @@ const PRICE_BANDS = [
 @Component({
   selector: 'app-shop',
   imports: [ProductCard],
+  styles: `
+    .shop-layout { display: flex; gap: 28px; padding: 32px; align-items: flex-start; }
+    .shop-sidebar { width: 220px; flex: none; display: flex; flex-direction: column; gap: 22px; }
+    .shop-main { flex: 1; min-width: 0; }
+    .filters-toggle {
+      display: none; width: 100%; align-items: center; justify-content: space-between;
+      gap: 8px; margin-bottom: 4px;
+    }
+    .filters-toggle .badge {
+      background: var(--color-accent); color: var(--color-bg); font-size: 11px; font-weight: 600;
+      border-radius: 999px; min-width: 18px; height: 18px; display: inline-flex;
+      align-items: center; justify-content: center; padding: 0 5px;
+    }
+    .filters-toggle .chevron { transition: transform 0.15s ease; }
+    .filters-toggle.open .chevron { transform: rotate(180deg); }
+    .show-results-btn { display: none; }
+    @media (max-width: 760px) {
+      .shop-layout { flex-direction: column; padding: 20px 16px; gap: 16px; }
+      .shop-sidebar { width: 100%; }
+      .shop-sidebar.collapsed { display: none; }
+      .filters-toggle { display: flex; }
+      .show-results-btn { display: inline-flex; }
+    }
+  `,
   template: `
-    <div style="display: flex; gap: 28px; padding: 32px; align-items: flex-start;">
-      <div class="col" style="width: 220px; flex: none; gap: 22px;">
+    <div class="shop-layout">
+      <button type="button" class="btn btn-secondary filters-toggle" [class.open]="filtersOpen()"
+              (click)="filtersOpen.set(!filtersOpen())" [attr.aria-expanded]="filtersOpen()">
+        <span class="row" style="gap: 8px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+          {{ i18n.t('shop.filters') }}
+          @if (activeFilterCount() > 0) { <span class="badge">{{ activeFilterCount() }}</span> }
+        </span>
+        <svg class="chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </button>
+
+      <div class="shop-sidebar" [class.collapsed]="!filtersOpen()">
         <div>
           <h6 style="margin-bottom: 10px;">{{ i18n.t('shop.category') }}</h6>
           <div class="col" style="gap: 8px; max-height: 280px; overflow-y: auto; padding-right: 4px;">
@@ -51,9 +85,10 @@ const PRICE_BANDS = [
           </div>
         </div>
         <button class="btn btn-secondary btn-block" (click)="clearFilters()">{{ i18n.t('shop.clearFilters') }}</button>
+        <button class="btn btn-primary btn-block show-results-btn" (click)="filtersOpen.set(false)">{{ i18n.t('shop.showResults') }}</button>
       </div>
 
-      <div style="flex: 1;">
+      <div class="shop-main">
         <div class="row" style="justify-content: space-between; margin-bottom: 18px; gap: 12px; flex-wrap: wrap;">
           <h3 style="margin: 0;">{{ i18n.t('shop.allProducts') }}</h3>
           <div class="row" style="gap: 10px;">
@@ -105,6 +140,9 @@ export class ShopPage implements OnInit {
   search = signal('');
   sort = signal('featured');
   page = signal(1);
+  filtersOpen = signal(false);
+
+  activeFilterCount = computed(() => this.selectedCategories().length + this.selectedBands().length);
 
   private searchInput$ = new Subject<string>();
 

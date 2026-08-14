@@ -13,13 +13,20 @@ const TRANSLATION_LANGS = ['hy', 'ru'] as const;
 @Component({
   selector: 'app-admin-product-form',
   imports: [FormsModule, RouterLink],
-  styles: `.input.invalid { border-color: #ff8a8a; }`,
+  styles: `
+    .input.invalid { border-color: #ff8a8a; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    @media (max-width: 640px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .form-grid > .field[style*="span 2"] { grid-column: span 1; }
+    }
+  `,
   template: `
     <div style="max-width: 860px;">
       <a class="btn btn-ghost" style="padding: 0; margin-bottom: 12px;" routerLink="/admin/products">{{ i18n.t('admin.form.backToProducts') }}</a>
       <h2 style="margin-bottom: 22px;">{{ isNew() ? i18n.t('admin.form.addProduct') : i18n.t('admin.form.editProduct') }}</h2>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+      <div class="form-grid">
         <div class="field" style="grid-column: span 2;"><label>{{ i18n.t('admin.form.productName') }} *</label>
           <input class="input" [class.invalid]="invalid(form.name)" [(ngModel)]="form.name" [placeholder]="i18n.t('admin.form.productNamePlaceholder')" /></div>
         @for (t of form.translations; track t.lang) {
@@ -84,10 +91,10 @@ const TRANSLATION_LANGS = ['hy', 'ru'] as const;
           <label>{{ i18n.t('admin.form.specifications') }}</label>
           <div class="col" style="gap: 8px;">
             @for (spec of form.specs; track $index) {
-              <div class="row" style="gap: 8px;">
-                <input class="input" [placeholder]="i18n.t('admin.form.specNamePlaceholder')" style="width: 200px;"
+              <div class="row" style="gap: 8px; flex-wrap: wrap;">
+                <input class="input" [placeholder]="i18n.t('admin.form.specNamePlaceholder')" style="width: 200px; flex: 1 1 160px;"
                        [(ngModel)]="spec.name" [ngModelOptions]="{ standalone: true }" />
-                <input class="input" [placeholder]="i18n.t('admin.form.specValuePlaceholder')"
+                <input class="input" [placeholder]="i18n.t('admin.form.specValuePlaceholder')" style="flex: 2 1 200px;"
                        [(ngModel)]="spec.value" [ngModelOptions]="{ standalone: true }" />
                 <button class="btn btn-icon btn-ghost" (click)="form.specs.splice($index, 1)" aria-label="Remove spec">×</button>
               </div>

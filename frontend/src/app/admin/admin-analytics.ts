@@ -9,11 +9,18 @@ import { I18nService } from '../core/i18n.service';
 @Component({
   selector: 'app-admin-analytics',
   imports: [DatePipe, DecimalPipe],
+  styles: `
+    .table-scroll { overflow-x: auto; }
+    .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+    @media (max-width: 640px) {
+      .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  `,
   template: `
     <h2 style="margin-bottom: 20px;">{{ i18n.t('admin.analytics.title') }}</h2>
 
     @if (data(); as a) {
-      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px;">
+      <div class="stat-grid">
         <div class="card elev-sm">
           <div class="card-kicker">{{ i18n.t('admin.analytics.revenue30d') }}</div>
           <div style="font-family: var(--font-heading); font-size: 26px;">{{ currency.format(a.revenue30d, currency.base(), 0) }}</div>
@@ -55,30 +62,34 @@ import { I18nService } from '../core/i18n.service';
       </div>
 
       <div class="card-title" style="margin-bottom: 12px;">{{ i18n.t('admin.analytics.topProducts') }}</div>
-      <table class="table" style="margin-bottom: 28px;">
+      <div class="table-scroll" style="margin-bottom: 28px;">
+      <table class="table">
         <thead><tr><th>{{ i18n.t('admin.analytics.table.product') }}</th><th>{{ i18n.t('admin.analytics.table.unitsSold') }}</th><th>{{ i18n.t('admin.analytics.table.revenue') }}</th></tr></thead>
         <tbody>
           @for (p of a.topProducts; track p.productId) {
-            <tr><td>{{ p.name }}</td><td>{{ p.unitsSold }}</td><td>{{ currency.format(p.revenue, currency.base(), 0) }}</td></tr>
+            <tr><td style="white-space: nowrap;">{{ p.name }}</td><td>{{ p.unitsSold }}</td><td style="white-space: nowrap;">{{ currency.format(p.revenue, currency.base(), 0) }}</td></tr>
           }
         </tbody>
       </table>
+      </div>
 
       @if (a.lowStockProducts.length > 0) {
         <div class="card-title" style="margin-bottom: 12px;">{{ i18n.t('admin.analytics.lowStock') }}</div>
+        <div class="table-scroll">
         <table class="table">
           <thead><tr><th>{{ i18n.t('admin.analytics.table.product') }}</th><th>{{ i18n.t('admin.products.table.sku') }}</th><th>{{ i18n.t('admin.products.table.category') }}</th><th>{{ i18n.t('admin.products.table.stock') }}</th></tr></thead>
           <tbody>
             @for (p of a.lowStockProducts; track p.id) {
               <tr>
-                <td>{{ p.name }}</td>
-                <td class="text-muted">{{ p.sku }}</td>
-                <td>{{ p.category }}</td>
-                <td><span class="tag tag-accent">{{ i18n.t('admin.products.units', { count: p.stock }) }}</span></td>
+                <td style="white-space: nowrap;">{{ p.name }}</td>
+                <td class="text-muted" style="white-space: nowrap;">{{ p.sku }}</td>
+                <td style="white-space: nowrap;">{{ p.category }}</td>
+                <td><span class="tag tag-accent" style="white-space: nowrap;">{{ i18n.t('admin.products.units', { count: p.stock }) }}</span></td>
               </tr>
             }
           </tbody>
         </table>
+        </div>
       }
     } @else {
       <div class="row" style="justify-content: center; padding: 60px;"><div class="spinner"></div></div>

@@ -117,6 +117,8 @@ export const ru: Record<string, string> = {
   'shop.priceBand.750-1500': '$750 – $1 500',
   'shop.priceBand.gt1500': 'Свыше $1 500',
   'shop.clearFilters': 'Сбросить фильтры',
+  'shop.filters': 'Фильтры',
+  'shop.showResults': 'Показать результаты',
   'shop.allProducts': 'Все товары',
   'shop.searchPlaceholder': 'Поиск товаров',
   'shop.sort.featured': 'Популярные',

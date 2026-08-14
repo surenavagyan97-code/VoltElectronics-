@@ -21,9 +21,28 @@ import { ThemeStore } from '../core/theme-store';
     }
     .admin-topbar {
       position: sticky; top: 0; z-index: 100;
-      display: flex; align-items: center; gap: 10px;
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
       padding: 12px 24px; background: var(--color-bg);
       border-bottom: 1px solid var(--color-divider);
+    }
+    .admin-shell { display: flex; flex: 1; min-height: 0; }
+    .admin-sidebar {
+      width: 220px; flex: none; display: flex; flex-direction: column; gap: 4px;
+      background: var(--color-surface); padding: 20px 14px;
+      border-right: 1px solid var(--color-divider);
+    }
+    .admin-content { flex: 1; padding: 28px 36px; min-width: 0; }
+    @media (max-width: 760px) {
+      .admin-topbar { padding: 10px 16px; }
+      .admin-shell { flex-direction: column; }
+      .admin-sidebar {
+        width: 100%; flex-direction: row; align-items: center; gap: 2px;
+        padding: 8px 10px; overflow-x: auto; border-right: none;
+        border-bottom: 1px solid var(--color-divider);
+      }
+      .admin-sidebar .brand-logo { display: none; }
+      .admin-sidebar .admin-nav-link { flex: none; white-space: nowrap; }
+      .admin-content { padding: 20px 16px; }
     }
   `,
   template: `
@@ -48,8 +67,8 @@ import { ThemeStore } from '../core/theme-store';
         </button>
         <a routerLink="/" class="btn btn-secondary" target="_blank" style="font-size: 13px;">{{ i18n.t('admin.nav.backToStore') }}</a>
       </div>
-      <div style="display: flex; flex: 1; min-height: 0;">
-      <div class="col" style="width: 220px; flex: none; background: var(--color-surface); padding: 20px 14px; gap: 4px; border-right: 1px solid var(--color-divider);">
+      <div class="admin-shell">
+      <div class="admin-sidebar">
         <div class="brand-logo" style="padding: 0 10px 18px;">
           <span class="brand-tile" aria-hidden="true">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 2 4.5 13.5h5.2L10.5 22l9-11.5h-5.2L13.5 2z"/></svg>
@@ -82,7 +101,7 @@ import { ThemeStore } from '../core/theme-store';
           {{ i18n.t('admin.nav.analytics') }}
         </a>
       </div>
-      <div style="flex: 1; padding: 28px 36px; min-width: 0;">
+      <div class="admin-content">
         <router-outlet />
       </div>
       </div>

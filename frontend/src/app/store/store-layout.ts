@@ -70,6 +70,20 @@ function readRecentSearches(): string[] {
       cursor: pointer; font: inherit;
     }
     .header-action:hover { color: var(--color-accent); }
+    .header-actions {
+      display: flex; flex-wrap: wrap; gap: 18px; align-items: center;
+      max-width: 100%; row-gap: 10px; justify-content: flex-end;
+    }
+    .header-username {
+      max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    @media (max-width: 720px) {
+      .mainbar { padding: 12px 16px; gap: 12px; }
+      .chips { padding: 6px 16px 14px; }
+      .header-actions { gap: 12px; }
+      .header-phone-text { display: none; }
+      .header-username { max-width: 70px; }
+    }
 
     /* — user menu — */
     .user-menu-wrap { position: relative; }
@@ -178,10 +192,10 @@ function readRecentSearches(): string[] {
         }
       </div>
 
-      <div class="row" style="gap: 18px; flex: none; align-items: center;">
+      <div class="header-actions">
         <a href="tel:+37410203040" class="header-action">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.34 1.79.66 2.64a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.44-1.23a2 2 0 0 1 2.11-.45c.85.32 1.74.54 2.64.66A2 2 0 0 1 22 16.92z"></path></svg>
-          +374 10 20 30 40
+          <span class="header-phone-text">+374 10 20 30 40</span>
         </a>
         <app-lang-select />
         <select class="input" style="height: 32px; padding: 2px 8px; font-size: 12px; width: auto;"
@@ -224,8 +238,8 @@ function readRecentSearches(): string[] {
             <button type="button" class="header-action" (click)="userMenuOpen.set(!userMenuOpen())"
                     [attr.aria-expanded]="userMenuOpen()" aria-haspopup="menu">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6 8-6s8 2 8 6"></path></svg>
-              {{ auth.user()?.fullName }}
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" style="opacity: 0.6;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              <span class="header-username">{{ auth.user()?.fullName }}</span>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" style="opacity: 0.6; flex: none;"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </button>
             @if (userMenuOpen()) {
               <div class="user-menu" role="menu">

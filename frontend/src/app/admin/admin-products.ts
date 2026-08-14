@@ -24,9 +24,10 @@ import { I18nService } from '../core/i18n.service';
       background: none; border: none; padding: 0; cursor: pointer;
       color: var(--color-accent); text-decoration: underline; font: inherit;
     }
+    .table-scroll { overflow-x: auto; }
   `,
   template: `
-    <div class="row" style="justify-content: space-between; margin-bottom: 20px;">
+    <div class="row" style="justify-content: space-between; margin-bottom: 20px; gap: 12px; flex-wrap: wrap;">
       <h2 style="margin: 0;">{{ i18n.t('admin.products.title') }}</h2>
       <div class="row" style="gap: 8px;">
         <button class="btn btn-secondary" [disabled]="exporting()" (click)="exportExcel()">
@@ -70,6 +71,7 @@ import { I18nService } from '../core/i18n.service';
 
     @if (error(); as err) { <div class="error-text" style="margin-bottom: 10px;">{{ err }}</div> }
 
+    <div class="table-scroll">
     <table class="table">
       <thead><tr><th></th><th>{{ i18n.t('admin.products.table.name') }}</th><th>{{ i18n.t('admin.products.table.sku') }}</th><th>{{ i18n.t('admin.products.table.category') }}</th><th>{{ i18n.t('admin.products.table.price') }}</th><th>{{ i18n.t('admin.products.table.stock') }}</th><th>{{ i18n.t('admin.products.table.status') }}</th><th></th></tr></thead>
       <tbody>
@@ -80,11 +82,11 @@ import { I18nService } from '../core/i18n.service';
                 @if (p.imageUrl) { <img [src]="p.imageUrl" [alt]="p.name" /> } @else { img }
               </div>
             </td>
-            <td>{{ p.name }}</td>
-            <td class="text-muted">{{ p.sku }}</td>
-            <td>{{ p.category }}</td>
-            <td>{{ currency.formatBase(p.price) }}</td>
-            <td><span class="tag" [class]="p.stock < 20 ? 'tag-accent' : 'tag-neutral'">{{ i18n.t('admin.products.units', { count: p.stock }) }}</span></td>
+            <td style="white-space: nowrap;">{{ p.name }}</td>
+            <td class="text-muted" style="white-space: nowrap;">{{ p.sku }}</td>
+            <td style="white-space: nowrap;">{{ p.category }}</td>
+            <td style="white-space: nowrap;">{{ currency.formatBase(p.price) }}</td>
+            <td><span class="tag" [class]="p.stock < 20 ? 'tag-accent' : 'tag-neutral'" style="white-space: nowrap;">{{ i18n.t('admin.products.units', { count: p.stock }) }}</span></td>
             <td><span class="tag" [class]="p.status === 'Active' ? 'tag-accent' : p.status === 'Draft' ? 'tag-outline' : 'tag-dim'">{{ statusLabel(p.status) }}</span></td>
             <td>
               <div class="row" style="gap: 4px;">
@@ -100,6 +102,7 @@ import { I18nService } from '../core/i18n.service';
         }
       </tbody>
     </table>
+    </div>
 
     @if (totalPages() > 1) {
       <div class="row" style="gap: 8px; justify-content: center; margin-top: 20px;">
@@ -111,7 +114,7 @@ import { I18nService } from '../core/i18n.service';
 
     @if (importOpen()) {
       <div class="dialog-backdrop" (click)="closeImport()">
-        <div class="dialog" style="width: 440px;" (click)="$event.stopPropagation()">
+        <div class="dialog" (click)="$event.stopPropagation()">
           <div class="dialog-title">{{ i18n.t('admin.products.importTitle') }}</div>
           <div class="dialog-body">
             <label class="drop-zone" [class.drag-over]="dragOver()"

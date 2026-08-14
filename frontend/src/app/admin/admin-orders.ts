@@ -13,11 +13,18 @@ const STATUSES = ['PendingPayment', 'Processing', 'Shipped', 'Delivered', 'Cance
 @Component({
   selector: 'app-admin-orders',
   imports: [DatePipe],
+  styles: `
+    .table-scroll { overflow-x: auto; }
+    .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+    @media (max-width: 640px) {
+      .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  `,
   template: `
     <h2 style="margin-bottom: 20px;">{{ i18n.t('admin.orders.title') }}</h2>
 
     @if (stats(); as s) {
-      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px;">
+      <div class="stat-grid">
         <div class="card elev-sm"><div class="card-kicker">{{ i18n.t('admin.orders.stats.total') }}</div><div style="font-family: var(--font-heading); font-size: 26px;">{{ s.total }}</div></div>
         <div class="card elev-sm"><div class="card-kicker">{{ i18n.t('admin.orders.stats.processing') }}</div><div style="font-family: var(--font-heading); font-size: 26px;">{{ s.processing }}</div></div>
         <div class="card elev-sm"><div class="card-kicker">{{ i18n.t('admin.orders.stats.shipped') }}</div><div style="font-family: var(--font-heading); font-size: 26px;">{{ s.shipped }}</div></div>
@@ -39,17 +46,18 @@ const STATUSES = ['PendingPayment', 'Processing', 'Shipped', 'Delivered', 'Cance
 
     @if (error(); as err) { <div class="error-text" style="margin-bottom: 10px;">{{ err }}</div> }
 
+    <div class="table-scroll">
     <table class="table">
       <thead><tr><th>{{ i18n.t('admin.orders.table.order') }}</th><th>{{ i18n.t('admin.orders.table.customer') }}</th><th>{{ i18n.t('admin.orders.table.email') }}</th><th>{{ i18n.t('admin.orders.table.date') }}</th><th>{{ i18n.t('admin.orders.table.items') }}</th><th>{{ i18n.t('admin.orders.table.total') }}</th><th>{{ i18n.t('admin.orders.table.status') }}</th><th>{{ i18n.t('admin.orders.table.courier') }}</th></tr></thead>
       <tbody>
         @for (o of result()?.items ?? []; track o.orderNumber) {
           <tr>
-            <td>{{ o.orderNumber }}</td>
-            <td>{{ o.customer }}</td>
-            <td class="text-muted">{{ o.email }}</td>
-            <td>{{ o.createdAt | date: 'MMM d, y' }}</td>
+            <td style="white-space: nowrap;">{{ o.orderNumber }}</td>
+            <td style="white-space: nowrap;">{{ o.customer }}</td>
+            <td class="text-muted" style="white-space: nowrap;">{{ o.email }}</td>
+            <td style="white-space: nowrap;">{{ o.createdAt | date: 'MMM d, y' }}</td>
             <td>{{ o.itemCount }}</td>
-            <td>{{ currency.format(o.total, o.currency) }}</td>
+            <td style="white-space: nowrap;">{{ currency.format(o.total, o.currency) }}</td>
             <td>
               <select class="input" style="width: 150px; min-height: 30px; padding: 3px 8px; font-size: 12px;"
                       [value]="o.status" (change)="updateStatus(o, $any($event.target).value)">
@@ -71,6 +79,7 @@ const STATUSES = ['PendingPayment', 'Processing', 'Shipped', 'Delivered', 'Cance
         }
       </tbody>
     </table>
+    </div>
 
     @if (totalPages() > 1) {
       <div class="row" style="gap: 8px; justify-content: center; margin-top: 20px;">
