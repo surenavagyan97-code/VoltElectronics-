@@ -9,6 +9,7 @@ namespace VoltElectronics.Domain.Ordering;
 /// </summary>
 public sealed record OrderTotals(
     decimal Subtotal,
+    decimal Discount,
     decimal Shipping,
     decimal Tax,
     decimal Total,

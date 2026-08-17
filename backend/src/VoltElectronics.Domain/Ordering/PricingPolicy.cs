@@ -8,11 +8,19 @@ public static class PricingPolicy
 
     public static decimal TaxFor(decimal subtotal) => Math.Round(subtotal * TaxRate, 2);
 
-    public static (decimal Subtotal, decimal Shipping, decimal Tax, decimal Total) Totals(decimal subtotal)
+    /// <summary>
+    /// <paramref name="discount"/> (from <see cref="Promotions.PromotionPricing"/>) is subtracted
+    /// from the subtotal before tax, so shoppers are taxed on what they actually pay — shipping is
+    /// flat regardless of discount.
+    /// </summary>
+    public static (decimal Subtotal, decimal Discount, decimal Shipping, decimal Tax, decimal Total) Totals(
+        decimal subtotal, decimal discount = 0)
     {
-        if (subtotal <= 0) return (0, 0, 0, 0);
+        if (subtotal <= 0) return (0, 0, 0, 0, 0);
+        discount = Math.Clamp(discount, 0, subtotal);
+        var discounted = subtotal - discount;
         var shipping = FlatShipping;
-        var tax = TaxFor(subtotal);
-        return (subtotal, shipping, tax, subtotal + shipping + tax);
+        var tax = TaxFor(discounted);
+        return (subtotal, discount, shipping, tax, discounted + shipping + tax);
     }
 }

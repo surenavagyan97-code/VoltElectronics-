@@ -46,8 +46,8 @@ internal sealed class GetOrderHandler(AppDbContext db) : IQueryHandler<GetOrderQ
             order.PaymentFailureReason,
             order.ShipTo.FullName, order.ShipTo.Company, order.ShipTo.Street, order.ShipTo.City,
             order.ShipTo.State, order.ShipTo.Zip, order.ShipTo.Phone,
-            order.Totals.Subtotal, order.Totals.Shipping, order.Totals.Tax, order.Totals.Total,
-            order.Totals.Currency,
+            order.Totals.Subtotal, order.Totals.Discount, order.Totals.Shipping, order.Totals.Tax, order.Totals.Total,
+            order.Totals.Currency, order.CouponCode,
             order.Items.Select(i => new OrderItemDto(
                 i.ProductId, i.ProductName,
                 products.TryGetValue(i.ProductId, out var p) ? p.Slug : null,

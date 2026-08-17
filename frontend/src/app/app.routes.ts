@@ -36,6 +36,7 @@ export const routes: Routes = [
       { path: 'products/new', loadComponent: () => import('./admin/admin-product-form').then((m) => m.AdminProductFormPage) },
       { path: 'products/:id', loadComponent: () => import('./admin/admin-product-form').then((m) => m.AdminProductFormPage) },
       { path: 'categories', loadComponent: () => import('./admin/admin-categories').then((m) => m.AdminCategoriesPage) },
+      { path: 'promotions', loadComponent: () => import('./admin/admin-promotions').then((m) => m.AdminPromotionsPage) },
       { path: 'content', loadComponent: () => import('./admin/admin-content').then((m) => m.AdminContentPage) },
       { path: 'orders', loadComponent: () => import('./admin/admin-orders').then((m) => m.AdminOrdersPage) },
       { path: 'couriers', loadComponent: () => import('./admin/admin-couriers').then((m) => m.AdminCouriersPage) },

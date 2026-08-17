@@ -80,10 +80,53 @@ export interface Cart {
   items: CartItem[];
   count: number;
   subtotal: number;
+  discount: number;
   shipping: number;
   tax: number;
   total: number;
   currency: string;
+  couponCode: string | null;
+  couponError: string | null;
+}
+
+// Promotions (coupon codes and admin-run sales share one model — see PromotionScope)
+export type PromotionType = 'Percentage' | 'FixedAmount';
+export type PromotionScope = 'Order' | 'Category' | 'Product';
+
+export interface Promotion {
+  id: number;
+  code: string | null;
+  name: string | null;
+  type: PromotionType;
+  value: number;
+  scope: PromotionScope;
+  categoryId: number | null;
+  categoryName: string | null;
+  productIds: number[];
+  minSubtotal: number | null;
+  maxDiscountAmount: number | null;
+  maxRedemptions: number | null;
+  redemptionCount: number;
+  startsAt: string | null;
+  expiresAt: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface SavePromotionRequest {
+  code: string | null;
+  name: string | null;
+  type: PromotionType;
+  value: number;
+  scope: PromotionScope;
+  categoryId: number | null;
+  productIds: number[];
+  minSubtotal: number | null;
+  maxDiscountAmount: number | null;
+  maxRedemptions: number | null;
+  startsAt: string | null;
+  expiresAt: string | null;
+  isActive: boolean;
 }
 
 // Auth
@@ -138,10 +181,12 @@ export interface OrderDetail {
   shipZip: string;
   shipPhone: string | null;
   subtotal: number;
+  discount: number;
   shippingCost: number;
   tax: number;
   total: number;
   currency: string;
+  couponCode: string | null;
   items: OrderItem[];
 }
 
@@ -209,6 +254,7 @@ export interface AdminOrderListItem {
   itemCount: number;
   courierId: string | null;
   courierName: string | null;
+  couponCode: string | null;
 }
 export interface Courier {
   id: string;

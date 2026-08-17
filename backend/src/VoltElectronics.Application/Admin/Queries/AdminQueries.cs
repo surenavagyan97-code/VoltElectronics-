@@ -1,6 +1,7 @@
 using VoltElectronics.Application.Catalog;
 using VoltElectronics.Application.Common.Messaging;
 using VoltElectronics.Application.Common.Models;
+using VoltElectronics.Application.Promotions;
 
 namespace VoltElectronics.Application.Admin.Queries;
 
@@ -28,3 +29,6 @@ public sealed record AdminGetOrderStatsQuery : IQuery<AdminOrderStatsDto>;
 public sealed record AdminGetCouriersQuery : IQuery<IReadOnlyList<CourierDto>>;
 
 public sealed record GetAnalyticsQuery : IQuery<AnalyticsDto>;
+
+/// <summary>Every coupon/sale, newest first.</summary>
+public sealed record AdminGetPromotionsQuery : IQuery<IReadOnlyList<PromotionDto>>;

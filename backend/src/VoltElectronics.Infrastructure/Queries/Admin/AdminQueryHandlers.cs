@@ -5,8 +5,10 @@ using VoltElectronics.Application.Admin.Queries;
 using VoltElectronics.Application.Catalog;
 using VoltElectronics.Application.Common.Messaging;
 using VoltElectronics.Application.Common.Models;
+using VoltElectronics.Application.Promotions;
 using VoltElectronics.Domain.Catalog;
 using VoltElectronics.Domain.Ordering;
+using VoltElectronics.Domain.Promotions;
 using VoltElectronics.Infrastructure.Data;
 
 namespace VoltElectronics.Infrastructure.Queries.Admin;
@@ -139,7 +141,8 @@ internal sealed class AdminGetOrdersHandler(AppDbContext db)
                 o.OrderNumber, o.ShipTo.FullName, o.GuestEmail ?? "", o.ShipTo.Phone, o.CreatedAt,
                 o.Totals.Total, o.Totals.Currency, o.Status.ToString(), o.Items.Sum(i => i.Qty),
                 o.AssignedCourierId,
-                db.Users.Where(u => u.Id == o.AssignedCourierId).Select(u => u.FullName).FirstOrDefault()))
+                db.Users.Where(u => u.Id == o.AssignedCourierId).Select(u => u.FullName).FirstOrDefault(),
+                o.CouponCode))
             .ToListAsync(cancellationToken);
 
         return new PagedResult<AdminOrderListItemDto>(items, total, page, pageSize);
@@ -261,5 +264,29 @@ internal sealed class GetAnalyticsHandler(AppDbContext db) : IQueryHandler<GetAn
             orders30, Delta(orders30, prevOrders),
             orders30 == 0 ? 0 : Math.Round(revenue30 / orders30, 2),
             lowStock.Count, revenueByDay, topProducts, lowStock);
+    }
+}
+
+internal sealed class AdminGetPromotionsHandler(IPromotionRepository promotions, AppDbContext db)
+    : IQueryHandler<AdminGetPromotionsQuery, IReadOnlyList<PromotionDto>>
+{
+    public async Task<IReadOnlyList<PromotionDto>> HandleAsync(
+        AdminGetPromotionsQuery query, CancellationToken cancellationToken)
+    {
+        var all = await promotions.GetAllAsync(cancellationToken);
+
+        var categoryIds = all.Where(p => p.CategoryId is not null).Select(p => p.CategoryId!.Value).Distinct().ToArray();
+        var categoryNames = await db.Categories.AsNoTracking()
+            .Where(c => categoryIds.Contains(c.Id))
+            .ToDictionaryAsync(c => c.Id, c => c.Name, cancellationToken);
+
+        return all
+            .Select(p => new PromotionDto(
+                p.Id, p.Code, p.Name, p.Type.ToString(), p.Value, p.Scope.ToString(),
+                p.CategoryId, p.CategoryId is not null ? categoryNames.GetValueOrDefault(p.CategoryId.Value) : null,
+                p.Products.Select(x => x.ProductId).ToList(),
+                p.MinSubtotal, p.MaxDiscountAmount, p.MaxRedemptions, p.RedemptionCount,
+                p.StartsAt, p.ExpiresAt, p.IsActive, p.CreatedAt))
+            .ToList();
     }
 }

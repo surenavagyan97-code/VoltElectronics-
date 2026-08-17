@@ -16,7 +16,7 @@ public class DeliveryTests : IDisposable
         var order = Order.Place(
             orderNumber, null, "shopper@example.com",
             ShippingAddress.Create("Jordan Lee", null, "500 Market St", "Yerevan", "Yerevan", "0010", "+374 91 000000"),
-            new OrderTotals(100m, 10m, 5m, 115m, "USD", 1m),
+            new OrderTotals(100m, 0m, 10m, 5m, 115m, "USD", 1m),
             null, "Fake",
             [new OrderLine(product.Id, product.Name, 100m, 1)]);
         if (status is { } s) order.ChangeStatus(s);

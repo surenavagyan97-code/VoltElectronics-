@@ -72,7 +72,27 @@ export const CHECKOUT_EMAIL_KEY = 'volt.checkoutEmail';
               </div>
             }
             <div class="hr" style="margin: 4px 0;"></div>
+
+            @if (cart.cart().couponCode; as code) {
+              <div class="row" style="justify-content: space-between; font-size: 13px; background: color-mix(in srgb, var(--color-accent) 12%, transparent); padding: 8px 10px; border-radius: var(--radius-md);">
+                <span>{{ i18n.t('cart.couponApplied', { code }) }}</span>
+                <button type="button" class="btn btn-ghost" style="padding: 0; font-size: 12px;" [disabled]="cart.busy()" (click)="removeCoupon()">{{ i18n.t('cart.couponRemove') }}</button>
+              </div>
+            } @else {
+              <div class="row" style="gap: 8px;">
+                <input class="input" style="flex: 1;" [placeholder]="i18n.t('cart.couponPlaceholder')"
+                       [(ngModel)]="couponInput" [ngModelOptions]="{ standalone: true }" (keyup.enter)="applyCoupon()" />
+                <button type="button" class="btn btn-secondary" [disabled]="cart.busy() || !couponInput.trim()" (click)="applyCoupon()">{{ i18n.t('cart.couponApply') }}</button>
+              </div>
+            }
+            @if (cart.cart().couponError; as err) {
+              <div class="error-text" style="font-size: 12px;">{{ err }}</div>
+            }
+
             <div class="row" style="justify-content: space-between; font-size: 14px;"><span class="text-muted">{{ i18n.t('cart.subtotal') }}</span><span>{{ currency.format(cart.cart().subtotal, cart.cart().currency) }}</span></div>
+            @if (cart.cart().discount > 0) {
+              <div class="row" style="justify-content: space-between; font-size: 14px; color: var(--color-accent);"><span>{{ i18n.t('cart.discount') }}</span><span>−{{ currency.format(cart.cart().discount, cart.cart().currency) }}</span></div>
+            }
             <div class="row" style="justify-content: space-between; font-size: 14px;"><span class="text-muted">{{ i18n.t('checkout.shipping') }}</span><span>{{ currency.format(cart.cart().shipping, cart.cart().currency) }}</span></div>
             <div class="row" style="justify-content: space-between; font-size: 14px;"><span class="text-muted">{{ i18n.t('checkout.tax') }}</span><span>{{ currency.format(cart.cart().tax, cart.cart().currency) }}</span></div>
             <div class="row" style="justify-content: space-between; font-family: var(--font-heading); font-size: 18px;"><span>{{ i18n.t('cart.total') }}</span><span>{{ currency.format(cart.cart().total, cart.cart().currency) }}</span></div>
@@ -105,6 +125,16 @@ export class CheckoutPage {
 
   busy = signal(false);
   error = signal<string | null>(null);
+  couponInput = '';
+
+  async applyCoupon(): Promise<void> {
+    if (!this.couponInput.trim()) return;
+    if (await this.cart.applyCoupon(this.couponInput.trim())) this.couponInput = '';
+  }
+
+  async removeCoupon(): Promise<void> {
+    await this.cart.removeCoupon();
+  }
 
   async placeOrder(): Promise<void> {
     const f = this.form;

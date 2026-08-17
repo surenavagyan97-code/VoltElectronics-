@@ -4,7 +4,10 @@ import { ApiClient } from './api-client';
 import { Cart } from './api.types';
 
 const GUEST_ID_KEY = 'volt.cartId';
-const EMPTY_CART: Cart = { id: '', items: [], count: 0, subtotal: 0, shipping: 0, tax: 0, total: 0, currency: 'USD' };
+const EMPTY_CART: Cart = {
+  id: '', items: [], count: 0, subtotal: 0, discount: 0, shipping: 0, tax: 0, total: 0, currency: 'USD',
+  couponCode: null, couponError: null,
+};
 
 @Injectable({ providedIn: 'root' })
 export class CartStore {
@@ -45,6 +48,14 @@ export class CartStore {
 
   async clear(): Promise<boolean> {
     return this.run(() => firstValueFrom(this.api.clearCart()));
+  }
+
+  async applyCoupon(code: string): Promise<boolean> {
+    return this.run(() => firstValueFrom(this.api.applyCoupon(code)));
+  }
+
+  async removeCoupon(): Promise<boolean> {
+    return this.run(() => firstValueFrom(this.api.removeCoupon()));
   }
 
   /** After login: fold the guest cart into the user's cart and drop the guest id. */

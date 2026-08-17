@@ -39,6 +39,12 @@ import { CHECKOUT_EMAIL_KEY } from './checkout';
           </p>
         }
         <div class="card elev-sm" style="text-align: left; gap: 10px; margin-bottom: 24px;">
+          @if (o.discount > 0) {
+            <div class="row" style="justify-content: space-between; font-size: 13px;">
+              <span class="text-muted">{{ o.couponCode ? i18n.t('cart.couponApplied', { code: o.couponCode }) : i18n.t('cart.discount') }}</span>
+              <span style="color: var(--color-accent);">−{{ currency.format(o.discount, o.currency) }}</span>
+            </div>
+          }
           <div class="row" style="justify-content: space-between; font-size: 13px;"><span class="text-muted">{{ i18n.t('confirmation.orderTotal') }}</span><span>{{ currency.format(o.total, o.currency) }}</span></div>
           <div class="row" style="justify-content: space-between; font-size: 13px;"><span class="text-muted">{{ i18n.t('confirmation.placed') }}</span><span>{{ o.createdAt | date: 'MMM d, y, h:mm a' }}</span></div>
           <div class="row" style="justify-content: space-between; font-size: 13px;"><span class="text-muted">{{ i18n.t('confirmation.shippingTo') }}</span><span>{{ o.shipCity }}, {{ o.shipState }}</span></div>

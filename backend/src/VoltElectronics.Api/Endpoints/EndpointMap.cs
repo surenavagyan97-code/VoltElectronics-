@@ -20,6 +20,7 @@ public static class EndpointMap
         AdminCategoryEndpoints.Map(app);
         AdminOrderEndpoints.Map(app);
         AdminCourierEndpoints.Map(app);
+        AdminPromotionEndpoints.Map(app);
 
         return app;
     }

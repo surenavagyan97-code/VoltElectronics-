@@ -7,6 +7,7 @@ using VoltElectronics.Domain.Carts;
 using VoltElectronics.Domain.Catalog;
 using VoltElectronics.Domain.Common;
 using VoltElectronics.Domain.Ordering;
+using VoltElectronics.Domain.Promotions;
 
 namespace VoltElectronics.Application.Ordering.Commands;
 
@@ -21,6 +22,7 @@ public sealed record CheckoutCommand(CartKey CartKey, string? UserId, CheckoutRe
 internal sealed class CheckoutHandler(
     ICartRepository carts,
     IProductRepository products,
+    IPromotionRepository promotions,
     IOrderRepository orders,
     IPaymentGateway gateway,
     ICurrencyConverter currency,
@@ -47,6 +49,7 @@ internal sealed class CheckoutHandler(
             .ToDictionary(p => p.Id);
 
         var lines = new List<OrderLine>(cart.Items.Count);
+        var promoLines = new List<PromotionPricing.Line>(cart.Items.Count);
         var subtotalBase = 0m;
         foreach (var item in cart.Items)
         {
@@ -60,14 +63,48 @@ internal sealed class CheckoutHandler(
             lines.Add(new OrderLine(
                 product.Id, product.Name,
                 currency.Convert(product.Price, SettlementCurrency), item.Qty));
+            promoLines.Add(new PromotionPricing.Line(product.Id, product.CategoryId, product.Price, item.Qty));
+        }
+
+        // The coded promotion (if any) is re-validated here, never trusted from the cart preview —
+        // a stale/expired/exhausted code is silently dropped rather than blocking checkout, since
+        // the shopper never explicitly re-confirmed it at this exact moment.
+        Promotion? codedPromotion = null;
+        if (cart.CouponCode is not null)
+        {
+            var candidate = await promotions.GetByCodeAsync(cart.CouponCode, cancellationToken);
+            var error = candidate is null ? "not found"
+                : candidate.Scope == PromotionScope.Order ? candidate.ValidateForOrder(subtotalBase)
+                : candidate.ValidateWindow();
+            if (error is null) codedPromotion = candidate;
+        }
+
+        var automaticPromotions = await promotions.GetActiveAutomaticAsync(cancellationToken);
+        var outcome = PromotionPricing.Compute(promoLines, subtotalBase, automaticPromotions, codedPromotion);
+
+        // Redeem before saving the order, in the same unit of work — if a limit was hit by someone
+        // else in the meantime, the whole checkout fails rather than silently under-charging.
+        foreach (var id in outcome.AppliedPromotionIds)
+        {
+            var promotion = automaticPromotions.FirstOrDefault(p => p.Id == id)
+                ?? (codedPromotion?.Id == id ? codedPromotion : null);
+            try
+            {
+                promotion?.Redeem();
+            }
+            catch (DomainException ex)
+            {
+                return Error.Invalid(ex.Message);
+            }
         }
 
         // Never trust client-side totals — shipping and tax are computed on the true base-currency
         // subtotal and only then converted, because converting each line first and re-summing can
         // drift a cent from per-line rounding.
-        var (subtotal, shipping, tax, total) = PricingPolicy.Totals(subtotalBase);
+        var (subtotal, discount, shipping, tax, total) = PricingPolicy.Totals(subtotalBase, outcome.Total);
         var totals = new OrderTotals(
             currency.Convert(subtotal, SettlementCurrency),
+            currency.Convert(discount, SettlementCurrency),
             currency.Convert(shipping, SettlementCurrency),
             currency.Convert(tax, SettlementCurrency),
             currency.Convert(total, SettlementCurrency),
@@ -84,7 +121,8 @@ internal sealed class CheckoutHandler(
             totals,
             cart.Id,
             gateway.Name,
-            lines);
+            lines,
+            codedPromotion?.Code);
 
         orders.Add(order);
         // Saved before initializing payment: the gateway is handed the order's real id.

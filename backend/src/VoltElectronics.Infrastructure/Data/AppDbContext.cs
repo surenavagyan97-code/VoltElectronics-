@@ -5,6 +5,7 @@ using VoltElectronics.Domain.Catalog;
 using VoltElectronics.Domain.Content;
 using VoltElectronics.Domain.Identity;
 using VoltElectronics.Domain.Ordering;
+using VoltElectronics.Domain.Promotions;
 using VoltElectronics.Infrastructure.Identity;
 
 namespace VoltElectronics.Infrastructure.Data;
@@ -17,6 +18,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<ContentPage> ContentPages => Set<ContentPage>();
+    public DbSet<Promotion> Promotions => Set<Promotion>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -84,6 +86,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
             // Guest cart ids are minted client-side and travel in the X-Cart-Id header.
             e.Property(c => c.Id).ValueGeneratedNever();
             e.Property(c => c.Currency).HasMaxLength(3);
+            e.Property(c => c.CouponCode).HasMaxLength(30);
             e.HasIndex(c => c.UserId);
             e.HasMany(c => c.Items).WithOne().HasForeignKey(i => i.CartId).OnDelete(DeleteBehavior.Cascade);
         });
@@ -109,6 +112,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
             e.Property(o => o.PaymentId).HasMaxLength(100);
             e.Property(o => o.PaymentProvider).HasMaxLength(30);
             e.Property(o => o.PaymentFailureReason).HasMaxLength(500);
+            e.Property(o => o.CouponCode).HasMaxLength(30);
 
             // Both value objects share the Orders table under the column names the original flat
             // entity used, so no migration is needed for the aggregate redesign.
@@ -127,6 +131,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
             e.OwnsOne(o => o.Totals, totals =>
             {
                 totals.Property(t => t.Subtotal).HasColumnName("Subtotal").HasPrecision(18, 2);
+                totals.Property(t => t.Discount).HasColumnName("Discount").HasPrecision(18, 2);
                 totals.Property(t => t.Shipping).HasColumnName("ShippingCost").HasPrecision(18, 2);
                 totals.Property(t => t.Tax).HasColumnName("Tax").HasPrecision(18, 2);
                 totals.Property(t => t.Total).HasColumnName("Total").HasPrecision(18, 2);
@@ -153,6 +158,28 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
             e.Property(t => t.TokenHash).HasMaxLength(128);
             e.HasIndex(t => t.TokenHash).IsUnique();
             e.HasIndex(t => t.UserId);
+        });
+
+        builder.Entity<Promotion>(e =>
+        {
+            e.Ignore(p => p.DomainEvents);
+            e.Property(p => p.Code).HasMaxLength(30);
+            e.Property(p => p.Name).HasMaxLength(150);
+            e.Property(p => p.Value).HasPrecision(18, 2);
+            e.Property(p => p.MinSubtotal).HasPrecision(18, 2);
+            e.Property(p => p.MaxDiscountAmount).HasPrecision(18, 2);
+            // Unique when set — SQL Server treats multiple NULLs as distinct, so no-code
+            // promotions (sales) never collide with each other here.
+            e.HasIndex(p => p.Code).IsUnique();
+            e.HasOne<Category>().WithMany().HasForeignKey(p => p.CategoryId).OnDelete(DeleteBehavior.SetNull);
+            e.HasMany(p => p.Products).WithOne().HasForeignKey(pp => pp.PromotionId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<PromotionProduct>(e =>
+        {
+            e.ToTable("PromotionProducts");
+            e.HasIndex(pp => new { pp.PromotionId, pp.ProductId }).IsUnique();
+            e.HasOne<Product>().WithMany().HasForeignKey(pp => pp.ProductId).OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

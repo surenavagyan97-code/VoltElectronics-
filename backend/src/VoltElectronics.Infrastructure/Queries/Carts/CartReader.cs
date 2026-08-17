@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using VoltElectronics.Application.Carts;
 using VoltElectronics.Application.Common.Abstractions;
 using VoltElectronics.Domain.Ordering;
+using VoltElectronics.Domain.Promotions;
 using VoltElectronics.Infrastructure.Data;
 
 namespace VoltElectronics.Infrastructure.Queries.Carts;
@@ -10,7 +11,7 @@ namespace VoltElectronics.Infrastructure.Queries.Carts;
 /// The shopper-facing cart projection: cart lines joined back to live product data (name, image,
 /// stock, current price) with every amount converted into the cart's display currency.
 /// </summary>
-internal sealed class CartReader(AppDbContext db, ICurrencyConverter currency) : ICartReader
+internal sealed class CartReader(AppDbContext db, ICurrencyConverter currency, IPromotionRepository promotions) : ICartReader
 {
     public async Task<CartDto> ReadAsync(CartKey key, CancellationToken cancellationToken = default)
     {
@@ -21,14 +22,14 @@ internal sealed class CartReader(AppDbContext db, ICurrencyConverter currency) :
 
         var cur = cart?.Currency ?? currency.BaseCurrency;
         if (cart is null || cart.Items.Count == 0)
-            return new CartDto(cart?.Id ?? Guid.Empty, [], 0, 0, 0, 0, 0, cur);
+            return new CartDto(cart?.Id ?? Guid.Empty, [], 0, 0, 0, 0, 0, 0, cur, null, null);
 
         var ids = cart.Items.Select(i => i.ProductId).ToArray();
         var products = await db.Products.AsNoTracking()
             .Where(p => ids.Contains(p.Id))
             .Select(p => new
             {
-                p.Id, p.Name, p.Slug, Category = p.Category.Name, p.Price, p.Stock,
+                p.Id, p.Name, p.Slug, Category = p.Category.Name, p.CategoryId, p.Price, p.Stock,
                 ImageUrl = p.Images.OrderBy(i => i.SortOrder).Select(i => (string?)i.CardUrl).FirstOrDefault()
             })
             .ToDictionaryAsync(p => p.Id, cancellationToken);
@@ -43,13 +44,36 @@ internal sealed class CartReader(AppDbContext db, ICurrencyConverter currency) :
                 x.Product.Stock, x.Product.ImageUrl))
             .ToList();
 
+        var subtotalBase = cart.Items.Sum(i => products[i.ProductId].Price * i.Qty);
+
+        // A stale coupon (expired since it was applied, usage limit hit meanwhile, etc.) is
+        // dropped from the preview rather than surfaced as an error every request — checkout
+        // re-validates from scratch anyway, so this is purely a display concern.
+        string? couponError = null;
+        Promotion? codedPromotion = null;
+        if (cart.CouponCode is not null)
+        {
+            var candidate = await promotions.GetByCodeAsync(cart.CouponCode, cancellationToken);
+            var error = candidate is null ? "Coupon code not found."
+                : candidate.Scope == PromotionScope.Order ? candidate.ValidateForOrder(subtotalBase)
+                : candidate.ValidateWindow();
+            if (error is null) codedPromotion = candidate;
+            else couponError = error;
+        }
+
+        var automaticPromotions = await promotions.GetActiveAutomaticAsync(cancellationToken);
+        var promoLines = cart.Items
+            .Select(i => new PromotionPricing.Line(i.ProductId, products[i.ProductId].CategoryId, products[i.ProductId].Price, i.Qty))
+            .ToList();
+        var outcome = PromotionPricing.Compute(promoLines, subtotalBase, automaticPromotions, codedPromotion);
+
         // Compute shipping/tax on the true base-currency subtotal, then convert the totals together —
         // converting each line first and re-summing could drift a cent from per-line rounding.
-        var (subtotal, shipping, tax, total) = PricingPolicy.Totals(
-            cart.Items.Sum(i => products[i.ProductId].Price * i.Qty));
+        var (subtotal, discount, shipping, tax, total) = PricingPolicy.Totals(subtotalBase, outcome.Total);
 
         return new CartDto(cart.Id, items, items.Sum(i => i.Qty),
-            currency.Convert(subtotal, cur), currency.Convert(shipping, cur),
-            currency.Convert(tax, cur), currency.Convert(total, cur), cur);
+            currency.Convert(subtotal, cur), currency.Convert(discount, cur),
+            currency.Convert(shipping, cur), currency.Convert(tax, cur), currency.Convert(total, cur), cur,
+            codedPromotion?.Code, couponError);
     }
 }

@@ -5,7 +5,8 @@ import {
   AdminOrderListItem, AdminOrderStats, AdminProductDetail, AdminProductListItem, Analytics,
   AppConfig, AuthResponse, Cart, Category, CheckoutRequest, CheckoutResponse, ContentPage,
   Courier, DeliveryOrder, ImportProductsResult, OrderDetail, OrderSummary, PagedResult,
-  ProductDetail, ProductImage, ProductListItem, ProductQuery, SaveProductRequest,
+  ProductDetail, ProductImage, ProductListItem, ProductQuery, Promotion, SaveProductRequest,
+  SavePromotionRequest,
 } from './api.types';
 import { I18nService } from './i18n.service';
 
@@ -86,6 +87,12 @@ export class ApiClient {
   mergeCart(): Observable<Cart> { return this.http.post<Cart>('/api/cart/merge', {}); }
   setCartCurrency(currency: string): Observable<Cart> {
     return this.http.put<Cart>('/api/cart/currency', { currency });
+  }
+  applyCoupon(code: string): Observable<Cart> {
+    return this.http.post<Cart>('/api/cart/coupon', { code });
+  }
+  removeCoupon(): Observable<Cart> {
+    return this.http.delete<Cart>('/api/cart/coupon');
   }
 
   // checkout / orders
@@ -193,6 +200,19 @@ export class ApiClient {
   }
   adminDeleteCourier(id: string): Observable<void> {
     return this.http.delete<void>(`/api/admin/couriers/${encodeURIComponent(id)}`);
+  }
+
+  adminGetPromotions(): Observable<Promotion[]> {
+    return this.http.get<Promotion[]>('/api/admin/promotions');
+  }
+  adminCreatePromotion(request: SavePromotionRequest): Observable<Promotion> {
+    return this.http.post<Promotion>('/api/admin/promotions', request);
+  }
+  adminUpdatePromotion(id: number, request: SavePromotionRequest): Observable<void> {
+    return this.http.put<void>(`/api/admin/promotions/${id}`, request);
+  }
+  adminDeletePromotion(id: number): Observable<void> {
+    return this.http.delete<void>(`/api/admin/promotions/${id}`);
   }
 
   // delivery (courier's own assignments)

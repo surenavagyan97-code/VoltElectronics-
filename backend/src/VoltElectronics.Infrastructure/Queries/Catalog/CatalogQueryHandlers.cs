@@ -5,6 +5,7 @@ using VoltElectronics.Application.Catalog.Queries;
 using VoltElectronics.Application.Common.Messaging;
 using VoltElectronics.Application.Common.Models;
 using VoltElectronics.Domain.Catalog;
+using VoltElectronics.Domain.Promotions;
 using VoltElectronics.Infrastructure.Data;
 
 namespace VoltElectronics.Infrastructure.Queries.Catalog;
@@ -28,7 +29,7 @@ internal static class CatalogProjections
         string.IsNullOrWhiteSpace(lang) ? null : lang.Trim().ToLowerInvariant();
 }
 
-internal sealed class GetProductsHandler(AppDbContext db)
+internal sealed class GetProductsHandler(AppDbContext db, IPromotionRepository promotions)
     : IQueryHandler<GetProductsQuery, PagedResult<ProductListItemDto>>
 {
     public async Task<PagedResult<ProductListItemDto>> HandleAsync(
@@ -73,11 +74,14 @@ internal sealed class GetProductsHandler(AppDbContext db)
             .Select(CatalogProjections.ListItem(CatalogProjections.NormalizeLang(query.Lang)))
             .ToListAsync(cancellationToken);
 
+        var itemPromotions = PromotionOverlay.ItemScoped(await promotions.GetActiveAutomaticAsync(cancellationToken));
+        items = PromotionOverlay.Apply(items, itemPromotions);
+
         return new PagedResult<ProductListItemDto>(items, total, page, pageSize);
     }
 }
 
-internal sealed class GetProductBySlugHandler(AppDbContext db)
+internal sealed class GetProductBySlugHandler(AppDbContext db, IPromotionRepository promotions)
     : IQueryHandler<GetProductBySlugQuery, ProductDetailDto?>
 {
     public async Task<ProductDetailDto?> HandleAsync(GetProductBySlugQuery query, CancellationToken cancellationToken)
@@ -112,14 +116,18 @@ internal sealed class GetProductBySlugHandler(AppDbContext db)
                 .ToListAsync(cancellationToken));
         }
 
+        var itemPromotions = PromotionOverlay.ItemScoped(await promotions.GetActiveAutomaticAsync(cancellationToken));
+        related = PromotionOverlay.Apply(related, itemPromotions);
+
         var translation = p.Translations.FirstOrDefault(t => t.Lang == lang);
-        return new ProductDetailDto(
+        var detail = new ProductDetailDto(
             p.Id, translation?.Name ?? p.Name, p.Slug, p.Sku, p.Category.Name, p.CategoryId,
             p.Price, p.CompareAtPrice, p.Badge, p.Rating, p.ReviewCount, p.Stock,
             translation?.Description ?? p.Description,
             p.Images.Select(i => new ProductImageDto(i.Id, i.Url, i.ThumbUrl, i.CardUrl, i.SortOrder)).ToList(),
             p.Specs.Select(s => new ProductSpecDto(s.Name, s.Value)).ToList(),
             related);
+        return PromotionOverlay.Apply(detail, itemPromotions);
     }
 }
 
@@ -135,19 +143,24 @@ internal sealed class GetCategoriesHandler(AppDbContext db)
             .ToListAsync(cancellationToken);
 }
 
-internal sealed class GetProductsByIdsHandler(AppDbContext db)
+internal sealed class GetProductsByIdsHandler(AppDbContext db, IPromotionRepository promotions)
     : IQueryHandler<GetProductsByIdsQuery, IReadOnlyList<ProductListItemDto>>
 {
     public async Task<IReadOnlyList<ProductListItemDto>> HandleAsync(
-        GetProductsByIdsQuery query, CancellationToken cancellationToken) =>
-        await db.Products.AsNoTracking()
+        GetProductsByIdsQuery query, CancellationToken cancellationToken)
+    {
+        var items = await db.Products.AsNoTracking()
             .Where(p => query.Ids.Contains(p.Id) && p.Status == ProductStatus.Active)
             .OrderBy(p => p.Name)
             .Select(CatalogProjections.ListItem(CatalogProjections.NormalizeLang(query.Lang)))
             .ToListAsync(cancellationToken);
+
+        var itemPromotions = PromotionOverlay.ItemScoped(await promotions.GetActiveAutomaticAsync(cancellationToken));
+        return PromotionOverlay.Apply(items, itemPromotions);
+    }
 }
 
-internal sealed class GetProductsForCompareHandler(AppDbContext db)
+internal sealed class GetProductsForCompareHandler(AppDbContext db, IPromotionRepository promotions)
     : IQueryHandler<GetProductsForCompareQuery, IReadOnlyList<ProductDetailDto>>
 {
     public async Task<IReadOnlyList<ProductDetailDto>> HandleAsync(
@@ -164,6 +177,8 @@ internal sealed class GetProductsForCompareHandler(AppDbContext db)
             .AsSplitQuery()
             .ToListAsync(cancellationToken);
 
+        var itemPromotions = PromotionOverlay.ItemScoped(await promotions.GetActiveAutomaticAsync(cancellationToken));
+
         // Preserve the order the shopper added them in, not whatever order EF returned them.
         return query.Ids
             .Select(id => products.FirstOrDefault(p => p.Id == id))
@@ -171,28 +186,34 @@ internal sealed class GetProductsForCompareHandler(AppDbContext db)
             .Select(p =>
             {
                 var translation = p!.Translations.FirstOrDefault(t => t.Lang == lang);
-                return new ProductDetailDto(
+                var detail = new ProductDetailDto(
                     p.Id, translation?.Name ?? p.Name, p.Slug, p.Sku, p.Category.Name, p.CategoryId,
                     p.Price, p.CompareAtPrice, p.Badge, p.Rating, p.ReviewCount, p.Stock,
                     translation?.Description ?? p.Description,
                     p.Images.Select(i => new ProductImageDto(i.Id, i.Url, i.ThumbUrl, i.CardUrl, i.SortOrder)).ToList(),
                     p.Specs.Select(s => new ProductSpecDto(s.Name, s.Value)).ToList(),
                     Array.Empty<ProductListItemDto>());
+                return PromotionOverlay.Apply(detail, itemPromotions);
             })
             .ToList();
     }
 }
 
-internal sealed class GetFeaturedProductsHandler(AppDbContext db)
+internal sealed class GetFeaturedProductsHandler(AppDbContext db, IPromotionRepository promotions)
     : IQueryHandler<GetFeaturedProductsQuery, IReadOnlyList<ProductListItemDto>>
 {
     public async Task<IReadOnlyList<ProductListItemDto>> HandleAsync(
-        GetFeaturedProductsQuery query, CancellationToken cancellationToken) =>
-        await db.Products.AsNoTracking()
+        GetFeaturedProductsQuery query, CancellationToken cancellationToken)
+    {
+        var items = await db.Products.AsNoTracking()
             .Where(p => p.Status == ProductStatus.Active)
             .OrderByDescending(p => p.Badge != null)
             .ThenByDescending(p => p.Rating)
             .Take(Math.Clamp(query.Count, 1, 12))
             .Select(CatalogProjections.ListItem(CatalogProjections.NormalizeLang(query.Lang)))
             .ToListAsync(cancellationToken);
+
+        var itemPromotions = PromotionOverlay.ItemScoped(await promotions.GetActiveAutomaticAsync(cancellationToken));
+        return PromotionOverlay.Apply(items, itemPromotions);
+    }
 }

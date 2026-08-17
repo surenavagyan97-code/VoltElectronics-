@@ -133,7 +133,7 @@ public static class DbSeeder
                 .Select(p => new OrderLine(p.Id, p.Name, p.Price, rng.Next(1, 3)))
                 .ToList();
 
-            var (subtotal, shipping, tax, total) = PricingPolicy.Totals(lines.Sum(l => l.UnitPrice * l.Qty));
+            var (subtotal, discount, shipping, tax, total) = PricingPolicy.Totals(lines.Sum(l => l.UnitPrice * l.Qty));
             var status = daysAgo switch
             {
                 > 14 => OrderStatus.Delivered,
@@ -148,8 +148,8 @@ public static class DbSeeder
                 email: customers[ci].Split(' ')[0].ToLowerInvariant() + "@example.com",
                 ShippingAddress.Create(
                     customers[ci], null, $"{100 + rng.Next(900)} Market St",
-                    cities[ci], states[ci], $"{94000 + rng.Next(5000)}", null),
-                new OrderTotals(subtotal, shipping, tax, total, "USD", 1m),
+                    cities[ci], states[ci], $"{94000 + rng.Next(5000)}", "+1 555 0100"),
+                new OrderTotals(subtotal, discount, shipping, tax, total, "USD", 1m),
                 cartId: null,
                 paymentProvider: "Fake",
                 lines);

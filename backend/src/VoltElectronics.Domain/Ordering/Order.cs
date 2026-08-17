@@ -21,6 +21,10 @@ public sealed class Order : AggregateRoot
     /// <summary>Cart that produced this order — emptied once payment succeeds.</summary>
     public Guid? CartId { get; private set; }
 
+    /// <summary>The code the shopper entered, if any — null even when automatic sales still
+    /// contributed to <see cref="OrderTotals.Discount"/>, since those don't need a code.</summary>
+    public string? CouponCode { get; private set; }
+
     // Gateway-assigned payment id (e.g. Ameriabank vPOS PaymentID) + which provider issued it.
     public string? PaymentId { get; private set; }
     public string? PaymentProvider { get; private set; }
@@ -43,7 +47,8 @@ public sealed class Order : AggregateRoot
         OrderTotals totals,
         Guid? cartId,
         string paymentProvider,
-        IEnumerable<OrderLine> lines)
+        IEnumerable<OrderLine> lines,
+        string? couponCode = null)
     {
         var order = new Order
         {
@@ -53,7 +58,8 @@ public sealed class Order : AggregateRoot
             ShipTo = shipTo,
             Totals = totals,
             CartId = cartId,
-            PaymentProvider = paymentProvider
+            PaymentProvider = paymentProvider,
+            CouponCode = couponCode
         };
 
         foreach (var line in lines)

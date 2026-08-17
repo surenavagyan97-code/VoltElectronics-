@@ -24,7 +24,8 @@ public record OrderDetailDto(
     string? PaymentFailureReason,
     string ShipFullName, string? ShipCompany, string ShipStreet, string ShipCity,
     string ShipState, string ShipZip, string? ShipPhone,
-    decimal Subtotal, decimal ShippingCost, decimal Tax, decimal Total, string Currency,
+    decimal Subtotal, decimal Discount, decimal ShippingCost, decimal Tax, decimal Total, string Currency,
+    string? CouponCode,
     IReadOnlyList<OrderItemDto> Items);
 
 /// <summary>Outcome of a gateway callback — tells the API where to send the shopper.</summary>

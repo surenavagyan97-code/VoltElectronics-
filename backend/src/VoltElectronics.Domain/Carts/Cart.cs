@@ -1,4 +1,5 @@
 using VoltElectronics.Domain.Common;
+using VoltElectronics.Domain.Promotions;
 
 namespace VoltElectronics.Domain.Carts;
 
@@ -15,6 +16,7 @@ public sealed class Cart : AggregateRoot
     public Guid Id { get; private set; }
     public string? UserId { get; private set; }
     public string Currency { get; private set; } = "USD";
+    public string? CouponCode { get; private set; }
     public DateTime UpdatedAt { get; private set; } = DateTime.UtcNow;
 
     public IReadOnlyList<CartItem> Items => _items;
@@ -65,14 +67,27 @@ public sealed class Cart : AggregateRoot
 
     public void Clear()
     {
-        if (_items.Count == 0) return;
+        if (_items.Count == 0 && CouponCode is null) return;
         _items.Clear();
+        CouponCode = null;
         Touch();
     }
 
     public void ChangeCurrency(string currency)
     {
         Currency = currency.ToUpperInvariant();
+        Touch();
+    }
+
+    public void ApplyCoupon(string code)
+    {
+        CouponCode = Promotion.Normalize(code);
+        Touch();
+    }
+
+    public void RemoveCoupon()
+    {
+        CouponCode = null;
         Touch();
     }
 

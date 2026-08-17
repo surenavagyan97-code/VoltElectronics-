@@ -34,6 +34,14 @@ public static class CartEndpoints
             WithCart(ctx, async key => ApiResults.Ok(
                 await dispatcher.Send(new SetCartCurrencyCommand(key, request.Currency), ct))));
 
+        cart.MapPost("/coupon", (ApplyCouponRequest request, HttpContext ctx, IDispatcher dispatcher, CancellationToken ct) =>
+            WithCart(ctx, async key => ApiResults.Ok(
+                await dispatcher.Send(new ApplyCouponCommand(key, request.Code), ct))));
+
+        cart.MapDelete("/coupon", (HttpContext ctx, IDispatcher dispatcher, CancellationToken ct) =>
+            WithCart(ctx, async key => ApiResults.Ok(
+                await dispatcher.Send(new RemoveCouponCommand(key), ct))));
+
         // Fold the pre-login guest cart into the authenticated user's cart.
         cart.MapPost("/merge", async (HttpContext ctx, IDispatcher dispatcher, CancellationToken ct) =>
             {
