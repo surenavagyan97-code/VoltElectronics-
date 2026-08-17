@@ -124,8 +124,11 @@ internal sealed class AdminGetOrdersHandler(AppDbContext db)
         {
             var term = query.Search.Trim();
             q = q.Where(o => o.OrderNumber.Contains(term) || o.ShipTo.FullName.Contains(term) ||
-                             (o.GuestEmail != null && o.GuestEmail.Contains(term)));
+                             (o.GuestEmail != null && o.GuestEmail.Contains(term)) ||
+                             (o.ShipTo.Phone != null && o.ShipTo.Phone.Contains(term)));
         }
+        if (!string.IsNullOrWhiteSpace(query.CourierId))
+            q = q.Where(o => o.AssignedCourierId == query.CourierId);
 
         var (page, pageSize) = Paging.Normalize(query.Page, query.PageSize, maxPageSize: 100);
         var total = await q.CountAsync(cancellationToken);
@@ -133,7 +136,7 @@ internal sealed class AdminGetOrdersHandler(AppDbContext db)
             .OrderByDescending(o => o.CreatedAt)
             .Skip((page - 1) * pageSize).Take(pageSize)
             .Select(o => new AdminOrderListItemDto(
-                o.OrderNumber, o.ShipTo.FullName, o.GuestEmail ?? "", o.CreatedAt,
+                o.OrderNumber, o.ShipTo.FullName, o.GuestEmail ?? "", o.ShipTo.Phone, o.CreatedAt,
                 o.Totals.Total, o.Totals.Currency, o.Status.ToString(), o.Items.Sum(i => i.Qty),
                 o.AssignedCourierId,
                 db.Users.Where(u => u.Id == o.AssignedCourierId).Select(u => u.FullName).FirstOrDefault()))

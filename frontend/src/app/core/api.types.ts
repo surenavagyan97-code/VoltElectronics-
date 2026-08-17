@@ -104,7 +104,7 @@ export interface CheckoutRequest {
   city: string;
   state: string;
   zip: string;
-  phone?: string | null;
+  phone: string;
 }
 export interface CheckoutResponse { orderNumber: string; paymentUrl: string; }
 
@@ -201,6 +201,7 @@ export interface AdminOrderListItem {
   orderNumber: string;
   customer: string;
   email: string;
+  phone: string | null;
   createdAt: string;
   total: number;
   currency: string;

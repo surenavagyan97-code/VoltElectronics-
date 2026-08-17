@@ -49,7 +49,7 @@ public record SaveContentRequest(string Lang, string Body);
 
 // Orders
 public record AdminOrderListItemDto(
-    string OrderNumber, string Customer, string Email, DateTime CreatedAt,
+    string OrderNumber, string Customer, string Email, string? Phone, DateTime CreatedAt,
     decimal Total, string Currency, string Status, int ItemCount,
     string? CourierId, string? CourierName);
 

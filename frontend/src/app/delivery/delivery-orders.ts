@@ -56,7 +56,7 @@ const FILTERS = ['Processing', 'Shipped', 'Delivered'];
             </div>
             <div>
               <div class="card-kicker">{{ i18n.t('delivery.toCollect') }}</div>
-              <div style="font-family: var(--font-heading); font-size: 20px;">{{ currency.format(o.total, o.currency) }}</div>
+              <div style="font-family: var(--font-heading); font-size: 20px;">{{ currency.formatFrom(o.total, o.currency) }}</div>
             </div>
           </div>
 

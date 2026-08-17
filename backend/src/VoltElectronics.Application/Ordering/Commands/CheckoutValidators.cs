@@ -17,7 +17,7 @@ internal sealed class CheckoutRequestValidator : AbstractValidator<CheckoutReque
         RuleFor(r => r.City).NotEmpty().MaximumLength(100);
         RuleFor(r => r.State).NotEmpty().MaximumLength(50);
         RuleFor(r => r.Zip).NotEmpty().MaximumLength(20);
-        RuleFor(r => r.Phone).MaximumLength(30);
+        RuleFor(r => r.Phone).NotEmpty().MaximumLength(30);
     }
 }
 

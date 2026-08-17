@@ -16,7 +16,8 @@ public sealed record ShippingAddress(
         string fullName, string? company, string street, string city, string state, string zip, string? phone)
     {
         if (string.IsNullOrWhiteSpace(fullName) || string.IsNullOrWhiteSpace(street) ||
-            string.IsNullOrWhiteSpace(city) || string.IsNullOrWhiteSpace(state) || string.IsNullOrWhiteSpace(zip))
+            string.IsNullOrWhiteSpace(city) || string.IsNullOrWhiteSpace(state) || string.IsNullOrWhiteSpace(zip) ||
+            string.IsNullOrWhiteSpace(phone))
             throw new DomainException("Please fill in all required shipping fields.");
 
         return new ShippingAddress(

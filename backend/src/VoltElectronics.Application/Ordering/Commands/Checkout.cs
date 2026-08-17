@@ -28,6 +28,11 @@ internal sealed class CheckoutHandler(
     IUnitOfWork unitOfWork,
     ILogger<CheckoutHandler> logger) : ICommandHandler<CheckoutCommand, Result<CheckoutResponse>>
 {
+    // The storefront lets shoppers browse/checkout in USD or EUR for convenience, but the
+    // payment gateway only settles in AMD — every order is placed and charged in AMD regardless
+    // of cart.Currency, which just drove the pre-payment display.
+    private const string SettlementCurrency = "AMD";
+
     public async Task<Result<CheckoutResponse>> HandleAsync(CheckoutCommand command, CancellationToken cancellationToken)
     {
         // Shape rules (required fields, email format) are CheckoutValidator's job by the time
@@ -54,7 +59,7 @@ internal sealed class CheckoutHandler(
             subtotalBase += product.Price * item.Qty;
             lines.Add(new OrderLine(
                 product.Id, product.Name,
-                currency.Convert(product.Price, cart.Currency), item.Qty));
+                currency.Convert(product.Price, SettlementCurrency), item.Qty));
         }
 
         // Never trust client-side totals — shipping and tax are computed on the true base-currency
@@ -62,12 +67,12 @@ internal sealed class CheckoutHandler(
         // drift a cent from per-line rounding.
         var (subtotal, shipping, tax, total) = PricingPolicy.Totals(subtotalBase);
         var totals = new OrderTotals(
-            currency.Convert(subtotal, cart.Currency),
-            currency.Convert(shipping, cart.Currency),
-            currency.Convert(tax, cart.Currency),
-            currency.Convert(total, cart.Currency),
-            cart.Currency,
-            currency.Rate(cart.Currency));
+            currency.Convert(subtotal, SettlementCurrency),
+            currency.Convert(shipping, SettlementCurrency),
+            currency.Convert(tax, SettlementCurrency),
+            currency.Convert(total, SettlementCurrency),
+            SettlementCurrency,
+            currency.Rate(SettlementCurrency));
 
         var order = Order.Place(
             orderNumbers.Next(),

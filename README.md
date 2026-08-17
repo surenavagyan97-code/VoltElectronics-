@@ -51,12 +51,13 @@ PAYMENTS_PROVIDER=Ameria
 AMERIA_CLIENT_ID=<guid from the bank>
 AMERIA_USERNAME=<username>
 AMERIA_PASSWORD=<password>
-AMERIA_CURRENCY=USD              # must match your merchant account (AMD for dram)
 AMERIA_ORDER_ID_OFFSET=3200000   # shift order ids into your assigned test range
 PAYMENTS_CALLBACK_BASE_URL=http://localhost:8080   # public URL of the API
 ```
 
 For production, point `AMERIA_BASE_URL` at `https://services.ameriabank.am/VPOS` and use a publicly reachable `PAYMENTS_CALLBACK_BASE_URL` (the bank redirects the shopper's browser there).
+
+Checkout always settles in AMD (`CheckoutHandler.SettlementCurrency`) regardless of what currency the storefront displayed prices in — the shopper can browse/checkout in USD or EUR for convenience, but the actual charge sent to the gateway, and the order record it produces, are always in AMD.
 
 Adding another Armenian provider (Idram, Telcell, ArCa iPay) means implementing the two-method `IPaymentProvider` interface (`Application/Payments`) and registering it in `Infrastructure/DependencyInjection.cs`.
 

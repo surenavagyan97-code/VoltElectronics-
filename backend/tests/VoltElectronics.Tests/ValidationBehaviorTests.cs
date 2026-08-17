@@ -85,7 +85,7 @@ public class ValidationBehaviorTests : IDisposable
     {
         var result = await _db.Dispatcher.Send(new CheckoutCommand(
             new CartKey(null, Guid.NewGuid()), null,
-            new CheckoutRequest("not-an-email", "Jordan Lee", null, "500 Market St", "Yerevan", "Yerevan", "0010", null)));
+            new CheckoutRequest("not-an-email", "Jordan Lee", null, "500 Market St", "Yerevan", "Yerevan", "0010", "+37410000000")));
 
         Assert.False(result.IsSuccess);
         // The empty-cart check lives in the handler; seeing the email complaint instead proves

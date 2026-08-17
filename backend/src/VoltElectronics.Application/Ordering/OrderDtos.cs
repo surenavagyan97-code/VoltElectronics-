@@ -9,7 +9,7 @@ public record CheckoutRequest(
     string City,
     string State,
     string Zip,
-    string? Phone);
+    string Phone);
 
 /// <summary>Send the shopper to PaymentUrl; the gateway redirects back and the order flips to Processing.</summary>
 public record CheckoutResponse(string OrderNumber, string PaymentUrl);

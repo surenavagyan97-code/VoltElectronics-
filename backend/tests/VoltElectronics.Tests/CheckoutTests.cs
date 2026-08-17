@@ -14,7 +14,7 @@ public class CheckoutTests : IDisposable
     private readonly TestDb _db = new();
 
     private static readonly CheckoutRequest ValidRequest = new(
-        "shopper@example.com", "Jordan Lee", null, "500 Market St", "Yerevan", "Yerevan", "0010", null);
+        "shopper@example.com", "Jordan Lee", null, "500 Market St", "Yerevan", "Yerevan", "0010", "+37410000000");
 
     public void Dispose() => _db.Dispose();
 
@@ -65,8 +65,12 @@ public class CheckoutTests : IDisposable
         using var fresh = _db.NewContext();
         var order = fresh.Orders.Single();
         Assert.Equal(OrderStatus.PendingPayment, order.Status);
-        Assert.Equal(2000m, order.Totals.Subtotal);
-        Assert.Equal(2000m + 24m + Math.Round(2000m * 0.0875m, 2), order.Totals.Total);
+        // Checkout always settles in AMD regardless of the cart's display currency (USD by
+        // default here) — base-currency totals (2000 / 24 / 175 / 2199) converted at the test
+        // fixture's 387 AMD rate.
+        Assert.Equal("AMD", order.Totals.Currency);
+        Assert.Equal(774000m, order.Totals.Subtotal);
+        Assert.Equal((2000m + 24m + Math.Round(2000m * 0.0875m, 2)) * 387m, order.Totals.Total);
         Assert.Equal("Fake", order.PaymentProvider);
         Assert.False(string.IsNullOrEmpty(order.PaymentId));
     }

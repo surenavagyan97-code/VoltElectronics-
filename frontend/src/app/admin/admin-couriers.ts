@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ApiClient } from '../core/api-client';
 import { Courier } from '../core/api.types';
@@ -8,7 +9,7 @@ import { I18nService } from '../core/i18n.service';
 
 @Component({
   selector: 'app-admin-couriers',
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   styles: `.table-scroll { overflow-x: auto; }`,
   template: `
     <div class="row" style="justify-content: space-between; margin-bottom: 20px; gap: 12px; flex-wrap: wrap;">
@@ -53,6 +54,10 @@ import { I18nService } from '../core/i18n.service';
             <td>{{ c.activeOrderCount }}</td>
             <td>
               <div class="row" style="gap: 4px; justify-content: flex-end;">
+                <a class="btn btn-secondary" style="font-size: 12px; padding: 5px 10px;"
+                   routerLink="/admin/orders" [queryParams]="{ courierId: c.id }">
+                  {{ i18n.t('admin.couriers.viewOrdersAction') }}
+                </a>
                 <button class="btn btn-icon btn-ghost" (click)="remove(c)" [attr.aria-label]="i18n.t('common.delete')">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg>
                 </button>

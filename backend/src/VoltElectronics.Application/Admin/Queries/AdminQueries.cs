@@ -19,7 +19,7 @@ public sealed record ExportProductsQuery : IQuery<IReadOnlyList<ProductExportRow
 public sealed record AdminGetCategoriesQuery : IQuery<IReadOnlyList<CategoryDto>>;
 
 public sealed record AdminGetOrdersQuery(
-    int Page = 1, int PageSize = 20, string? Status = null, string? Search = null)
+    int Page = 1, int PageSize = 20, string? Status = null, string? Search = null, string? CourierId = null)
     : IQuery<PagedResult<AdminOrderListItemDto>>;
 
 public sealed record AdminGetOrderStatsQuery : IQuery<AdminOrderStatsDto>;

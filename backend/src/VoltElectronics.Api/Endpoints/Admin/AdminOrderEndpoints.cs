@@ -17,8 +17,8 @@ public static class AdminOrderEndpoints
 
         orders.MapGet("/", async (
                 IDispatcher dispatcher, CancellationToken ct,
-                int page = 1, int pageSize = 20, string? status = null, string? search = null) =>
-            Results.Ok(await dispatcher.Query(new AdminGetOrdersQuery(page, pageSize, status, search), ct)));
+                int page = 1, int pageSize = 20, string? status = null, string? search = null, string? courierId = null) =>
+            Results.Ok(await dispatcher.Query(new AdminGetOrdersQuery(page, pageSize, status, search, courierId), ct)));
 
         orders.MapGet("/stats", async (IDispatcher dispatcher, CancellationToken ct) =>
             Results.Ok(await dispatcher.Query(new AdminGetOrderStatsQuery(), ct)));

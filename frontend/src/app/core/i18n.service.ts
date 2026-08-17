@@ -41,5 +41,5 @@ export class I18nService {
 
 function readStored(): Lang {
   const v = localStorage.getItem(STORAGE_KEY);
-  return v === 'hy' || v === 'ru' ? v : 'en';
+  return v === 'en' || v === 'ru' ? v : 'hy';
 }

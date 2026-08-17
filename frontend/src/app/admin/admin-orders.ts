@@ -1,5 +1,7 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ApiClient } from '../core/api-client';
 import { AdminOrderListItem, AdminOrderStats, Courier, PagedResult } from '../core/api.types';
@@ -33,12 +35,18 @@ const STATUSES = ['PendingPayment', 'Processing', 'Shipped', 'Delivered', 'Cance
     }
 
     <div class="row" style="gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
-      <div class="seg" style="width: fit-content;">
-        <div class="seg-opt" [class.seg-active]="statusFilter() === ''" (click)="setStatus('')">{{ i18n.t('admin.orders.filterAll') }}</div>
+      <select class="input" style="width: 180px;" [value]="statusFilter()" (change)="setStatus($any($event.target).value)">
+        <option value="">{{ i18n.t('admin.orders.filterAll') }}</option>
         @for (s of statuses; track s) {
-          <div class="seg-opt" [class.seg-active]="statusFilter() === s" (click)="setStatus(s)">{{ i18n.t('status.' + s) }}</div>
+          <option [value]="s">{{ i18n.t('status.' + s) }}</option>
         }
-      </div>
+      </select>
+      <select class="input" style="width: 200px;" (change)="setCourierFilter($any($event.target).value)">
+        <option value="" [selected]="!courierFilter()">{{ i18n.t('admin.orders.allCouriers') }}</option>
+        @for (c of couriers(); track c.id) {
+          <option [value]="c.id" [selected]="c.id === courierFilter()">{{ c.fullName }}</option>
+        }
+      </select>
       <div class="field" style="margin: 0; width: 240px;">
         <input class="input" [placeholder]="i18n.t('admin.orders.searchPlaceholder')" (input)="onSearch($any($event.target).value)" />
       </div>
@@ -48,16 +56,17 @@ const STATUSES = ['PendingPayment', 'Processing', 'Shipped', 'Delivered', 'Cance
 
     <div class="table-scroll">
     <table class="table">
-      <thead><tr><th>{{ i18n.t('admin.orders.table.order') }}</th><th>{{ i18n.t('admin.orders.table.customer') }}</th><th>{{ i18n.t('admin.orders.table.email') }}</th><th>{{ i18n.t('admin.orders.table.date') }}</th><th>{{ i18n.t('admin.orders.table.items') }}</th><th>{{ i18n.t('admin.orders.table.total') }}</th><th>{{ i18n.t('admin.orders.table.status') }}</th><th>{{ i18n.t('admin.orders.table.courier') }}</th></tr></thead>
+      <thead><tr><th>{{ i18n.t('admin.orders.table.order') }}</th><th>{{ i18n.t('admin.orders.table.customer') }}</th><th>{{ i18n.t('admin.orders.table.email') }}</th><th>{{ i18n.t('admin.orders.table.phone') }}</th><th>{{ i18n.t('admin.orders.table.date') }}</th><th>{{ i18n.t('admin.orders.table.items') }}</th><th>{{ i18n.t('admin.orders.table.total') }}</th><th>{{ i18n.t('admin.orders.table.status') }}</th><th>{{ i18n.t('admin.orders.table.courier') }}</th></tr></thead>
       <tbody>
         @for (o of result()?.items ?? []; track o.orderNumber) {
           <tr>
             <td style="white-space: nowrap;">{{ o.orderNumber }}</td>
             <td style="white-space: nowrap;">{{ o.customer }}</td>
             <td class="text-muted" style="white-space: nowrap;">{{ o.email }}</td>
+            <td class="text-muted" style="white-space: nowrap;">{{ o.phone ?? '—' }}</td>
             <td style="white-space: nowrap;">{{ o.createdAt | date: 'MMM d, y' }}</td>
             <td>{{ o.itemCount }}</td>
-            <td style="white-space: nowrap;">{{ currency.format(o.total, o.currency) }}</td>
+            <td style="white-space: nowrap;">{{ currency.formatFrom(o.total, o.currency) }}</td>
             <td>
               <select class="input" style="width: 150px; min-height: 30px; padding: 3px 8px; font-size: 12px;"
                       [value]="o.status" (change)="updateStatus(o, $any($event.target).value)">
@@ -90,8 +99,10 @@ const STATUSES = ['PendingPayment', 'Processing', 'Shipped', 'Delivered', 'Cance
     }
   `,
 })
-export class AdminOrdersPage implements OnInit {
+export class AdminOrdersPage {
   private api = inject(ApiClient);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
   currency = inject(CurrencyStore);
   i18n = inject(I18nService);
 
@@ -105,11 +116,26 @@ export class AdminOrdersPage implements OnInit {
   search = signal('');
   page = signal(1);
   error = signal<string | null>(null);
+  // Settable here via the dropdown, or preset by arriving from the couriers page's "view orders"
+  // link; reflected in the URL so it survives a refresh and can be linked to directly.
+  courierFilter = signal<string | null>(null);
 
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
-  async ngOnInit(): Promise<void> {
-    await Promise.all([this.loadStats(), this.load(), this.loadCouriers()]);
+  constructor() {
+    void Promise.all([this.loadStats(), this.loadCouriers()]);
+
+    // Subscribed (not snapshotted) so a link from the couriers page while already on this page
+    // re-filters live. Emits immediately, so this also does the first load.
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((qp) => {
+      this.courierFilter.set(qp.get('courierId'));
+      this.page.set(1);
+      void this.load();
+    });
+  }
+
+  setCourierFilter(courierId: string): void {
+    void this.router.navigate([], { queryParams: { courierId: courierId || null }, queryParamsHandling: 'merge' });
   }
 
   totalPages(): number {
@@ -165,6 +191,7 @@ export class AdminOrdersPage implements OnInit {
 
   private async load(): Promise<void> {
     this.result.set(await firstValueFrom(this.api.adminGetOrders(
-      this.page(), 20, this.statusFilter() || undefined, this.search() || undefined)));
+      this.page(), 20, this.statusFilter() || undefined, this.search() || undefined,
+      this.courierFilter() || undefined)));
   }
 }

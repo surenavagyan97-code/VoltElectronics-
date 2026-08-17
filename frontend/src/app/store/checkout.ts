@@ -46,7 +46,7 @@ export const CHECKOUT_EMAIL_KEY = 'volt.checkoutEmail';
                 <div class="field"><label>{{ i18n.t('checkout.city') }}</label><input class="input" name="city" [(ngModel)]="form.city" required placeholder="Yerevan" /></div>
                 <div class="field"><label>{{ i18n.t('checkout.state') }}</label><input class="input" name="state" [(ngModel)]="form.state" required placeholder="Yerevan" /></div>
                 <div class="field"><label>{{ i18n.t('checkout.zip') }}</label><input class="input" name="zip" [(ngModel)]="form.zip" required placeholder="0010" /></div>
-                <div class="field"><label>{{ i18n.t('checkout.phone') }}</label><input class="input" name="phone" [(ngModel)]="form.phone" placeholder="+374 10 000000" /></div>
+                <div class="field"><label>{{ i18n.t('checkout.phone') }}</label><input class="input" type="tel" name="phone" [(ngModel)]="form.phone" required placeholder="+374 10 000000" /></div>
               </div>
             </div>
             <div>
@@ -108,7 +108,7 @@ export class CheckoutPage {
 
   async placeOrder(): Promise<void> {
     const f = this.form;
-    if (!f.email || !f.fullName || !f.street || !f.city || !f.state || !f.zip) {
+    if (!f.email || !f.fullName || !f.street || !f.city || !f.state || !f.zip || !f.phone) {
       this.error.set(this.i18n.t('checkout.requiredFieldsError'));
       return;
     }
@@ -117,7 +117,7 @@ export class CheckoutPage {
     try {
       const res = await firstValueFrom(this.api.checkout({
         email: f.email, fullName: f.fullName, company: f.company || null,
-        street: f.street, city: f.city, state: f.state, zip: f.zip, phone: f.phone || null,
+        street: f.street, city: f.city, state: f.state, zip: f.zip, phone: f.phone,
       }));
       sessionStorage.setItem(CHECKOUT_EMAIL_KEY, f.email);
       // Hand the shopper to the gateway's hosted pay page.

@@ -48,7 +48,7 @@ import { statusTagClass } from './status-tag';
                     <td><a [routerLink]="['/confirmation', o.orderNumber]" style="text-decoration: none; white-space: nowrap;">{{ o.orderNumber }}</a></td>
                     <td style="white-space: nowrap;">{{ o.createdAt | date: 'MMM d, y' }}</td>
                     <td>{{ o.itemCount }}</td>
-                    <td style="white-space: nowrap;">{{ currency.format(o.total, o.currency) }}</td>
+                    <td style="white-space: nowrap;">{{ currency.formatFrom(o.total, o.currency) }}</td>
                     <td><span class="tag" [class]="statusClass(o.status)">{{ i18n.t('status.' + o.status) }}</span></td>
                   </tr>
                 }

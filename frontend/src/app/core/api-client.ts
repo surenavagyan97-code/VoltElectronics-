@@ -165,10 +165,11 @@ export class ApiClient {
     return this.http.put<void>(`/api/admin/content/${encodeURIComponent(key)}`, { lang, body });
   }
 
-  adminGetOrders(page: number, pageSize: number, status?: string, search?: string): Observable<PagedResult<AdminOrderListItem>> {
+  adminGetOrders(page: number, pageSize: number, status?: string, search?: string, courierId?: string): Observable<PagedResult<AdminOrderListItem>> {
     let params = new HttpParams().set('page', page).set('pageSize', pageSize);
     if (status) params = params.set('status', status);
     if (search) params = params.set('search', search);
+    if (courierId) params = params.set('courierId', courierId);
     return this.http.get<PagedResult<AdminOrderListItem>>('/api/admin/orders', { params });
   }
   adminGetOrderStats(): Observable<AdminOrderStats> {

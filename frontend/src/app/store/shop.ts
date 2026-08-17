@@ -4,15 +4,18 @@ import { Subject, debounceTime, firstValueFrom } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ApiClient } from '../core/api-client';
 import { Category, PagedResult, ProductListItem } from '../core/api.types';
+import { CurrencyStore } from '../core/currency-store';
 import { I18nService } from '../core/i18n.service';
 import { ProductCard } from './product-card';
 
+// Thresholds are in the store's base currency (USD) — the backend filters on the raw price,
+// so the band `key`s stay fixed; only the displayed label converts to the shopper's currency.
 const PRICE_BANDS = [
-  { key: 'lt250', labelKey: 'shop.priceBand.lt250' },
-  { key: '250-750', labelKey: 'shop.priceBand.250-750' },
-  { key: '750-1500', labelKey: 'shop.priceBand.750-1500' },
-  { key: 'gt1500', labelKey: 'shop.priceBand.gt1500' },
-];
+  { key: 'lt250', high: 250 },
+  { key: '250-750', low: 250, high: 750 },
+  { key: '750-1500', low: 750, high: 1500 },
+  { key: 'gt1500', low: 1500 },
+] as const;
 
 @Component({
   selector: 'app-shop',
@@ -79,7 +82,7 @@ const PRICE_BANDS = [
                 <span class="box">
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 </span>
-                {{ i18n.t(band.labelKey) }}
+                {{ bandLabel(band) }}
               </label>
             }
           </div>
@@ -127,6 +130,7 @@ export class ShopPage implements OnInit {
   private api = inject(ApiClient);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  currency = inject(CurrencyStore);
   i18n = inject(I18nService);
 
   readonly priceBands = PRICE_BANDS;
@@ -171,6 +175,21 @@ export class ShopPage implements OnInit {
   totalPages(): number {
     const r = this.result();
     return r ? Math.max(1, Math.ceil(r.total / r.pageSize)) : 1;
+  }
+
+  // Rounded (no decimals) — these are round-number thresholds, so cents just add noise once
+  // converted into another currency (e.g. AMD).
+  private formatThreshold(baseAmount: number): string {
+    return this.currency.format(this.currency.convert(baseAmount), undefined, 0);
+  }
+
+  bandLabel(band: (typeof PRICE_BANDS)[number]): string {
+    if (!('low' in band)) return this.i18n.t('shop.priceBand.lt', { amount: this.formatThreshold(band.high) });
+    if (!('high' in band)) return this.i18n.t('shop.priceBand.gt', { amount: this.formatThreshold(band.low) });
+    return this.i18n.t('shop.priceBand.range', {
+      low: this.formatThreshold(band.low),
+      high: this.formatThreshold(band.high),
+    });
   }
 
   onSearch(term: string): void { this.searchInput$.next(term); }

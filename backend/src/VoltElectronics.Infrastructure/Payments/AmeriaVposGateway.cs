@@ -25,9 +25,9 @@ internal sealed class AmeriaVposGateway(
 
     public async Task<PaymentInitResult> InitPaymentAsync(PaymentInitRequest request, CancellationToken cancellationToken = default)
     {
-        // Charge in whatever currency the order was placed in. Note: Ameriabank provisions a
-        // merchant account for specific settlement currencies — confirm with the bank that
-        // this ClientID actually accepts AMD/USD/EUR before relying on this in production.
+        // Charges in whatever currency the caller passed — CheckoutHandler always settles in AMD
+        // (the merchant account's provisioned settlement currency), regardless of what the
+        // shopper was browsing/checking out in.
         var body = new
         {
             ClientID = Opts.ClientId,
