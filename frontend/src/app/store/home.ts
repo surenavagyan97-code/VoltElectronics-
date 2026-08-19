@@ -10,10 +10,13 @@ import { ProductCard } from './product-card';
   selector: 'app-home',
   imports: [RouterLink, ProductCard],
   template: `
-    <!-- Indigo hero from the Electronics Store design sheet — deliberately the same deep
-         indigo in both themes, with white text. -->
-    <div style="background: linear-gradient(120deg, #383c8e, #4a4fae); color: #fff; padding: 64px 32px; display: flex; align-items: center; gap: 48px; flex-wrap: wrap;">
-      <div style="max-width: 460px;">
+    <!-- Hero: looping tech video as the background (indigo gradient stays as the fallback
+         while it loads), dark scrim on top so the white text stays legible. -->
+    <div style="position: relative; overflow: hidden; background: linear-gradient(120deg, #383c8e, #4a4fae); color: #fff; padding: 64px 32px; min-height: 420px; display: flex; align-items: center; gap: 48px; flex-wrap: wrap;">
+      <video src="tech-background-loop.mp4" autoplay muted loop playsinline aria-hidden="true"
+             style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none;"></video>
+      <div style="position: absolute; inset: 0; background: linear-gradient(to right, rgba(10, 8, 30, 0.55), rgba(10, 8, 30, 0.15)); pointer-events: none;"></div>
+      <div style="position: relative; max-width: 460px;">
         <div style="display: inline-block; border: 1px solid rgba(255, 255, 255, 0.45); border-radius: 6px; padding: 4px 12px; font-size: 12px; margin-bottom: 16px;">{{ i18n.t('home.hero.kicker') }}</div>
         <h1 style="font-size: 46px; margin-bottom: 14px; color: #fff;">{{ i18n.t('home.hero.title') }}</h1>
         <p style="opacity: 0.85; font-size: 15px; margin-bottom: 22px;">{{ i18n.t('home.hero.subtitle') }}</p>
@@ -22,7 +25,6 @@ import { ProductCard } from './product-card';
           <a class="btn" routerLink="/contact" style="background: #fff; color: #383c8e;">{{ i18n.t('home.hero.talkToSales') }}</a>
         </div>
       </div>
-      <div class="ph" style="width: 380px; height: 260px;">{{ i18n.t('home.hero.imagePlaceholder') }}</div>
     </div>
 
     <div style="padding: 48px 32px;">
