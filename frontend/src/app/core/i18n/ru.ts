@@ -138,6 +138,8 @@ export const ru: Record<string, string> = {
   'product.addedToCart': 'Добавлено в корзину ✓',
   'product.requestBulkQuote': 'Запросить оптовую цену',
   'product.youMayAlsoLike': 'Вам может понравиться',
+  'product.prevImage': 'Предыдущее фото',
+  'product.nextImage': 'Следующее фото',
   'product.notFound': 'Товар не найден',
   'product.backToShop': 'Вернуться в магазин',
 

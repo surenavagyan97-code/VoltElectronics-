@@ -139,6 +139,8 @@ export const en: Record<string, string> = {
   'product.addedToCart': 'Added to cart ✓',
   'product.requestBulkQuote': 'Request bulk quote',
   'product.youMayAlsoLike': 'You may also like',
+  'product.prevImage': 'Previous photo',
+  'product.nextImage': 'Next photo',
   'product.notFound': 'Product not found',
   'product.backToShop': 'Back to shop',
 

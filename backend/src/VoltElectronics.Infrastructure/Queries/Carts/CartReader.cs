@@ -46,9 +46,10 @@ internal sealed class CartReader(AppDbContext db, ICurrencyConverter currency, I
 
         var subtotalBase = cart.Items.Sum(i => products[i.ProductId].Price * i.Qty);
 
-        // A stale coupon (expired since it was applied, usage limit hit meanwhile, etc.) is
-        // dropped from the preview rather than surfaced as an error every request — checkout
-        // re-validates from scratch anyway, so this is purely a display concern.
+        // A stale coupon (expired since it was applied, deleted, usage limit hit meanwhile, etc.)
+        // is dropped from the *discount* calculation, but the DTO still echoes back the stored
+        // code (see the CartDto.CouponCode below) — otherwise the shopper sees an error with no
+        // "remove" button to ever clear it, since that button only renders when a code is present.
         string? couponError = null;
         Promotion? codedPromotion = null;
         if (cart.CouponCode is not null)
@@ -74,6 +75,6 @@ internal sealed class CartReader(AppDbContext db, ICurrencyConverter currency, I
         return new CartDto(cart.Id, items, items.Sum(i => i.Qty),
             currency.Convert(subtotal, cur), currency.Convert(discount, cur),
             currency.Convert(shipping, cur), currency.Convert(tax, cur), currency.Convert(total, cur), cur,
-            codedPromotion?.Code, couponError);
+            cart.CouponCode, couponError);
     }
 }

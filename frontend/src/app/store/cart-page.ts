@@ -61,7 +61,7 @@ import { I18nService } from '../core/i18n.service';
 
             @if (cart.cart().couponCode; as code) {
               <div class="row" style="justify-content: space-between; font-size: 13px; background: color-mix(in srgb, var(--color-accent) 12%, transparent); padding: 8px 10px; border-radius: var(--radius-md);">
-                <span>{{ i18n.t('cart.couponApplied', { code }) }}</span>
+                <span>{{ cart.cart().couponError ? code : i18n.t('cart.couponApplied', { code }) }}</span>
                 <button type="button" class="btn btn-ghost" style="padding: 0; font-size: 12px;" [disabled]="cart.busy()" (click)="removeCoupon()">{{ i18n.t('cart.couponRemove') }}</button>
               </div>
             } @else {

@@ -1,5 +1,5 @@
 import { DecimalPipe } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ApiClient } from '../core/api-client';
@@ -18,6 +18,23 @@ import { ProductCard } from './product-card';
     @media (max-width: 760px) {
       .product-grid { grid-template-columns: 1fr; gap: 24px; }
     }
+    .carousel-main { position: relative; }
+    .carousel-nav {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      background: color-mix(in srgb, var(--color-bg) 70%, transparent); color: var(--color-text);
+      opacity: 0; transition: opacity 0.15s ease, background 0.15s ease;
+    }
+    .carousel-main:hover .carousel-nav, .carousel-nav:focus-visible { opacity: 1; }
+    .carousel-nav:hover { background: color-mix(in srgb, var(--color-bg) 90%, transparent); }
+    .carousel-prev { left: 10px; }
+    .carousel-next { right: 10px; }
+    .thumb-strip {
+      display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none;
+    }
+    .thumb-strip::-webkit-scrollbar { display: none; }
+    .thumb-strip .thumb { flex: 0 0 76px; height: 76px; cursor: pointer; }
   `,
   template: `
     @if (product(); as p) {
@@ -28,19 +45,27 @@ import { ProductCard } from './product-card';
         </div>
         <div class="product-grid">
           <div class="col" style="gap: 12px;">
-            <div class="ph" style="width: 100%; height: 380px;">
-              @if (activeImage(); as img) {
-                <img [src]="img" [alt]="p.name" />
+            <div class="ph carousel-main" style="width: 100%; height: 380px;">
+              @if (p.images[activeIndex()]; as img) {
+                <img [src]="img.url" [alt]="p.name" />
               } @else {
                 {{ p.name }} — product photo
               }
+              @if (p.images.length > 1) {
+                <button type="button" class="carousel-nav carousel-prev" (click)="prevImage()" [attr.aria-label]="i18n.t('product.prevImage')">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                <button type="button" class="carousel-nav carousel-next" (click)="nextImage()" [attr.aria-label]="i18n.t('product.nextImage')">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+              }
             </div>
             @if (p.images.length > 1) {
-              <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
-                @for (img of p.images; track img.id) {
-                  <div class="ph" style="height: 76px; cursor: pointer;"
-                       [style.outline]="activeImage() === img.url ? '2px solid var(--color-accent)' : 'none'"
-                       (click)="activeImage.set(img.url)">
+              <div class="thumb-strip" #thumbStrip>
+                @for (img of p.images; track img.id; let i = $index) {
+                  <div class="ph thumb"
+                       [style.outline]="activeIndex() === i ? '2px solid var(--color-accent)' : 'none'"
+                       (click)="activeIndex.set(i)">
                     <img [src]="img.thumbUrl" [alt]="p.name" />
                   </div>
                 }
@@ -133,9 +158,11 @@ export class ProductDetailPage {
 
   product = signal<ProductDetail | null>(null);
   notFound = signal(false);
-  activeImage = signal<string | null>(null);
+  activeIndex = signal(0);
   qty = signal(1);
   added = signal(false);
+
+  private thumbStrip = viewChild<ElementRef<HTMLElement>>('thumbStrip');
 
   savePct = computed(() => {
     const p = this.product();
@@ -150,6 +177,15 @@ export class ProductDetailPage {
   constructor() {
     // Re-load when navigating between related products (same component instance).
     this.route.paramMap.subscribe((params) => void this.load(params.get('slug')!));
+
+    // Keep the active thumbnail scrolled into view as the arrows move through a strip
+    // wider than its container — re-fires once the strip itself renders, too.
+    effect(() => {
+      const index = this.activeIndex();
+      const strip = this.thumbStrip()?.nativeElement;
+      const thumb = strip?.children[index] as HTMLElement | undefined;
+      thumb?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    });
   }
 
   private async load(slug: string): Promise<void> {
@@ -157,13 +193,23 @@ export class ProductDetailPage {
     this.notFound.set(false);
     this.added.set(false);
     this.qty.set(1);
+    this.activeIndex.set(0);
     try {
       const product = await firstValueFrom(this.api.getProduct(slug));
       this.product.set(product);
-      this.activeImage.set(product.images[0]?.url ?? null);
     } catch {
       this.notFound.set(true);
     }
+  }
+
+  prevImage(): void {
+    const count = this.product()?.images.length ?? 0;
+    if (count > 0) this.activeIndex.update((i) => (i - 1 + count) % count);
+  }
+
+  nextImage(): void {
+    const count = this.product()?.images.length ?? 0;
+    if (count > 0) this.activeIndex.update((i) => (i + 1) % count);
   }
 
   async addToCart(): Promise<void> {

@@ -35,9 +35,17 @@ function emptyForm(): FormState {
   };
 }
 
-/** <input type="datetime-local"> wants/gives "yyyy-MM-ddTHH:mm" with no timezone — treat both ends as UTC. */
+/**
+ * <input type="datetime-local"> both reads and writes a timezone-less "yyyy-MM-ddTHH:mm" string
+ * representing wall-clock time in the browser's own timezone — never UTC. `new Date(local)`
+ * already parses that string as local time (correct for saving), but converting the other way
+ * needs the local getters, not a raw slice of the UTC ISO string the API returns.
+ */
 function toLocalInput(iso: string | null): string {
-  return iso ? iso.slice(0, 16) : '';
+  if (!iso) return '';
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 function toIso(local: string): string | null {
   return local ? new Date(local).toISOString() : null;
@@ -48,8 +56,10 @@ function toIso(local: string): string | null {
   imports: [FormsModule, DatePipe],
   styles: `
     .table-scroll { overflow-x: auto; }
-    .promo-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    @media (max-width: 640px) { .promo-form-grid { grid-template-columns: 1fr; } }
+    .promo-form-grid { display: flex; flex-direction: column; gap: 14px; }
+    .promo-row { display: flex; gap: 14px; }
+    .promo-row > .field { flex: 1; min-width: 0; }
+    @media (max-width: 640px) { .promo-row { flex-direction: column; } }
     .chip-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
     .chip-remove { background: none; border: none; cursor: pointer; color: inherit; padding: 0; margin-left: 6px; font-size: 13px; line-height: 1; }
     .product-results {
@@ -82,62 +92,73 @@ function toIso(local: string): string | null {
         <div class="card-kicker">{{ editingId() ? i18n.t('admin.promotions.editTitle') : i18n.t('admin.promotions.newTitle') }}</div>
 
         <div class="promo-form-grid">
-          <div class="field" style="margin: 0;"><label>{{ i18n.t('admin.promotions.code') }}</label>
-            <input class="input" [(ngModel)]="form.code" [placeholder]="i18n.t('admin.promotions.codePlaceholder')" [disabled]="!!editingId()" />
-          </div>
-          <div class="field" style="margin: 0;"><label>{{ i18n.t('admin.promotions.name') }}</label>
-            <input class="input" [(ngModel)]="form.name" [placeholder]="i18n.t('admin.promotions.namePlaceholder')" />
-          </div>
-
-          <div class="field" style="margin: 0;"><label>{{ i18n.t('admin.promotions.type') }}</label>
-            <select class="input" [(ngModel)]="form.type">
-              <option value="Percentage">{{ i18n.t('admin.promotions.type.percentage') }}</option>
-              <option value="FixedAmount">{{ i18n.t('admin.promotions.type.fixedAmount') }}</option>
-            </select>
-          </div>
-          <div class="field" style="margin: 0;"><label>{{ i18n.t('admin.promotions.value') }} {{ form.type === 'Percentage' ? '(%)' : '($)' }}</label>
-            <input class="input" type="number" min="0" [max]="form.type === 'Percentage' ? 100 : null" step="0.01" [(ngModel)]="form.value" />
+          <div class="promo-row">
+            <div class="field" style="margin: 0;"><label>{{ i18n.t('admin.promotions.code') }}</label>
+              <input class="input" [(ngModel)]="form.code" [placeholder]="i18n.t('admin.promotions.codePlaceholder')" [disabled]="!!editingId()" />
+            </div>
+            <div class="field" style="margin: 0;"><label>{{ i18n.t('admin.promotions.name') }}</label>
+              <input class="input" [(ngModel)]="form.name" [placeholder]="i18n.t('admin.promotions.namePlaceholder')" />
+            </div>
           </div>
 
-          <div class="field" style="margin: 0;"><label>{{ i18n.t('admin.promotions.scope') }}</label>
-            <select class="input" [(ngModel)]="form.scope">
-              <option value="Order">{{ i18n.t('admin.promotions.scope.order') }}</option>
-              <option value="Category">{{ i18n.t('admin.promotions.scope.category') }}</option>
-              <option value="Product">{{ i18n.t('admin.promotions.scope.product') }}</option>
-            </select>
-          </div>
-
-          @if (form.scope === 'Category') {
-            <div class="field" style="margin: 0;"><label>{{ i18n.t('shop.category') }}</label>
-              <select class="input" [(ngModel)]="form.categoryId">
-                <option [ngValue]="null">—</option>
-                @for (c of categories(); track c.id) { <option [ngValue]="c.id">{{ c.name }}</option> }
+          <div class="promo-row">
+            <div class="field" style="margin: 0;"><label>{{ i18n.t('admin.promotions.type') }}</label>
+              <select class="input" [(ngModel)]="form.type">
+                <option value="Percentage">{{ i18n.t('admin.promotions.type.percentage') }}</option>
+                <option value="FixedAmount">{{ i18n.t('admin.promotions.type.fixedAmount') }}</option>
               </select>
             </div>
-          }
+            <div class="field" style="margin: 0;"><label>{{ i18n.t('admin.promotions.value') }} {{ form.type === 'Percentage' ? '(%)' : '($)' }}</label>
+              <input class="input" type="number" min="0" [max]="form.type === 'Percentage' ? 100 : null" step="0.01" [(ngModel)]="form.value" />
+            </div>
+          </div>
 
-          @if (form.scope === 'Order') {
-            <div class="field" style="margin: 0;"><label>{{ i18n.t('admin.promotions.minSubtotal') }}</label>
-              <input class="input" type="number" min="0" step="0.01" [(ngModel)]="form.minSubtotal" [placeholder]="i18n.t('admin.promotions.noMinimum')" />
+          <div class="promo-row">
+            <div class="field" style="margin: 0;"><label>{{ i18n.t('admin.promotions.scope') }}</label>
+              <select class="input" [(ngModel)]="form.scope">
+                <option value="Order">{{ i18n.t('admin.promotions.scope.order') }}</option>
+                <option value="Category">{{ i18n.t('admin.promotions.scope.category') }}</option>
+                <option value="Product">{{ i18n.t('admin.promotions.scope.product') }}</option>
+              </select>
+            </div>
+            @if (form.scope === 'Category') {
+              <div class="field" style="margin: 0;"><label>{{ i18n.t('shop.category') }}</label>
+                <select class="input" [(ngModel)]="form.categoryId">
+                  <option [ngValue]="null">—</option>
+                  @for (c of categories(); track c.id) { <option [ngValue]="c.id">{{ c.name }}</option> }
+                </select>
+              </div>
+            }
+          </div>
+
+          @if (form.scope === 'Order' || form.type === 'Percentage') {
+            <div class="promo-row">
+              @if (form.scope === 'Order') {
+                <div class="field" style="margin: 0;"><label>{{ i18n.t('admin.promotions.minSubtotal') }}</label>
+                  <input class="input" type="number" min="0" step="0.01" [(ngModel)]="form.minSubtotal" [placeholder]="i18n.t('admin.promotions.noMinimum')" />
+                </div>
+              }
+              @if (form.type === 'Percentage') {
+                <div class="field" style="margin: 0;"><label>{{ i18n.t('admin.promotions.maxDiscount') }}</label>
+                  <input class="input" type="number" min="0" step="0.01" [(ngModel)]="form.maxDiscountAmount" [placeholder]="i18n.t('admin.promotions.noCap')" />
+                </div>
+              }
             </div>
           }
 
-          @if (form.type === 'Percentage') {
-            <div class="field" style="margin: 0;"><label>{{ i18n.t('admin.promotions.maxDiscount') }}</label>
-              <input class="input" type="number" min="0" step="0.01" [(ngModel)]="form.maxDiscountAmount" [placeholder]="i18n.t('admin.promotions.noCap')" />
+          <div class="promo-row">
+            <div class="field" style="margin: 0;"><label>{{ i18n.t('admin.promotions.maxRedemptions') }}</label>
+              <input class="input" type="number" min="1" step="1" [(ngModel)]="form.maxRedemptions" [placeholder]="i18n.t('admin.promotions.unlimited')" />
             </div>
-          }
-
-          <div class="field" style="margin: 0;"><label>{{ i18n.t('admin.promotions.maxRedemptions') }}</label>
-            <input class="input" type="number" min="1" step="1" [(ngModel)]="form.maxRedemptions" [placeholder]="i18n.t('admin.promotions.unlimited')" />
           </div>
-          <div class="field" style="margin: 0;"></div>
 
-          <div class="field" style="margin: 0;"><label>{{ i18n.t('admin.promotions.startsAt') }}</label>
-            <input class="input" type="datetime-local" [(ngModel)]="form.startsAt" />
-          </div>
-          <div class="field" style="margin: 0;"><label>{{ i18n.t('admin.promotions.expiresAt') }}</label>
-            <input class="input" type="datetime-local" [(ngModel)]="form.expiresAt" />
+          <div class="promo-row">
+            <div class="field" style="margin: 0;"><label>{{ i18n.t('admin.promotions.startsAt') }}</label>
+              <input class="input" type="datetime-local" [(ngModel)]="form.startsAt" />
+            </div>
+            <div class="field" style="margin: 0;"><label>{{ i18n.t('admin.promotions.expiresAt') }}</label>
+              <input class="input" type="datetime-local" [(ngModel)]="form.expiresAt" />
+            </div>
           </div>
         </div>
 

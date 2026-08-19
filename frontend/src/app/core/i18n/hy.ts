@@ -138,6 +138,8 @@ export const hy: Record<string, string> = {
   'product.addedToCart': 'Ավելացվել է զամբյուղ ✓',
   'product.requestBulkQuote': 'Հարցնել մեծածախ գին',
   'product.youMayAlsoLike': 'Ձեզ կարող է հետաքրքրել',
+  'product.prevImage': 'Նախորդ լուսանկարը',
+  'product.nextImage': 'Հաջորդ լուսանկարը',
   'product.notFound': 'Ապրանքը չի գտնվել',
   'product.backToShop': 'Վերադառնալ խանութ',
 
